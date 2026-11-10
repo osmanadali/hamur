@@ -33,7 +33,7 @@ const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).to
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
 const IMG = {};
-for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -142,6 +142,24 @@ function burst(x, y, cols, n, sp) {
     parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, l: 0, m: .4 + Math.random() * .35, c: cols[i % cols.length], r: cell * (.03 + Math.random() * .05) });
   }
 }
+// Un tozu: yapışma ve oturma anında yarı saydam, bulanık pufluk (parcacik şeridinin ilk üç karesi).
+function un(x, y, n) {
+  if (RM) return;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * 6.283, v = cell * (.5 + Math.random() * .9);
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - cell * .3, l: 0, m: .55 + Math.random() * .3, k: i % 3, r: cell * (.3 + Math.random() * .22), un: 1, a: Math.random() * 6.283, w: 0 });
+  }
+}
+// Bölüm sonu: şekerler ve yıldızlar tahtanın üstünden yağar (şeridin 3-13. kareleri).
+function konfeti() {
+  if (RM) return;
+  const w = st.W * cell, n = 34;
+  for (let i = 0; i < n; i++) {
+    const yildiz = i % 4 === 0;
+    parts.push({ x: Math.random() * w, y: -PAD - Math.random() * cell * 2.5, vx: (Math.random() - .5) * cell * 1.6, vy: cell * (2.5 + Math.random() * 3), g: cell * 9, l: 0, m: 1.5 + Math.random() * .7,
+      k: yildiz ? 3 + (i >> 2) % 3 : 6 + i % 8, r: cell * (yildiz ? .2 : .13) * (.8 + Math.random() * .5), a: Math.random() * 6.283, w: (Math.random() - .5) * 9 });
+  }
+}
 // Çekirdekten gelen olayları (yapışma, kalıba oturma) ekrana ve sese yansıt, sonra kazanma / çıkmaz denetimi.
 function olaylar(p, ev) {
   const now = performance.now();
@@ -158,7 +176,7 @@ function olaylar(p, ev) {
       if (p.mix) p.mix.maxR = Math.max(...p.cells.map(c => Math.hypot(c[0] + .5 - x0 - p.mix.ox, c[1] + .5 - y0 - p.mix.oy))) + .8;
       p.flash = { t0: now, segs: e.seam.map(s => [s[0] - x0, s[1] - y0, s[2], s[3]]) };
       p.pv += 1.5;
-      burst((x0 + mx) * cell, (y0 + my) * cell, [a, b], 12, cell * 2.6);
+      burst((x0 + mx) * cell, (y0 + my) * cell, [a, b], 7, cell * 2.6); un((x0 + mx) * cell, (y0 + my) * cell, 4);
       if (e.mixed) { buzz([16, 40, 16]); tone(280, .2, 'sine', 130, .16); tone(420, .7, 'sine', 700, .05, .05); }
       else { buzz(14); tone(300, .16, 'sine', 150, .16); tone(640, .09, 'triangle', 880, .05, .03); }
       threads.delete(e.q);
@@ -319,6 +337,7 @@ function kazanKaydet() {
   window.Olcum?.event('level_end', { level: li + 1, time_left: Math.ceil(timeLeft) });
 }
 function win() {
+  konfeti();
   [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09));
   Ads.warm();
   const kalan = L('Kalan süre ', 'Time left: ') + Math.ceil(timeLeft) + L(' sn.', ' s.');
@@ -513,16 +532,23 @@ function damga(renk, cx, cy, boy, a) {
 }
 // Yüz (kaynak: docs/gorseller/yuzler.png, 4×2 ifade): parçanın tek karesine yerleşir, ifade duruma göre değişir.
 // normalde sakin · sürüklenirken yöne bakar · süre azalınca telaşlı · yanlış yapışınca (ya da kaybedince) üzgün · kalıba oturunca mutlu
+const DIKEY = { yukari: 0, asagi: 1 };
 const YUZ = { sakin: 0, mutlu: 1, kirp: 2, sol: 3, sag: 4, telas: 5, saskin: 6, uzgun: 7 };
 function ifade(p, now) {
   if (state === 'lost' || (p.shakeT && now - p.shakeT < 1600)) return 'uzgun';
   if (state === 'won' || sinks.some(s => s.p === p)) return 'mutlu';
   if (state === 'play' && running && timeLeft < 10) return 'telas';
   if (drag) {
-    let dx;
-    if (drag.p === p) { const h = drag.hist, a = h[Math.max(0, h.length - 6)]; dx = Math.abs(drag.px - a.x) > 2 ? drag.px - a.x : yaslan()[0] * cell; if (Math.abs(dx) > cell * .08) p.bak = dx < 0 ? 'sol' : 'sag'; return p.bak || 'sag'; }
-    dx = center(drag.p)[0] - center(p)[0];
-    return Math.abs(dx) < cell * .4 ? 'sakin' : dx < 0 ? 'sol' : 'sag';
+    let dx, dy;
+    const yon = (dx, dy) => Math.abs(dy) > Math.abs(dx) ? (dy < 0 ? 'yukari' : 'asagi') : dx < 0 ? 'sol' : 'sag';
+    if (drag.p === p) {   // tutulan parça gittiği yöne bakar (dört yön); durunca son baktığı yerde kalır
+      const h = drag.hist, a = h[Math.max(0, h.length - 6)], oyn = Math.hypot(drag.px - a.x, drag.py - a.y) > 2, y = yaslan();
+      dx = oyn ? drag.px - a.x : y[0] * cell; dy = oyn ? drag.py - a.y : y[1] * cell;
+      if (Math.hypot(dx, dy) > cell * .08) p.bak = yon(dx, dy);
+      return p.bak || 'sag';
+    }
+    const c = center(drag.p), d = center(p); dx = c[0] - d[0]; dy = c[1] - d[1];
+    return Math.hypot(dx, dy) < cell * .4 ? 'sakin' : yon(dx, dy);
   }
   p.bak = null;
   return ((now + p.seed * 900) % 4200) < 140 ? 'kirp' : 'sakin';
@@ -531,7 +557,8 @@ function face(p, now) {
   const [x0, y0] = p.cells[0], f = p.cells[p.face], fx = (f[0] - x0 + .5) * cell, fy = (f[1] - y0 + .5) * cell, ne = ifade(p, now);
   const jx = ne === 'telas' && !RM ? Math.sin(now / 38 + p.seed) * cell * .014 : 0, im = IMG.yuzler;
   if (im) {
-    const sw = im.width / 4, sh = im.height / 2, i = YUZ[ne] || 0, w = cell * .8, h = w * sh / sw;
+    const sw = im.width / 4, sh = im.height / 2, i = YUZ[ne] || 0, w = cell * .8, h = w * sh / sw, dk = IMG['yuz-dikey'];
+    if (ne in DIKEY && dk) { ctx.drawImage(dk, DIKEY[ne] * sw, 0, sw, sh, fx - w / 2, fy + cell * .27 - h, w, h); return; }
     ctx.drawImage(im, (i % 4) * sw, (i / 4 | 0) * sh, sw, sh, fx - w / 2 + jx, fy + cell * .27 - h, w, h);
     return;
   }
@@ -619,9 +646,28 @@ function draw(now) {
   for (const p of st.pieces) if (!drag || p !== drag.p) drawPiece(p, now, 1, glow.get(p));
   if (drag) drawPiece(drag.p, now, 1, glow.get(drag.p));
   drawThreads(now);
+  const pim = IMG.parcacik;
   for (const q of parts) {
-    ctx.globalAlpha = 1 - q.l / q.m; ctx.fillStyle = q.c; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.2832); ctx.fill();
+    const t = q.l / q.m;
+    if (q.k == null) { ctx.globalAlpha = 1 - t; ctx.fillStyle = q.c; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.2832); ctx.fill(); continue; }
+    if (!pim) continue;
+    const r = q.un ? q.r * (1 + 1.1 * t) : q.r, hc = pim.height;
+    ctx.globalAlpha = q.un ? .6 * (1 - t) * Math.min(1, t * 8) : Math.min(1, (1 - t) * 4);
+    ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.a); ctx.drawImage(pim, q.k * hc, 0, hc, hc, -r, -r, 2 * r, 2 * r); ctx.restore();
   }
+  ctx.globalAlpha = 1;
+  el(now);
+}
+
+// İlk açılış: henüz hiç bölüm bitirmemiş oyuncuya el, ilk parçayı eşine doğru sürüklemeyi gösterir. İşaret noktası parmak ucu (görselin sol üstü).
+function el(now) {
+  const im = IMG.el;
+  if (!im || li !== 0 || running || drag || state !== 'play' || done.size > 0 || st.pieces.length < 2) return;
+  const a = center(st.pieces[0]), b = center(st.pieces[1]), yon = Math.sign(b[0] - a[0]) || 1;
+  const hx = b[0] - yon * cell, T = 2400, t = (now % T) / T, u = t < .15 ? 0 : t < .7 ? (t - .15) / .55 : 1, e = RM ? .5 : u * u * (3 - 2 * u);
+  const x = a[0] + (hx - a[0]) * e, y = a[1] + (b[1] - a[1]) * e + cell * .12, w = cell * 1.6, bas = t > .08 && t < .8 ? .92 : 1;
+  ctx.globalAlpha = RM ? 1 : Math.min(1, t * 12, (1 - t) * 7);
+  ctx.drawImage(im, x - w * .07 * bas, y - w * .07 * bas, w * bas, w * bas * im.height / im.width);
   ctx.globalAlpha = 1;
 }
 
@@ -654,12 +700,12 @@ function update(dt, now) {
   for (const s of sinks) {
     if (now - s.t0 >= 340) {
       s.h.shown = true; s.gone = true; rings.push({ h: s.h, t0: now });
-      const [x, y] = center(s.p); burst(x, y, [C[s.h.color], '#ffffff'], 16, cell * 3);
+      const [x, y] = center(s.p); burst(x, y, [C[s.h.color], '#ffffff'], 9, cell * 3); un(x, y, 3 + Math.min(4, s.p.cells.length));
       buzz(22); tone(170, .2, 'sine', 85, .2); tone(784, .16, 'triangle', 0, .07, .08); tone(1175, .24, 'triangle', 0, .06, .16);
     }
   }
   sinks = sinks.filter(s => !s.gone);
-  for (const q of parts) { q.l += dt; q.x += q.vx * dt; q.y += q.vy * dt; const d = Math.exp(-dt * 4); q.vx *= d; q.vy *= d; }
+  for (const q of parts) { q.l += dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.g) { q.vy += q.g * dt; q.a += q.w * dt; continue; } const d = Math.exp(-dt * 4); q.vx *= d; q.vy *= d; }
   parts = parts.filter(q => q.l < q.m);
   if (state === 'won' && !sinks.length && $('ov').hidden) {
     if (!wonAt) wonAt = now;
