@@ -1,5 +1,5 @@
 // Hamur — açılış: yalın yükleme ekranı. İlk kare sistem açılış ekranıyla aynıdır (düz #c59af1, ortada ikon); logo üstten düşer,
-// kısa bir an sonra zemin solar ve ana ekran görünür. Oyuncudan bir şey istenmez; dokununca hemen geçilir.
+// kısa bir an sonra zemin solar ve ana ekran görünür. Oyuncudan bir şey istenmez; dokununca geçilmez.
 (() => {
 'use strict';
 const kap = document.getElementById('acilis'), O = window.__hamur && window.__hamur.oyun;
@@ -17,5 +17,5 @@ const yazi = kap.querySelector('p'); if (yazi) {   // "Yükleniyor" ve sırayla 
 }
 let bitti = false;
 const bitir = () => { if (bitti) return; bitti = true; kap.classList.add('ac'); setTimeout(() => kap.remove(), 300); };
-setTimeout(bitir, 2300); kap.addEventListener('pointerdown', bitir);
+setTimeout(bitir, 2300);   // dokununca geçilmez
 })();
