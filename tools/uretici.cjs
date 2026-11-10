@@ -9,7 +9,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const K = require('../www/rules/cekirdek.js'), C = require('../www/rules/cozucu.js');
-const ELLE = require('./uretici/elle.cjs');
+const ELLE = require('./uretici/elle.cjs'), IPUCU = ELLE.ipucu || {};
 
 // ---------- tohumlu rastgele ----------
 function rastgele(seed) { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -137,6 +137,7 @@ function aday(r, B, zorla = {}) {
       if (!cells.every(([x, y]) => dolu[y][x] === '.' && molds[y][x] === '.')) continue;
       if (cells.some(([x, y]) => D4.some(([dx, dy]) => 'rybgop'.includes(dolu[y + dy]?.[x + dx] || '.')))) continue;   // hiçbir parçaya değmeden başlar
       if (bolge && r() < .8 && cells.some(([x, y]) => icinde(bolge, x, y))) continue;   // aralıklı duvarda çoğu parça karşı tarafta başlar
+      if (bolge && cells.some(([x, y]) => (bolge.yan === 'y' ? y : x) === bolge.duvar)) continue;   // aralığın içinde parça başlamaz (aralık baştan tıkalı olmasın)
       for (const [x, y] of cells) dolu[y][x] = p.renk;
       kondu = true;
     }
@@ -175,7 +176,6 @@ function puanla(L, B) {
     const satir = L.map.findIndex(row => (row.match(/#/g) || []).length >= row.length - 1), sutun = satir < 0 ? [...L.map[0]].findIndex((_, x) => L.map.filter(row => row[x] === '#').length >= L.map.length - 1) : -1;
     const taraf = c => satir >= 0 ? Math.sign(c[1] - satir) : Math.sign(c[0] - sutun);
     if (!R.yol.some(m => taraf(m.kareler[0]) !== taraf([m.kareler[0][0] + m.dx, m.kareler[0][1] + m.dy]))) return null;
-    if (!R.etiket.yol) return null;                                     // "aralıktan geçmeyen şekil" tuzağı gerçekten var olmalı
   }
   return { L, R, parca: st.pieces.length, alan: st.W * st.H };
 }
@@ -185,8 +185,18 @@ const imza = L => {
   const bic = (map, molds) => ad(map.join('/') + '|' + molds.join('/'));
   return [bic(L.map, L.molds), bic(L.map.map(ters), L.molds.map(ters)), bic(L.map.slice().reverse(), L.molds.slice().reverse()), bic(L.map.map(ters).reverse(), L.molds.map(ters).reverse())].sort()[0];
 };
-// Kaba benzerlik: aynı boyut + aynı kalıp şekilleri + aynı parça sayısı → "aynı his"
-const tur = (L) => { const st = K.load(L); return st.W + 'x' + st.H + ':' + st.holes.map(h => h.color + C.shapeOf(h.cells).key).sort().join(',') + ':' + st.pieces.length; };
+// Kaba benzerlik ("aynı his"): tahta boyundan, yönden ve renkten bağımsız iskelet. Kalıp şekilleri dönme ve ayna altında eşitlenir,
+// renkler ana / ara diye ayrılır, parça boyları eklenir. Bant içinde aynı iskelet cezalanır, art arda gelemez.
+const sekilKanon = cells => {
+  let en = null;
+  for (let d = 0; d < 8; d++) {
+    const c = cells.map(([x, y]) => { for (let i = 0; i < (d & 3); i++) [x, y] = [-y, x]; return d & 4 ? [-x, y] : [x, y]; });
+    const mx = Math.min(...c.map(q => q[0])), my = Math.min(...c.map(q => q[1])), k = c.map(q => (q[0] - mx) + '' + (q[1] - my)).sort().join('.');
+    if (en === null || k < en) en = k;
+  }
+  return en;
+};
+const tur = L => { const st = K.load(L), sinif = c => 'ryb'.includes(c) ? 'a' : 'k'; return st.holes.map(h => sinif(h.color) + sekilKanon(h.cells)).sort().join(',') + ':' + st.pieces.map(p => sinif(p.color) + p.cells.length).sort().join('') + ':' + st.makas.length; };   // duvar anahtara girmez: aynı bulmacanın duvarlı hali de aynı histir
 
 function havuz(B, n = 70, tohum = 1000) {
   const r = rastgele(tohum + B.no * 7919), out = [], gor = new Set(); let deneme = 0;
@@ -216,30 +226,42 @@ function secHepsi(bantlar) {
   const bant = no => bantlar.find(x => no >= x.B.bas && no <= x.B.son);
   const koy = (no, L, R, ek) => { out.set(no, { no, L, R, ritim: RITIM[(no - 1) % 10], ...ek }); const t = bant(no).B.no + '|' + tur(L); turSay.set(t, (turSay.get(t) || 0) + 1); };
   for (let no = bas; no <= son; no++) if (ELLE[no] && bant(no)) koy(no, ELLE[no], C.rapor(ELLE[no]), { elle: true });
-  const sec1 = (no, alt, ust) => {
-    const { B, P } = bant(no), ritim = RITIM[(no - 1) % 10], hedef = Math.max(alt, Math.min(ust, HEDEF[B.no][ritim] + 1.5 * (no - B.bas) / Math.max(1, B.son - B.bas)));
-    const onceki = out.get(no - 1) && tur(out.get(no - 1).L);
+  const SIRA = ['rahat', 'orta', 'zor', 'enzor'], basamak = no => SIRA.indexOf(RITIM[(no - 1) % 10]);
+  const sec1 = (no, nolar) => {
+    const { B, P } = bant(no), ritim = RITIM[(no - 1) % 10];
+    // döngü içinde basamak sırası korunur: rahat < orta < zor < en zor (elle yazılanlar dahil, tanıtım bölümleri hariç)
+    let alt = 0, ust = Infinity;
+    for (const n of nolar) { const x = out.get(n); if (!x || x.L.tanitim) continue; if (basamak(n) < basamak(no)) alt = Math.max(alt, x.R.puan + .1); if (basamak(n) > basamak(no)) ust = Math.min(ust, x.R.puan - .1); }
+    const hedef = Math.max(alt, Math.min(ust, HEDEF[B.no][ritim] + 1.5 * (no - B.bas) / Math.max(1, B.son - B.bas)));
+    const onceki = out.get(no - 1) && tur(out.get(no - 1).L), sonraki = out.get(no + 1) && tur(out.get(no + 1).L);
     let en = null, enC = Infinity;
     for (const p of P) {
       if (kullan.has(p) || p.R.puan < alt || p.R.puan > ust) continue;
-      if (ritim !== 'rahat' && B.no === 2 && !p.R.etiket.yol) continue;                       // duvar bandı: rahat dışındaki bölümlerde aralık tuzağı olmalı
-      const t = tur(p.L), c = Math.abs(p.R.puan - hedef) + (t === onceki ? 4 : 0) + 2.5 * (turSay.get(B.no + '|' + t) || 0);   // art arda aynı his olmasın, bantta aynı iskelet tekrar etmesin
+      if (ritim !== 'rahat' && B.no === 2 && !p.R.etiket.duvar) continue;                     // duvar bandı: rahat dışındaki bölümlerde aralık tuzağı olmalı (duvar kalkınca çıkmaz olmayan yanlış)
+      const t = tur(p.L); if (t === onceki || t === sonraki) continue;                         // art arda aynı iskelet olmaz
+      const c = Math.abs(p.R.puan - hedef) + 3 * (turSay.get(B.no + '|' + t) || 0);          // bantta aynı iskelet tekrar etmesin
       if (c < enC) { enC = c; en = p; }
     }
-    if (!en) throw new Error(`bölüm ${no}: uygun aday yok (bant ${B.no}, ${ritim}, puan ${alt}…${ust}, havuz ${P.length})`);
+    if (!en) throw new Error(`bölüm ${no}: uygun aday yok (bant ${B.no}, ${ritim}, puan ${alt.toFixed(1)}…${ust}, havuz ${P.length})`);
     kullan.add(en); koy(no, en.L, en.R, {});
   };
   for (let d = Math.floor((bas - 1) / 10); d * 10 < son; d++) {
     const nolar = []; for (let no = d * 10 + 1; no <= d * 10 + 10; no++) if (no >= bas && no <= son) nolar.push(no);
-    const zirve = d * 10 + 10, elleZirve = out.get(zirve)?.R.puan;
-    // önce döngünün öteki bölümleri (zirve elle yazılmışsa onun altında kalmalı), en son zirve (ötekilerin hepsinden zor)
-    for (const no of nolar) if (no !== zirve && !out.has(no)) sec1(no, 0, elleZirve ? elleZirve - .3 : Infinity);
-    if (nolar.includes(zirve) && !out.has(zirve)) sec1(zirve, Math.max(...nolar.filter(n => n !== zirve).map(n => out.get(n).R.puan)) + .3, Infinity);
+    for (const b of [0, 1, 2, 3]) for (const no of nolar) if (basamak(no) === b && !out.has(no)) sec1(no, nolar);   // önce rahatlar, en son döngünün en zoru
+  }
+  // elle yazılan bölümler de kabul ölçütlerine bakılır: geçmeyen uyarı olarak yazılır (tanıtım bölümleri bilerek kolaydır)
+  for (const x of out.values()) if (x.elle) {
+    const R = x.R, sorun = [];
+    if (!R.cozuldu || !C.dogrula(x.L, R.yol)) sorun.push('çözülemiyor');
+    else { if (R.hamle < 2) sorun.push('tek hamle'); if (R.belirsizTemas) sorun.push('belirsiz temas'); if (!x.L.tanitim && R.yanlis < 1) sorun.push('yanlış yapılabilecek karar yok'); }
+    if (sorun.length) console.warn(`UYARI: elle bölüm ${x.no}: ${sorun.join(', ')}`);
   }
   return [...out.values()].sort((a, b) => a.no - b.no);
 }
-// Süre: 15 sn okuma payı + en kısa çözümün her kare adımı için 1,3 sn; zor ve en zor bölümlerde 1,0 sn. Elle bölümlerde yazılı süre kalır.
-const sure = (x) => x.elle && x.L.t ? x.L.t : (x.ritim === 'zor' || x.ritim === 'enzor' ? x.R.sureZor : x.R.sure);
+// Süre: yol haritasının başlangıç formülü (15 sn okuma payı + en kısa çözümün her kare adımı için 1,3 sn; zor ve en zor bölümlerde 1,0 sn)
+// + hamle başına 2 sn (yapışma ölçüsünün dolması ve karar payı; yoksa en zor bölümler en kısa süreyi alıyordu), en az 30 sn.
+// Elle bölümlerde yazılı süre kalır. Hepsi kapalı testte ayarlanır.
+const sure = (x) => x.elle && x.L.t ? x.L.t : Math.max(30, (x.ritim === 'zor' || x.ritim === 'enzor' ? x.R.sureZor : x.R.sure) + 2 * x.R.hamle);
 
 function uret(bantNo) {
   const bantlar = BANT.filter(B => !bantNo || B.no === bantNo).map(B => ({ B, P: havuz(B, B.havuz || 110) }));
@@ -257,7 +279,8 @@ if (require.main === module) {
   }
   console.log(`\n${((Date.now() - t0) / 1000).toFixed(0)} sn`);
   if (a.includes('--yaz')) {
-    const B_ = U.flatMap(u => u.S).sort((x, y) => x.no - y.no).map(x => ({ t: sure(x), hint: x.L.hint || ['', ''], map: x.L.map, molds: x.L.molds }));
+    if (bantNo) { console.error('--yaz bütün bantları yazar; --bant ile birlikte kullanılmaz'); process.exit(2); }
+    const B_ = U.flatMap(u => u.S).sort((x, y) => x.no - y.no).map(x => ({ t: sure(x), hint: (x.elle && x.L.hint) || IPUCU[x.no] || ['', ''], map: x.L.map, molds: x.L.molds }));
     const satir = L => `  { t: ${L.t}, hint: ${JSON.stringify(L.hint)},\n    map: ${JSON.stringify(L.map)},\n    molds: ${JSON.stringify(L.molds)} },`;
     const bas = `// Hamur — bölümler. ÜRETİLDİ: node tools/uretici.cjs --yaz (elle düzenlenmez; sabit bölümler tools/uretici/elle.cjs içinde).\n// Biçim: www/rules/cekirdek.js başındaki açıklama. hint: [Türkçe, English]. t: süre (sn).\n(function (root, B) { if (typeof module === 'object' && module.exports) module.exports = B; else root.HAMUR_BOLUMLER = B; })(typeof self !== 'undefined' ? self : this, [\n`;
     fs.writeFileSync(path.join(__dirname, '..', 'www', 'bolumler.js'), bas + B_.map((L, i) => `  // ${i + 1}\n` + satir(L)).join('\n') + '\n]);\n');

@@ -21,7 +21,7 @@ node tools/uretici.cjs
 node tools/uretici.cjs --yaz
 ```
 
-Son seçim elle yapılır: üretici aday verir, bölüme karakterini insan verir. Bir bölümü değiştirmek için ya `elle.cjs` içine o numarayla yazılır ya da üreticinin parametresi değiştirilir.
+Son seçim elle yapılır: üretici aday verir, bölüme karakterini insan verir. Bir bölümü değiştirmek için ya `elle.cjs` içine o numarayla yazılır ya da üreticinin parametresi değiştirilir. Üretilen bir bölüme yalnız ipucu eklemek için `elle.cjs › ipucu` kullanılır. İpuçları oyundaki davranışla çelişmemelidir (ör. geri al düğmesi varken "geri alınmaz" denmez).
 
 ## Mekanik takvimi
 
@@ -47,11 +47,13 @@ Bir aday şu durumlarda elenir (`tools/uretici.cjs` içindeki `puanla`):
 - Parçalar zaten kalıbın dibinde (parça başına 2 kare adımından az).
 - Çözümde bir parça aynı anda iki farklı ana renge değiyor (sonuç sıraya bağlı olur).
 - Banda özgü şart tutmuyor:
-  - Duvar: çözümde en az bir hamle aralıktan geçer; rahat dışındaki bölümlerde "aralıktan geçmeyen şekil" tuzağı vardır.
+  - Duvar: çözümde en az bir hamle aralıktan geçer; hiçbir parça aralığın içinde başlamaz; rahat dışındaki bölümlerde "aralıktan geçmeyen şekil" tuzağı vardır (yanlış karar duvarla çıkmaz, duvarsız çıkmaz değil: `etiket.duvar`).
   - Yeşil: çözümde karışım vardır.
   - Mor ve turuncu: çözümde karışım ve "kalıbı olmayan renk" tuzağı vardır.
   - Makas: en kısa çözüm kesim içerir ve bölüm makassız çözülemez.
 - Ayna ya da renk değişimi altında başka bir adayın kopyası.
+- Aynı iskelet (kalıp şekilleri dönme ve ayna altında aynı, parça boyları aynı) art arda gelemez; bant içinde tekrarı cezalanır.
+- Bir parça kalıbın üstünde başlıyor (kalıbın şekli baştan görünmeli; `validate` da reddeder).
 
 Bozulmayan kurallar (yol haritası): her bölümde en az bir yapışma kararı olur, her bölüm güçlendirici kullanmadan çözülür ve çözücü bunu kanıtlar.
 
@@ -71,11 +73,11 @@ Bozulmayan kurallar (yol haritası): her bölümde en az bir yapışma kararı o
 
 10 bölümlük döngü: 1-2 rahat, 3 orta, 4 rahat, 5 zor, 6-7 rahat, 8 orta, 9 rahat, 10 döngünün en zoru.
 
-Her bandın her basamak için mutlak hedef puanı vardır (`uretici.cjs › HEDEF`). Bantlar üst üste biner: yeni mekanik gelince zorluk bir basamak iner, sonra önceki bandın üstüne çıkar. Döngünün 10. bölümü o döngüdeki bütün bölümlerden zordur; robot bunu denetler.
+Her bandın her basamak için mutlak hedef puanı vardır (`uretici.cjs › HEDEF`). Bantlar üst üste biner: yeni mekanik gelince zorluk bir basamak iner, sonra önceki bandın üstüne çıkar. Döngü içinde sıra korunur: rahat < orta < zor < döngünün en zoru (10. bölüm); robot bunu denetler. Mekaniği tek başına tanıtan elle bölümler (`tanitim: true`) bilerek kolaydır ve bu sıraya girmez.
 
 ## Süre
 
-Başlangıç formülü: 15 sn okuma payı + en kısa çözümün her kare adımı için 1,3 sn. Zor ve en zor bölümlerde kare adımı başına 1,0 sn. Elle yazılan bölümlerde yazılı süre kalır. Aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir (henüz kodlanmadı). Hepsi kapalı testte ayarlanır.
+Yol haritasının başlangıç formülü: 15 sn okuma payı + en kısa çözümün her kare adımı için 1,3 sn (zor ve en zor bölümlerde 1,0 sn). Buna hamle başına 2 sn eklenir ve süre 30 sn'den kısa olmaz; yoksa en zor bölümler en kısa süreyi alıyordu. Elle yazılan bölümlerde yazılı süre kalır. Aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir (henüz kodlanmadı). Hepsi kapalı testte ayarlanır.
 
 ## Yeni bölüm eklerken
 

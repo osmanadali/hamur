@@ -35,6 +35,10 @@ module.exports = async ({ check, metrics }) => {
       [{ t: 9, map: ['r.r', 'y..'], molds: ['RR.', '..Y'] }, 'kenar kenara'],
       [{ t: 9, map: ['r.', 'r'], molds: ['..', '..'] }, 'kare'],
       [{ t: 0, map: ['r.'], molds: ['.R'] }, 'süre'],
+      [{ t: '9', map: ['r.'], molds: ['.R'] }, 'süre'],
+      [{ t: 9, map: ['r..........'], molds: ['..........R'] }, '10×10'],
+      [{ t: 9, map: [null], molds: ['.'] }, 'dizisi'],
+      [{ t: 9, map: ['.r.', '...'], molds: ['.YY', 'R..'] }, 'kalıbın üstünde'],
     ].map(([L, ne]) => K.validate(L).some(e => e.includes(ne)));
     check('kural.dogrulama', 'Bölüm doğrulaması: örnek bölümler geçerli, bozuk bölümler nedeniyle reddedilir', iyi && kotu.every(Boolean), kotu.join());
   }
@@ -95,6 +99,19 @@ module.exports = async ({ check, metrics }) => {
     // zorluk ritmi: her 10'lukta 10. bölüm döngünün en zoru, 1. bölüm en zorlardan değil
     const dongu = []; for (let d = 0; d < 6; d++) { const p = R.slice(d * 10, d * 10 + 10).map(r => r.puan), enZor = Math.max(...p); if (p[9] < enZor) dongu.push(`${d * 10 + 10}. bölüm döngünün en zoru değil (${p[9]} < ${enZor})`); }
     check('bolum.ritim', 'Zorluk ritmi: her 10 bölümlük döngünün en zoru 10. bölümdür', !dongu.length, dongu.join(' · '), 'medium');
+    // basamak sırası: döngü içinde rahat < orta < zor (mekaniği tanıtan elle bölümler bilerek kolaydır, sayılmaz)
+    const ELLE = require('../uretici/elle.cjs'), SIRA = ['rahat', 'orta', 'zor', 'enzor'], ters = [];
+    for (let d = 0; d < 6; d++) for (let a = 0; a < 10; a++) for (let b = 0; b < 10; b++) {
+      const x = d * 10 + a, y = d * 10 + b; if (ELLE[x + 1]?.tanitim || ELLE[y + 1]?.tanitim) continue;
+      if (SIRA.indexOf(RITIM[a]) < SIRA.indexOf(RITIM[b]) && R[x].puan >= R[y].puan) ters.push(`${x + 1} (${RITIM[a]} ${R[x].puan}) ≥ ${y + 1} (${RITIM[b]} ${R[y].puan})`);
+    }
+    check('bolum.basamak', 'Zorluk ritmi: döngü içinde rahat bölümler ortadan, orta bölümler zordan kolaydır', !ters.length, ters.slice(0, 4).join(' · '), 'medium');
+    const ustunde = BOLUM.map((L, i) => { const st = K.load(L), k = new Set(st.holes.flatMap(h => h.cells.map(c => c + ''))); return st.pieces.some(p => p.cells.some(c => k.has(c + ''))) ? i + 1 : 0; }).filter(Boolean);
+    check('bolum.gorunur', 'Hiçbir bölümde parça kalıbın üstünde başlamaz (kalıbın şekli baştan görünür)', !ustunde.length, ustunde.join(', '));
+    const kisaSure = BOLUM.map((L, i) => L.t < 30 ? i + 1 : 0).filter(Boolean);
+    check('bolum.sure.alt', 'Hiçbir bölümün süresi 30 saniyeden kısa değil', !kisaSure.length, kisaSure.join(', '));
+    const ipucu = BOLUM[1].hint.join(' ');
+    check('bolum.ipucu', 'İpuçları oyunla çelişmez: "geri alınmaz" denmez (geri al düğmesi var)', !BOLUM.some(L => /geri alınmaz|cannot be undone/i.test(L.hint.join(' '))) && /geri al/i.test(ipucu), ipucu);
   }
 
   // --- çözücü ---

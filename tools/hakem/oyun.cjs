@@ -63,6 +63,32 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await o.ctx.close();
   }
 
+  // ---------- önce aynı renk, sonra karışım (elde tutarken de, bırakınca da, tahtanın iki yönünde de) ----------
+  {
+    // mavi, hem sarıya hem öteki maviye değecek yere gelir: önce mavi + mavi, sonra + sarı = 3 karelik yeşil (kalıba oturur)
+    const son = [];
+    for (const map of [['.....', 'y.b..', '.....', '.b...'], ['.....', 'b.y..', '.....', '.b...']]) for (const kip of ['bekle', 'sariya it', 'birak']) {
+      const o = await ac(); await o.kur({ t: 60, hint: ['', ''], map, molds: ['.....', '.....', '.....', '..GGG'] });
+      await o.basla(1, 3); await o.gotur(1, 2, 80); await o.gotur(1, 1, 80);
+      if (kip === 'bekle') await o.page.waitForTimeout(900);
+      if (kip === 'sariya it') { await o.gotur(1, 1, 60, map[1][0] === 'y' ? -.45 : .45, 0); await o.page.waitForTimeout(450); }
+      if (kip === 'birak') { await o.birak(); await o.page.waitForTimeout(150); }
+      const s = await o.d(); son.push(`${map[1]} ${kip}: ${s.boy} ${s.durum}`); if (kip !== 'birak') await o.birak();
+      await o.ctx.close();
+    }
+    check('niyet.sira', 'Aynı anda kendi rengine ve karışacağı renge değen parça önce kendi rengiyle yapışır (tut, it ya da bırak; tahtanın iki yönü)', son.every(x => / 3 play$/.test(x)), son.join(' · '));
+  }
+  {
+    // sarı, kırmızı ile mavinin arasına hemen bırakılır: iplikler eşit, sonuç tahtanın yönüne bağlı olmamalı (çekirdek: kırmızı önce → turuncu)
+    const son = [];
+    for (const map of [['.....', 'r.b..', '.....', '.y...'], ['.....', 'b.r..', '.....', '.y...']]) {
+      const o = await ac(); await o.kur({ t: 60, hint: ['', ''], map, molds: ['OO.B.', '.....', '.....', '.....'] });
+      await o.basla(1, 3); await o.gotur(1, 1, 120); await o.birak(); await o.page.waitForTimeout(150);
+      son.push(await o.page.evaluate(() => window.__hamur.oyun.st.pieces.map(p => p.color + p.cells.length).sort().join(' '))); await o.ctx.close();
+    }
+    check('niyet.esit', 'İki farklı renge aynı anda değip hemen bırakınca sonuç tahtanın yönüne bağlı değildir', son[0] === son[1] && son[0] === 'b1 o2', son.join(' | '));
+  }
+
   // ---------- makas ----------
   {
     const MAKAS = { t: 60, hint: ['', ''], map: ['.....', 'rr...', '.....', '.....'], molds: ['.....', '...x.', '.....', 'R...R'] };
@@ -95,6 +121,22 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await o.ctx.close();
   }
 
+  // ---------- kazanç kaydı ve deneme bölümü ----------
+  {
+    const o = await ac({ save: { level: 1 } });
+    await o.basla(0, 1); await o.gotur(3, 1, 250); await o.birak(); await o.page.waitForTimeout(150);
+    await o.basla(3, 1); await o.gotur(1, 1, 200); await o.gotur(1, 3, 200); await o.birak(); await o.page.click('#retry'); await o.page.waitForTimeout(1200);   // bindirme gelmeden Baştan
+    const k = await getSave(o.page);
+    check('oyun.kazanc', 'Kazanç tahta boşaldığı an kaydedilir (bindirme gelmeden Baştan ya da başka bölüme geçilse de)', k.done?.includes(1) && k.wins === 1, JSON.stringify({ done: k.done, wins: k.wins }));
+    await o.ctx.close();
+    const d = await ac({ save: { level: 37, done: [1, 2], wins: 3 } }); await d.kur({ t: 30, hint: ['', ''], map: ['r..', '...'], molds: ['..R', '...'] });
+    await d.basla(0, 0); await d.gotur(2, 0, 200); await d.birak(); await d.page.waitForTimeout(1500);
+    const ov = await d.d(); await d.page.click('#ovB'); await d.page.waitForTimeout(200);
+    const k2 = await getSave(d.page), b = await d.page.evaluate(() => window.__hamur.oyun.bolum);
+    check('oyun.deneme', 'Deneme bölümü kazanılınca ilerlemeye dokunmaz ve yeniden aynı bölümü açar', /Deneme/.test(ov.ov) && k2.level === 37 && k2.wins === 3 && k2.done.length === 2 && b > 60, `"${ov.ov}" · kayıt bölüm ${k2.level} · açık bölüm ${b}`);
+    await d.ctx.close();
+  }
+
   // ---------- çıkmaz + geri alma ----------
   {
     const o = await ac(); await o.kur(PROTO[3]);
@@ -118,6 +160,14 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await o.page.evaluate(() => { window.__hamur.oyun.sure = .2; }); await o.page.waitForTimeout(500);
     const s = await o.d();
     check('oyun.sure', 'Süre ilk dokunuşta başlar; bitince bölüm kaybedilir', s.durum === 'lost' && !!s.ov, `${s.durum} · "${s.ov}"`);
+    // süre bittikten sonra geri al kullanılamaz: hak harcanmaz
+    const z = await ac(); await z.kur({ t: 60, hint: ['', ''], map: ['....', 'r...', '..r.'], molds: ['...R', '...R', '....'] });
+    await z.basla(0, 1); await z.gotur(2, 1, 150); await z.birak(); await z.page.waitForTimeout(150);
+    const once = await z.d(); await z.page.evaluate(() => { window.__hamur.oyun.sure = .1; }); await z.page.waitForTimeout(500);
+    const dugme = await z.page.evaluate(() => document.getElementById('undo').disabled); await z.page.evaluate(() => window.__hamur.oyun.geriAl()); await z.page.waitForTimeout(200);
+    const sonra = await z.d();
+    check('oyun.sure.geri', 'Süre bitince geri al kapanır, hak harcanmaz, tahta geri sarılmaz', once.geriVar && dugme === true && sonra.durum === 'lost' && sonra.boy === '2' && sonra.geri === 1, `düğme kapalı ${dugme} · parçalar ${sonra.boy} · hak ${sonra.geri}`);
+    await z.ctx.close();
     const bekle = await ac({ save: { level: 1 } }); await bekle.page.waitForTimeout(600);
     const t = await bekle.page.evaluate(() => window.__hamur.oyun.sure);
     check('oyun.sure.bekle', 'Dokunmadan önce süre işlemez', t === 30, t + ' sn');

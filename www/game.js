@@ -119,7 +119,13 @@ function layout() {
   if (!st) return;
   const s = stage.getBoundingClientRect();
   dpr = Math.min(2.5, window.devicePixelRatio || 1);
+  const eski = cell;
   cell = Math.max(22, Math.floor(Math.min((s.width - 2 * PAD) / st.W, (s.height - 2 * PAD) / st.H, 86)));
+  if (cell !== eski) {   // tahta yeniden boyutlandı (ekran döndü, pencere değişti): piksel cinsinden tutulanlar ölçeklenir, parmak kıpırdamadan karar çıkmaz
+    const k = cell / eski;
+    if (drag) { drag.px *= k; drag.py *= k; for (const h of drag.hist) { h.x *= k; h.y *= k; } }
+    for (const p of vis()) { p.ox *= k; p.oy *= k; }
+  }
   const w = st.W * cell + 2 * PAD, h = st.H * cell + 2 * PAD;
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -168,7 +174,7 @@ function olaylar(p, ev) {
 // Kazanma / çıkmaz denetimi (her yapışma, kalıba oturma ve kesimden sonra)
 function denetle(p) {
   if (state !== 'play') return;
-  if (st.pieces.length === 0) { state = 'won'; running = false; wonAt = 0; }
+  if (st.pieces.length === 0) { state = 'won'; running = false; wonAt = 0; kazanKaydet(); }
   else if (Coz.cikmaz(st, cz)) lose('doom', K.doomed(st) || (st.pieces.includes(p) ? p : st.pieces[0]));
 }
 // Makas: çok kareli parça açık makasa doğru itilince dolan ölçü. Dolunca parça o kareye girer, makasın üstündeki kare kopar,
@@ -238,14 +244,24 @@ function niyet(dt, now) {
     else if (gecebilir && (yanHiz > CFG.gecHiz || yan > .3)) { th.ne = 'gec'; th.v -= dt / CFG.kararsizSn; }   // yanından geçip gidiyor: dolmaz
     else { th.ne = 'kararsiz'; th.v += dt / CFG.kararsizSn; }                                             // yanında duruyor, yönü belli değil
     th.v = clamp(th.v, 0, 1);
-    if (th.v >= 1) { olaylar(p, [K.fuse(st, p, t.q)]); if (state === 'play' && st.pieces.includes(p)) { const s = K.sink(st, p); if (s) olaylar(p, [s]); } return; }
   }
+  // İpliği dolan komşu varsa yapış. Sıra çekirdeğin kuralıdır (settle): önce aynı renkli komşular, sonra karışım. Böylece elde
+  // tutarken de, bırakınca da, çözücüde de sonuç aynıdır. Birden çok karışım ipliği aynı anda dolduysa renk sırası (kırmızı, sarı, mavi).
+  const dolan = T.filter(t => threads.get(t.q)?.v >= 1);
+  if (!dolan.length) return;
+  const ev = [];
+  for (const t of T.filter(t => t.q.color === p.color && dolan.some(d => d.q.color !== p.color || d === t))) ev.push(K.fuse(st, p, t.q));   // karışımdan önce aynı renkli komşular (iplikleri dolmamış olsa da)
+  const kar = dolan.filter(t => st.pieces.includes(t.q) && t.q.color !== p.color).sort((a, b) => 'rybgop'.indexOf(a.q.color) - 'rybgop'.indexOf(b.q.color))[0];
+  if (kar && K.fuseColor(p.color, kar.q.color)) ev.push(K.fuse(st, p, kar.q));
+  const s = K.sink(st, p); if (s) ev.push(s);
+  olaylar(p, ev.filter(Boolean));
 }
 // Parmak kalktı: parça olduğu yerde kaldı → yapışabileceği her şeye yapışır.
 function birak() {
   const p = drag.p, d = drag; kesim = null;
-  // iki farklı renge aynı anda değiyorsa ipliği en dolu olanla yapışır (oyuncunun ekranda gördüğü)
-  const dolu = t => t.slice().sort((a, b) => (threads.get(b.q)?.v || 0) - (threads.get(a.q)?.v || 0))[0];
+  // iki farklı renge aynı anda değiyorsa ipliği belirgin biçimde daha dolu olanla yapışır (oyuncunun ekranda gördüğü);
+  // iplikler eşitse karar çekirdeğin renk sırasına kalır (çözücüyle aynı sonuç, parça listesi sırasına bağlı değil)
+  const dolu = t => { const s = t.slice().sort((a, b) => (threads.get(b.q)?.v || 0) - (threads.get(a.q)?.v || 0)), v = x => threads.get(x.q)?.v || 0; return s.length > 1 && v(s[0]) - v(s[1]) < .15 ? undefined : s[0]; };
   if (CFG.niyet && state === 'play' && st.pieces.includes(p) && K.touching(st, p).length) olaylar(p, K.settle(st, p, dolu));
   if (drag === d) drag = null;
   threads = new Map();
@@ -267,13 +283,13 @@ function lose(kind, piece) {
       ? showOv(L('Yanlış yapıştı', 'Wrong stick'), msg, L('Geri al', 'Undo'), geriAl, yine, () => setup(li))
       : showOv(L('Yanlış yapıştı', 'Wrong stick'), msg, yine, () => setup(li)) };
   } else {
-    buzz([60, 40, 60]); tone(210, .45, 'sawtooth', 70, .08);
+    buzz([60, 40, 60]); tone(210, .45, 'sawtooth', 70, .08); geri = null; paintUndo();
     showOv(L('Süre bitti', 'Time is up'), L('Parçalar kalıba yetişmedi.', 'The pieces did not reach the molds in time.'), yine, () => setup(li));
   }
 }
 // Geri alma: son yapışmanın olduğu sürüklemenin başına döner. Süre geri gelmez.
 function geriAl() {
-  if (!geri || geriKalan <= 0 || state === 'won') return;
+  if (!geri || geriKalan <= 0 || state === 'won' || timeLeft <= 0) return;   // süre bittiyse geri alma işe yaramaz: hak harcanmaz
   geriKalan--; st = geri; geri = null; cz = Coz.hazirla(st);
   st.pieces.forEach(giydir); for (const h of st.holes) h.shown = h.filled;
   state = 'play'; running = true; drag = null; sinks = []; rings = []; after = null; threads = new Map(); kesim = null;
@@ -284,16 +300,20 @@ function geriAl() {
 const paintUndo = () => { const b = $('undo'); b.hidden = !CFG.geriHak; b.disabled = !(geri && geriKalan > 0); };
 // Bölüm arası reklam: yalnız kazanınca, sıradaki tahta gelmeden önce. İlk 10 bölümde yok, sonra 3 bölümde bir (iki reklam arası en az 90 sn: ads.js).
 async function sonraki(i) {
-  if (!save.noads && li + 1 > 10 && save.wins % 3 === 0) await Ads.interstitial();
+  if (!save.noads && li < ASIL && li + 1 > 10 && save.wins % 3 === 0) await Ads.interstitial();
   setup(i);
 }
-function win() {
-  if (li < ASIL) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; App.persist(); }
-  $('lvlNo').classList.add('done');
-  [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09));
+// Kazanç, tahta boşaldığı an kayda yazılır (bindirme gelmeden başka bölüme geçilse de kaybolmaz). Deneme bölümü ilerlemeye yazmaz.
+function kazanKaydet() {
+  if (li < ASIL) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; App.persist(); $('lvlNo').classList.add('done'); }
   window.Olcum?.event('level_end', { level: li + 1, time_left: Math.ceil(timeLeft) });
+}
+function win() {
+  [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09));
   Ads.warm();
-  const lastOne = li === LEVELS.length - 1, kalan = L('Kalan süre ', 'Time left: ') + Math.ceil(timeLeft) + L(' sn.', ' s.');
+  const kalan = L('Kalan süre ', 'Time left: ') + Math.ceil(timeLeft) + L(' sn.', ' s.');
+  if (li >= ASIL) return showOv(L('Deneme tamam', 'Test complete'), kalan, L('Yeniden oyna', 'Play again'), () => setup(li));   // editörden gelen deneme bölümü
+  const lastOne = li === ASIL - 1;
   showOv(lastOne ? L('Hepsi tamam', 'All done') : L('Bölüm tamam', 'Level complete'),
     lastOne ? L('Bütün bölümler bitti. ', 'Every level is finished. ') + kalan : kalan,
     lastOne ? L('Baştan oyna', 'Play again') : L('Sıradaki bölüm', 'Next level'), () => sonraki(lastOne ? 0 : li + 1));
@@ -632,7 +652,7 @@ try {
   const m = location.hash.match(/^#bolum=(.+)$/), Lx = m && JSON.parse(decodeURIComponent(m[1]));
   if (Lx && !K.validate(Lx).length) { if (!Array.isArray(Lx.hint)) Lx.hint = [Lx.hint || '', Lx.hint || '']; LEVELS.push(Lx); li = LEVELS.length - 1; }
 } catch {}
-setup(li);
+try { setup(li); } catch (e) { if (li < ASIL) throw e; LEVELS.length = ASIL; setup(li = clamp((save.level || 1) - 1, 0, ASIL - 1)); }   // bozuk deneme bölümü: kayıtlı bölüme dön
 if (window.ResizeObserver) new ResizeObserver(layout).observe(stage);
 else addEventListener('resize', layout);
 requestAnimationFrame(frame);

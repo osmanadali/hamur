@@ -219,20 +219,25 @@
   // Bölüm dosyası doğrulaması: hata metinlerinin listesi (boşsa geçerli). Çözülebilirliğe bakmaz (o çözücünün işi).
   function validate(L) {
     const E = [];
-    if (!L || !Array.isArray(L.map) || !Array.isArray(L.molds) || !L.map.length) return ['map ve molds satır dizisi olmalı'];
+    if (!L || !Array.isArray(L.map) || !Array.isArray(L.molds) || !L.map.length || typeof L.map[0] !== 'string' || !L.map[0].length) return ['map ve molds satır dizisi olmalı'];
     const W = L.map[0].length, H = L.map.length;
+    if (W > 10 || H > 10) E.push('tahta en çok 10×10 olabilir');
     if (L.molds.length !== H) E.push('map ve molds aynı sayıda satır içermeli');
     for (const [ad, rows, ok] of [['map', L.map, '.#rybgop'], ['molds', L.molds, '.RYBGOPx']]) rows.forEach((r, y) => {
       if (typeof r !== 'string' || r.length !== W) E.push(`${ad} ${y + 1}. satır ${W} kare olmalı`);
       else for (const ch of r) if (!ok.includes(ch)) E.push(`${ad} ${y + 1}. satırda geçersiz harf: ${ch}`);
     });
-    if (!(L.t > 0)) E.push('t (süre, saniye) pozitif olmalı');
+    if (typeof L.t !== 'number' || !Number.isFinite(L.t) || !(L.t > 0)) E.push('t (süre, saniye) pozitif bir sayı olmalı');
     if (E.length) return E;
     const st = load(L);
     if (!st.pieces.length) E.push('en az bir parça olmalı');
     if (!st.holes.length) E.push('en az bir kalıp olmalı');
     for (const h of st.holes) if (h.cells.some(c => st.walls.has(key(c[0], c[1])))) E.push('kalıp duvarın üstünde olamaz');
     if (st.makas.some(m => st.walls.has(key(m.x, m.y)))) E.push('makas duvarın üstünde olamaz');
+    if (st.holes.length > 30 || st.makas.length > 30) E.push('en çok 30 kalıp ve 30 makas olabilir');
+    // kalıbın şekli bölüm başında görünmeli: hiçbir parça bir kalıp karesinin üstünde başlamaz
+    const kalipKare = new Set(st.holes.flatMap(h => h.cells.map(c => key(c[0], c[1]))));
+    if (st.pieces.some(p => p.cells.some(c => kalipKare.has(key(c[0], c[1]))))) E.push('başlangıçta parça kalıbın üstünde duramaz');
     if (st.pieces.some(p => p.cells.length > 1 && p.cells.some(c => makasta(st, c[0], c[1])))) E.push('başlangıçta makasın üstünde yalnız tek karelik parça durabilir');
     const alan = a => a.reduce((n, x) => n + x.cells.length, 0);
     if (alan(st.pieces) !== alan(st.holes)) E.push(`parça kareleri (${alan(st.pieces)}) kalıp karelerine (${alan(st.holes)}) eşit olmalı`);

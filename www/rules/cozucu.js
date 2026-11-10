@@ -290,7 +290,8 @@
   // çözümün hangi adımında yapılırsa yapılsın bir kez sayılır. Yalnız kanıtlı çıkmaza götüren yapışma yanlış sayılır (cikmaz);
   // aramada çözümü bulunamayan ama kanıtlanamayan yapışmalar "belirsiz"dir ve puana girmez.
   //   yapisma: çözüm boyunca yapılabilecek farklı yapışma kararı · yanlis: bunlardan kanıtlı çıkmaza götürenler · darlik: yanlis / yapisma
-  //   etiket:  yanlışların nedeni: renk (oluşan rengin açık kalıbı yok) · sekil (hiçbir kalıba sığmıyor) · yol (sığıyor ama kalıba ulaşamıyor)
+  //   etiket:  yanlışların nedeni: renk (oluşan rengin açık kalıbı yok) · sekil (hiçbir kalıba sığmıyor) · yol (sığıyor ama çıkmaz)
+  //            duvar: yanlışlardan kaçı yalnız duvar yüzünden çıkmaz (duvarlar kalkınca çıkmaz değil): "aralıktan geçmeyen şekil" tuzağı
   //   karisim: çözümdeki renk karışımı sayısı · kes: çözümdeki kesim sayısı
   //   puan:    2·hamle + 3·log2(1 + yanlis) + 4·darlik   (taslak; katsayılar kapalı testte ayarlanır)
   //   sure:    15 sn okuma payı + en kısa çözümün her kare adımı için 1,3 sn (sureZor: 1,0 sn). Başlangıç formülü, testte ayarlanır.
@@ -318,14 +319,16 @@
         const x = sonuc(s, c); if (!x) continue;
         const kotu = c.pieces.length ? cikmaz(c, ctx) : false;
         if (!kotu && c.pieces.length && !cozulur(ctx, c)) { belirsiz++; continue; }
-        const o = sinif.get(x.sinif); if (!o) sinif.set(x.sinif, { kotu, etiket: x.etiket }); else if (!kotu) o.kotu = false;   // aynı karar bir yerde doğruysa yanlış sayılmaz
+        const o = sinif.get(x.sinif); if (!o) sinif.set(x.sinif, { kotu, etiket: x.etiket, st: c }); else if (!kotu) o.kotu = false;   // aynı karar bir yerde doğruysa yanlış sayılmaz
       }
       if (mv.tip === 'yapis') { const s2 = K.clone(s), p2 = s2.pieces[mv.i]; K.ayril(s2, p2); p2.cells = p2.cells.map(c => [c[0] + mv.dx, c[1] + mv.dy]); if (K.belirsiz(s2, p2)) belirsizTemas++; }
       const sonraki = uygula(s, mv.i, mv.dx, mv.dy);
       if (mv.tip === 'yapis' && 'ryb'.includes(mv.renk)) { const x = sonuc(s, sonraki); if (x ? 'gop'.includes(x.renk) : sonraki.holes.some((h, i) => h.filled && !s.holes[i].filled && 'gop'.includes(h.color))) karisim++; }
       s = sonraki;
     }
-    let yanlis = 0; for (const o of sinif.values()) if (o.kotu) { yanlis++; etiket[o.etiket]++; }
+    let yanlis = 0, duvar = 0; const bos = st.wallCells.length ? { walls: new Set(), wallCells: [] } : null, ctx2 = bos && hazirla({ ...st, ...bos });
+    for (const o of sinif.values()) if (o.kotu) { yanlis++; etiket[o.etiket]++; if (bos && !cikmaz({ ...o.st, ...bos }, ctx2)) duvar++; }
+    etiket.duvar = duvar;
     out.yapisma = sinif.size; out.yanlis = yanlis; out.darlik = sinif.size ? +(yanlis / sinif.size).toFixed(2) : 0;
     out.etiket = etiket; out.belirsiz = belirsiz; out.karisim = karisim;
     out.belirsizTemas = belirsizTemas;   // çözümde, parçanın aynı anda iki farklı ana renge değdiği hamle sayısı (sonuç sıraya bağlı: üretici eler)
