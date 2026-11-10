@@ -20,8 +20,9 @@ function gecis(ad) {
 // Bekleme: 'serit' 500 ms'yi geçen beklemede (oklavayla açılan hamur), 'top' reklam ve satın alma beklerken (yoğrulan hamur topu).
 const bekle = (() => {
   let z = 0, n = 0; const el = $('bekle');
-  const ac = tur => { n++; clearTimeout(z); z = setTimeout(() => { el.className = 'bekle b-' + tur; el.hidden = false; }, tur === 'top' ? 150 : 500); };
-  const kapat = () => { if (--n > 0) return; n = 0; clearTimeout(z); el.hidden = true; };
+  const kilit = v => { if ($('ayar').hidden) for (const id of Object.values(EKRAN)) $(id).inert = v; };
+  const ac = tur => { if (n++ > 0) return; z = setTimeout(() => { el.className = 'bekle b-' + tur; el.hidden = false; kilit(true); }, tur === 'top' ? 150 : 500); };   // iç içe beklemede sayaç ve tür ilk çağrınındır
+  const kapat = () => { if (n <= 0 || --n > 0) return; clearTimeout(z); if (!el.hidden) { el.hidden = true; kilit(false); } };
   return { ac, kapat, sar: (p, tur = 'serit') => { ac(tur); return Promise.resolve(p).finally(kapat); } };
 })();
 App.bekle = bekle;
@@ -107,7 +108,7 @@ function ayar() {
   const d = document.createElement('div'); d.className = 'secenek dil'; d.append(Object.assign(document.createElement('span'), { textContent: L('Dil', 'Language') }));
   const sel = document.createElement('select'); sel.id = 'sec-dil'; sel.setAttribute('aria-label', L('Dil', 'Language'));
   for (const [k, ad] of window.HAMUR_LANGS) sel.add(new Option(ad, k, false, k === window.HAMUR_LANG));
-  sel.onchange = () => { save.lang = sel.value; App.persist(); bekle.ac('serit'); location.reload(); };
+  sel.onchange = () => { save.lang = sel.value; App.persist(); bekle.ac('serit'); try { sessionStorage.setItem('hamurAcilisAtla', '1'); } catch {} location.reload(); };
   d.append(sel); el.appendChild(d);
   ayarOnce = document.activeElement;
   for (const id of Object.values(EKRAN)) $(id).inert = true;   // arkadaki düğmeler klavye ve ekran okuyucuya kapalı

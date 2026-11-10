@@ -1,0 +1,73 @@
+# Hamur iOS: imzasız simülatör derlemesi (projenin derlendiğini doğrular; Apple hesabı ve gizli değer istemez). TestFlight: ios-release.yml, docs/YAYIN-IOS.md
+# Yalnızca elle: Actions → "iOS (simülatör)" → Run workflow (ya da: gh workflow run ios.yml)
+# İsteğe bağlı değişkenler: ADMOB_APP_ID_IOS (yoksa Google test App ID), ADMOB_INTERSTITIAL_IOS, ADMOB_REWARDED_IOS
+# (Hamur'un AdMob iOS kaydı henüz yok; eksikse yalnız uyarı verilir, derleme Google test kimlikleriyle sürer)
+name: iOS (simülatör)
+on:
+  workflow_dispatch:
+permissions: { contents: read }
+concurrency: { group: 'ios-${{ github.ref }}', cancel-in-progress: true }
+jobs:
+  ios:
+    runs-on: macos-latest
+    env:
+      ADMOB_APP_ID_IOS: ${{ vars.ADMOB_APP_ID_IOS }}
+      ADMOB_INTERSTITIAL_IOS: ${{ vars.ADMOB_INTERSTITIAL_IOS }}
+      ADMOB_REWARDED_IOS: ${{ vars.ADMOB_REWARDED_IOS }}
+      VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - name: AdMob kimlikleri (uyarı, durdurmaz)
+        run: |
+          if [ -z "$ADMOB_APP_ID_IOS" ] || [ -z "$ADMOB_INTERSTITIAL_IOS" ] || [ -z "$ADMOB_REWARDED_IOS" ]; then
+            echo "::warning title=Test reklamları::iOS AdMob değişkenlerinden biri eksik; bu derleme Google test kimlikleriyle çalışır (\"Test Ad\", gelir yok)."
+          elif echo "$ADMOB_APP_ID_IOS $ADMOB_INTERSTITIAL_IOS $ADMOB_REWARDED_IOS" | grep -q 3940256099942544; then
+            echo "::warning title=Test reklamları::iOS AdMob değişkenlerinde Google test kimliği (3940256099942544) var; reklamlar test kipinde çalışır."
+          else echo "iOS AdMob değişkenleri gerçek kimlik gibi görünüyor."; fi
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - name: Xcode 26+ seç (Capacitor 8 gereği)
+        run: |
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1 || true)
+          [ -n "$X" ] && sudo xcode-select -s "$X"
+          xcodebuild -version | tr "\n" " "; echo
+          V=$(xcodebuild -version | awk 'NR==1{print int($2)}')
+          [ "$V" -ge 26 ] || { echo "::error::Capacitor 8 Xcode 26+ ister (bulunan: $V)"; exit 1; }
+      - run: npm ci --no-audit --no-fund
+      - run: npx cap add ios
+      - name: İkon ve açılış ekranı (assets/)
+        run: npx @capacitor/assets generate --ios --iconBackgroundColor '#c59af1' --iconBackgroundColorDark '#c59af1' --splashBackgroundColor '#c59af1' --splashBackgroundColorDark '#c59af1'
+      - name: Yerel projeyi hazırla (Info.plist, yalnız iPhone + dikey, sürüm, simge)
+        env: { FIREBASE_IOS_PLIST: '${{ secrets.FIREBASE_IOS_PLIST }}' }   # isteğe bağlı: yoksa ölçüm kapalı derlenir (tools/olcum-hazirla.cjs)
+        run: bash tools/ios/hazirla.sh
+      - run: npx cap sync ios
+      - name: Derle (simülatör, imzasız)
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 \
+            || { grep -E "error:" build.log | sort -u | head -40; tail -60 build.log; exit 1; }
+          grep -E "warning: .*Info\.plist|\*\* BUILD" build.log || true
+      - name: Uygulama paketini denetle (iPhone, SKAdNetwork, satın alma, 6 dil)
+        run: |
+          A=build/Build/Products/Release-iphonesimulator/App.app
+          plutil -p "$A/Info.plist" | grep -E 'CFBundleDisplayName|CFBundleShortVersionString|CFBundleVersion|MinimumOSVersion|UIDeviceFamily|GADApplicationIdentifier|ITSAppUses|NSUserTracking' -A2 | grep -v '^--'
+          [ "$(plutil -extract CFBundleIdentifier raw -o - "$A/Info.plist")" = com.osmanadali.hamur ] || { echo "::error::CFBundleIdentifier com.osmanadali.hamur değil"; exit 1; }
+          [ "$(plutil -extract CFBundleDisplayName raw -o - "$A/Info.plist")" = Hamur ] || { echo "::error::CFBundleDisplayName Hamur değil"; exit 1; }
+          plutil -extract UIDeviceFamily json -o - "$A/Info.plist" | grep -qx '\[1\]' || { echo "::error::Yalnız iPhone (UIDeviceFamily [1]) değil"; exit 1; }
+          echo "SKAdNetwork: $(plutil -extract SKAdNetworkItems json -o - "$A/Info.plist" | grep -o skadnetwork | wc -l | tr -d ' ')"
+          [ -f "$A/GoogleService-Info.plist" ] && echo "Ölçüm: GoogleService-Info.plist pakette" || echo "Ölçüm kapalı (FIREBASE_IOS_PLIST yok)"
+          grep -q 'cordova-plugin-purchase' "$A/public/cordova_plugins.js" && nm -gU "$A/App" 2>/dev/null | grep -q 'InAppPurchase' \
+            && echo "Satın alma eklentisi (StoreKit) pakette" || echo "::warning::cordova-plugin-purchase iOS paketinde görünmüyor (satın alma ürünleri henüz yok; ürün eklenince bu denetim hataya çevrilmeli)"
+          echo "Diller: geliştirme $(plutil -extract CFBundleDevelopmentRegion raw -o - "$A/Info.plist"), CFBundleLocalizations $(plutil -extract CFBundleLocalizations json -o - "$A/Info.plist")"
+          [ "$(plutil -extract CFBundleDevelopmentRegion raw -o - "$A/Info.plist")" = en ] || { echo "::error::CFBundleDevelopmentRegion en değil"; exit 1; }
+          for l in en tr de es pt-BR fr; do
+            plutil -extract CFBundleLocalizations json -o - "$A/Info.plist" | grep -q "\"$l\"" || { echo "::error::CFBundleLocalizations içinde $l yok"; exit 1; }
+            [ -f "$A/$l.lproj/InfoPlist.strings" ] || { echo "::error::$l.lproj/InfoPlist.strings pakette yok"; exit 1; }
+            t=$(plutil -extract NSUserTrackingUsageDescription raw -o - "$A/$l.lproj/InfoPlist.strings") \
+              || { echo "::error::$l.lproj içinde NSUserTrackingUsageDescription yok"; exit 1; }
+            echo "  $l ATT: $t"
+          done
+          du -sh "$A"; ditto -c -k --keepParent "$A" hamur-ios-simulator.zip
+          echo "::notice::iOS simülatör derlemesi tamam ($(xcodebuild -version | tr '\n' ' '))"
+      - uses: actions/upload-artifact@v5
+        with: { name: hamur-ios-simulator, path: hamur-ios-simulator.zip, retention-days: 7 }

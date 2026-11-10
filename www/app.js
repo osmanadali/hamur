@@ -4,10 +4,11 @@
 const KEY = 'hamur';
 // level: sıradaki bölüm (1'den başlar) · done: bitirilen bölüm numaraları · wins: kazanılan bölüm sayısı (reklam aralığı)
 // fails: bölüm numarası → art arda kayıp sayısı (üç kayıptan sonra o bölümde 10 sn eklenir; kazanınca silinir)
-const def = { level: 1, done: [], wins: 0, fails: {}, sound: true, music: true, vib: true, lang: '', noads: false, bst: { geri: 0, sure: 0, makas: 0 }, iapTx: [] };
+const def = { level: 1, done: [], wins: 0, fails: {}, sound: true, music: true, vib: true, lang: '', noads: false, bst: { geri: 3, sure: 3, makas: 3 }, iapTx: [] };
 let save;
 try { save = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { save = { ...def }; }
 save.bst = { ...def.bst, ...save.bst };
+if (!save.bstHediye) { for (const k of Object.keys(def.bst)) save.bst[k] = Math.max(save.bst[k] | 0, def.bst[k]); save.bstHediye = true; }   // başlangıç stoku: eski kayıtlara da bir kez verilir
 const persist = () => { save.ts = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(save)); return true; } catch { return false; } };
 
 Ses.init(() => save);

@@ -1,0 +1,170 @@
+# Hamur iOS: imzalı arşiv + App Store Connect'e yükleme (TestFlight'a düşer). Kurulum adımları: docs/YAYIN-IOS.md
+# Yalnızca elle: Actions → "iOS yayın (App Store Connect)" → Run workflow (ya da: gh workflow run ios-release.yml [-f buildNumber=12])
+# Gizli değerler (Settings → Secrets and variables → Actions → Secrets): APPSTORE_API_KEY_ID, APPSTORE_API_ISSUER_ID, APPSTORE_API_KEY_P8_BASE64, APPLE_TEAM_ID
+# İsteğe bağlı gizli değer: FIREBASE_IOS_PLIST (yoksa ölçüm kapalı derlenir).
+# İsteğe bağlı değişkenler (aynı yer → Variables): ADMOB_APP_ID_IOS, ADMOB_INTERSTITIAL_IOS, ADMOB_REWARDED_IOS.
+# Hamur'un AdMob'da iOS kaydı HENÜZ YOK: değişkenler boşsa aşağıdaki Google iOS TEST kimliklerine düşülür ("Test Ad" görünür, gelir yok).
+# Bu hâl TestFlight denemesi içindir; App Store incelemesine göndermeden önce AdMob'da "Hamur (iOS)" açılıp üç değişken girilmeli
+# (üçü birlikte: ya hepsi gerçek ya hepsi boş). Gerçek kimlik girilince window.HAMUR_ADS index.html'e yazılır ve arşivde denetlenir.
+name: iOS yayın (App Store Connect)
+on:
+  workflow_dispatch:
+    inputs:
+      buildNumber:
+        description: 'Yapı numarası (boş: çalıştırma numarası). App Store Connect aynı sürümde öncekinden büyük ister.'
+        type: string
+        default: ''
+permissions: { contents: read }
+concurrency: { group: release-ios, cancel-in-progress: false }
+jobs:
+  release:
+    runs-on: macos-latest
+    env:
+      VERSION_CODE: ${{ inputs.buildNumber || github.run_number }}
+      # Varsayılanlar Google'ın herkese açık iOS test kimlikleridir (Hamur'un kendi AdMob kaydı açılınca değişken girilir)
+      ADMOB_APP_ID_IOS: ${{ vars.ADMOB_APP_ID_IOS || 'ca-app-pub-3940256099942544~1458002511' }}
+      ADMOB_INTERSTITIAL_IOS: ${{ vars.ADMOB_INTERSTITIAL_IOS || 'ca-app-pub-3940256099942544/4411468910' }}
+      ADMOB_REWARDED_IOS: ${{ vars.ADMOB_REWARDED_IOS || 'ca-app-pub-3940256099942544/1712485313' }}
+      APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+      APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Gizli değerleri ve değişkenleri denetle
+        env:
+          P8: ${{ secrets.APPSTORE_API_KEY_P8_BASE64 }}
+        run: |
+          eksik=""
+          [ -n "$APPSTORE_API_KEY_ID" ]    || eksik="$eksik\n  • APPSTORE_API_KEY_ID (gizli değer: API anahtarı kimliği, 10 karakter)"
+          [ -n "$APPSTORE_API_ISSUER_ID" ] || eksik="$eksik\n  • APPSTORE_API_ISSUER_ID (gizli değer: Issuer ID, UUID)"
+          [ -n "$P8" ]                     || eksik="$eksik\n  • APPSTORE_API_KEY_P8_BASE64 (gizli değer: AuthKey_….p8 dosyasının base64 hâli)"
+          [ -n "$APPLE_TEAM_ID" ]          || eksik="$eksik\n  • APPLE_TEAM_ID (gizli değer: Team ID, 10 karakter)"
+          if [ -n "$eksik" ]; then
+            printf "Eksik ayar var, iOS yapısı üretilmedi:$eksik\nNasıl eklenir: docs/YAYIN-IOS.md (Settings → Secrets and variables → Actions)\n"
+            echo "::error title=Eksik ayar::iOS yayını için gizli değer eksik. Günlükteki listeye ve docs/YAYIN-IOS.md'ye bak."
+            exit 1
+          fi
+          hata=""
+          echo "$ADMOB_APP_ID_IOS" | grep -Eq '^ca-app-pub-[0-9]{16}~[0-9]{10}$' || hata="$hata\n  • ADMOB_APP_ID_IOS biçimi yanlış (ca-app-pub-…~… olmalı, '/' değil '~')"
+          echo "$ADMOB_INTERSTITIAL_IOS" | grep -Eq '^ca-app-pub-[0-9]{16}/[0-9]{10}$' || hata="$hata\n  • ADMOB_INTERSTITIAL_IOS biçimi yanlış (ca-app-pub-…/… olmalı)"
+          echo "$ADMOB_REWARDED_IOS" | grep -Eq '^ca-app-pub-[0-9]{16}/[0-9]{10}$' || hata="$hata\n  • ADMOB_REWARDED_IOS biçimi yanlış (ca-app-pub-…/… olmalı)"
+          # üçü birlikte: ya hepsi Google test kimliği (değişken girilmemiş) ya hepsi gerçek
+          t=0; for v in "$ADMOB_APP_ID_IOS" "$ADMOB_INTERSTITIAL_IOS" "$ADMOB_REWARDED_IOS"; do case "$v" in *3940256099942544*) t=$((t+1));; esac; done
+          case $t in
+            0) echo "AdMob: gerçek kimlikler." ;;
+            3) echo "::warning title=Test reklamları::AdMob değişkenleri girilmemiş: bu yapı Google test kimlikleriyle çalışır (\"Test Ad\", gelir yok). TestFlight denemesi için uygundur; App Store incelemesine göndermeden önce docs/YAYIN-IOS.md §6." ;;
+            *) hata="$hata\n  • AdMob değişkenleri karışık: üçü de girilmeli (ADMOB_APP_ID_IOS, ADMOB_INTERSTITIAL_IOS, ADMOB_REWARDED_IOS) ya da üçü de boş kalmalı" ;;
+          esac
+          echo "$APPLE_TEAM_ID" | grep -Eq '^[A-Z0-9]{10}$' || hata="$hata\n  • APPLE_TEAM_ID 10 karakter (büyük harf/rakam) olmalı"
+          echo "$VERSION_CODE" | grep -Eq '^[1-9][0-9]{0,9}$' || hata="$hata\n  • Yapı numarası pozitif tam sayı olmalı: $VERSION_CODE"
+          if [ -n "$hata" ]; then printf "Ayar hatası:$hata\n"; echo "::error title=Ayar hatası::AdMob kimliği, Team ID ya da yapı numarası yanlış. Günlüğe bak."; exit 1; fi
+          echo "Ayarlar tamam."
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - name: Xcode 26+ seç (Capacitor 8 gereği)
+        run: |
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1 || true)
+          [ -n "$X" ] && sudo xcode-select -s "$X"
+          xcodebuild -version | tr "\n" " "; echo
+          V=$(xcodebuild -version | awk 'NR==1{print int($2)}')
+          [ "$V" -ge 26 ] || { echo "::error::Capacitor 8 Xcode 26+ ister (bulunan: $V)"; exit 1; }
+      - run: npm ci --no-audit --no-fund
+      - run: npx cap add ios
+      - name: İkon ve açılış ekranı (assets/)
+        run: npx @capacitor/assets generate --ios --iconBackgroundColor '#c59af1' --iconBackgroundColorDark '#c59af1' --splashBackgroundColor '#c59af1' --splashBackgroundColorDark '#c59af1'
+      - name: Yerel projeyi hazırla (AdMob kimlikleri, diller, yalnız iPhone + dikey, sürüm, simge)
+        env: { FIREBASE_IOS_PLIST: '${{ secrets.FIREBASE_IOS_PLIST }}' }   # isteğe bağlı: yoksa ölçüm kapalı derlenir (tools/olcum-hazirla.cjs)
+        run: |
+          VERSION_NAME=$(node -p "require('./package.json').version"); export VERSION_NAME
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          bash tools/ios/hazirla.sh
+          echo "window.HAMUR_ADS satırı: $(grep -c 'window.HAMUR_ADS' www/index.html || true) (test kimliklerinde 0, gerçek kimliklerde 1)"
+      - run: npx cap sync ios
+      - name: API anahtarını çöz (yalnız bu makinede, iş bitince silinir)
+        env: { P8: '${{ secrets.APPSTORE_API_KEY_P8_BASE64 }}' }
+        run: |
+          echo "$P8" | base64 -d > "$RUNNER_TEMP/AuthKey.p8"
+          grep -q 'BEGIN PRIVATE KEY' "$RUNNER_TEMP/AuthKey.p8" || { echo "::error::APPSTORE_API_KEY_P8_BASE64 çözülemedi (base64 ile kodlanmış .p8 olmalı)"; exit 1; }
+          # yapıştırırken giren boşluk / satır sonu atılır; kimlikler biçim ve Apple'a gerçek bir istekle denetlenir (değer yazılmaz)
+          tr1() { printf '%s' "$1" | tr -d ' \r\n\t'; }
+          KID=$(tr1 "$APPSTORE_API_KEY_ID"); ISS=$(tr1 "$APPSTORE_API_ISSUER_ID"); TID=$(tr1 "$APPLE_TEAM_ID")
+          for v in "$KID" "$ISS" "$TID"; do echo "::add-mask::$v"; done
+          { echo "APPSTORE_API_KEY_ID=$KID"; echo "APPSTORE_API_ISSUER_ID=$ISS"; echo "APPLE_TEAM_ID=$TID"; } >> "$GITHUB_ENV"
+          echo "$KID" | grep -Eq '^[A-Z0-9]{10}$' || { echo "::error::APPSTORE_API_KEY_ID 10 karakter (büyük harf/rakam) olmalı, girilen ${#KID} karakter"; exit 1; }
+          echo "$ISS" | grep -Eiq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' || { echo "::error::APPSTORE_API_ISSUER_ID tireli uzun kod (UUID) olmalı, girilen ${#ISS} karakter"; exit 1; }
+          KID="$KID" ISS="$ISS" KEY="$RUNNER_TEMP/AuthKey.p8" node -e '
+            const c=require("crypto"),fs=require("fs"),b=o=>Buffer.from(JSON.stringify(o)).toString("base64url"),t=Math.floor(Date.now()/1e3);
+            const h=b({alg:"ES256",kid:process.env.KID,typ:"JWT"}),p=b({iss:process.env.ISS,iat:t,exp:t+600,aud:"appstoreconnect-v1"});
+            const sig=c.sign("sha256",Buffer.from(h+"."+p),{key:fs.readFileSync(process.env.KEY),dsaEncoding:"ieee-p1363"}).toString("base64url");
+            fetch("https://api.appstoreconnect.apple.com/v1/apps?limit=1",{headers:{Authorization:"Bearer "+h+"."+p+"."+sig}}).then(async r=>{
+              if(r.ok){console.log("App Store Connect API anahtarı geçerli.");return;}
+              console.log("::error::Apple anahtarı kabul etmedi (HTTP "+r.status+"). Key ID ile Issuer ID aynı anahtara ait mi, .p8 o anahtarın dosyası mı, anahtar Team Keys altında ve Admin mi? Ayrıntı: "+(await r.text()).slice(0,300));process.exit(1);});'
+      - name: Arşivle (otomatik imza)
+        run: |
+          xcodebuild archive -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/Hamur.xcarchive \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$VERSION_CODE" \
+            CODE_SIGN_STYLE=Automatic \
+            -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$APPSTORE_API_KEY_ID" -authenticationKeyIssuerID "$APPSTORE_API_ISSUER_ID" > archive.log 2>&1 \
+            || { grep -E "error:" archive.log | sort -u | head -40; tail -60 archive.log; exit 1; }
+          grep -E "\*\* ARCHIVE" archive.log || true
+      - name: Arşivi denetle (AdMob, HAMUR_ADS, paket kimliği, sürüm, diller)
+        run: |
+          A=build/Hamur.xcarchive/Products/Applications/App.app
+          [ -d "$A" ] || { echo "::error::Arşivde App.app yok"; ls -R build/Hamur.xcarchive | head -40; exit 1; }
+          GAD=$(plutil -extract GADApplicationIdentifier raw -o - "$A/Info.plist")
+          echo "GADApplicationIdentifier: $GAD"
+          [ "$GAD" = "$ADMOB_APP_ID_IOS" ] || { echo "::error::GADApplicationIdentifier beklenen AdMob App ID değil"; exit 1; }
+          if echo "$GAD" | grep -q 3940256099942544; then
+            # test kimlikleri: window.HAMUR_ADS yazılmamış olmalı (ads.js kendi test kimliklerini ve test kipini kullanır)
+            grep -q 'window.HAMUR_ADS = ' "$A/public/index.html" && { echo "::error::Test App ID ile birlikte window.HAMUR_ADS yazılmış"; exit 1; }
+            echo "::warning title=Test reklamları::Bu yapı Google test reklamlarıyla yüklendi (AdMob değişkenleri yok)."
+          else
+            grep -q 'window.HAMUR_ADS = ' "$A/public/index.html" || { echo "::error::window.HAMUR_ADS yayın arşivinde yok (ads.js test reklamlarına düşer)"; exit 1; }
+            grep -o 'window.HAMUR_ADS = [^<]*' "$A/public/index.html" | grep -q 3940256099942544 && { echo "::error::window.HAMUR_ADS içinde Google test kimliği var"; exit 1; }
+          fi
+          BID=$(plutil -extract CFBundleIdentifier raw -o - "$A/Info.plist")
+          [ "$BID" = com.osmanadali.hamur ] || { echo "::error::CFBundleIdentifier $BID, beklenen com.osmanadali.hamur"; exit 1; }
+          CV=$(plutil -extract CFBundleVersion raw -o - "$A/Info.plist"); SV=$(plutil -extract CFBundleShortVersionString raw -o - "$A/Info.plist")
+          [ "$CV" = "$VERSION_CODE" ] || { echo "::error::CFBundleVersion $CV, beklenen $VERSION_CODE"; exit 1; }
+          plutil -extract UIDeviceFamily json -o - "$A/Info.plist" | grep -qx '\[1\]' || { echo "::error::Yalnız iPhone (UIDeviceFamily [1]) değil"; exit 1; }
+          [ "$(plutil -extract CFBundleDevelopmentRegion raw -o - "$A/Info.plist")" = en ] || { echo "::error::CFBundleDevelopmentRegion en değil"; exit 1; }
+          for l in en tr de es pt-BR fr; do
+            plutil -extract CFBundleLocalizations json -o - "$A/Info.plist" | grep -q "\"$l\"" || { echo "::error::CFBundleLocalizations içinde $l yok"; exit 1; }
+            plutil -extract NSUserTrackingUsageDescription raw -o - "$A/$l.lproj/InfoPlist.strings" >/dev/null || { echo "::error::$l.lproj ATT metni pakette yok"; exit 1; }
+          done
+          # arşiv geliştirme imzasıyla (hesapta en az bir kayıtlı iPhone gerekir), dışa aktarımda App Store dağıtım imzasına çevrilir
+          codesign -dvv "$A" 2>&1 | grep -E "Authority|TeamIdentifier" || { echo "::error::Uygulama imzası okunamadı"; exit 1; }
+          echo "::notice::Hamur $SV ($CV) arşivlendi"
+      - name: Dışa aktar (dağıtım imzası) ve App Store Connect'e yükle
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict></plist>
+          EOF
+          plutil -lint "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive -archivePath build/Hamur.xcarchive -exportPath build/out \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$APPSTORE_API_KEY_ID" -authenticationKeyIssuerID "$APPSTORE_API_ISSUER_ID" > export.log 2>&1 \
+            || { grep -iE "error" export.log | sort -u | head -40; tail -60 export.log; exit 1; }
+          grep -iE "upload|EXPORT SUCCEEDED" export.log | tail -5 || true
+          echo "::notice::Hamur $VERSION_NAME ($VERSION_CODE) App Store Connect'e yüklendi. İşlenince TestFlight'ta görünür (genelde 10-30 dk)."
+      - name: Arşiv günlükleri ve dSYM
+        if: always()
+        run: |
+          mkdir -p out; cp archive.log export.log out/ 2>/dev/null || true
+          [ -d build/Hamur.xcarchive/dSYMs ] && ditto -c -k --keepParent build/Hamur.xcarchive/dSYMs "out/hamur-$VERSION_NAME-$VERSION_CODE-dSYMs.zip" || true
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with: { name: 'hamur-ios-${{ env.VERSION_NAME }}-${{ env.VERSION_CODE }}', path: out/, retention-days: 30, if-no-files-found: ignore }
+      - name: API anahtarını sil
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"

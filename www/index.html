@@ -13,6 +13,7 @@
 <body>
 <!-- Açılış: ilk kare sistem açılış ekranıyla aynı (düz zemin, ortada ikon); animasyon acilis.js'te -->
 <div class="acilis" id="acilis"><img src="img/acilis.webp" alt="" width="192" height="192"><canvas aria-hidden="true"></canvas><p hidden></p></div>
+<script>setTimeout(function () { var a = document.getElementById('acilis'); if (a && !a.dataset.canli) a.remove(); }, 4000);</script><!-- emniyet: acilis.js çalışmazsa katman kalkar -->
 <!-- Ekranlar: ana ekran, bölüm yolu, tepsi koleksiyonu, oyun. Görsellerde yazı yoktur; bütün metin ve sayılar koddan gelir. -->
 <section class="ekran" id="sAna" hidden>
   <header class="ust"><span></span><button class="top" id="bAyar" type="button" aria-label="Ayarlar" data-en-label="Settings"><i style="background-image:url(img/ayarlar.webp)"></i></button></header>
@@ -41,7 +42,7 @@
         <button class="top cik" id="bCik" type="button" aria-label="Bölümlere dön" data-en-label="Back to levels"><i class="sola" style="background-image:url(img/oynat.webp)"></i></button>
         <span id="lvlNo" aria-live="polite">1</span>
       </div>
-      <button class="btn resim" id="undo" type="button" aria-label="Geri al" data-en-label="Undo" disabled></button>
+      <button class="btn resim" id="duraklat" type="button" aria-label="Duraklat" data-en-label="Pause"><i></i></button>
       <button class="btn resim" id="sound" type="button" aria-label="Ses" data-en-label="Sound"></button>
       <button class="btn resim" id="retry" type="button" aria-label="Baştan" data-en-label="Restart"></button>
     </div>
@@ -65,10 +66,17 @@
     </div>
   </main>
   <footer class="foot">
-    <div class="rx" id="rx" hidden>
+    <!-- Güçlendirici çubuğu: geri alma, 15 sn ek süre, makas; sağda renk tarifi düğmesi (basınca tarif şeridi açılır) -->
+    <div class="gucler" id="gucler">
+    <div class="rx" id="rx" role="group" aria-label="Renk tarifi" data-en-label="Color recipe" hidden>
       <span><i data-c="b" role="img" aria-label="mavi" data-en-label="blue" style="background:var(--b)"></i>+<i data-c="y" role="img" aria-label="sarı" data-en-label="yellow" style="background:var(--y)"></i>=<i data-c="g" role="img" aria-label="yeşil" data-en-label="green" style="background:var(--g)"></i></span>
       <span><i data-c="r" role="img" aria-label="kırmızı" data-en-label="red" style="background:var(--r)"></i>+<i data-c="b" role="img" aria-label="mavi" data-en-label="blue" style="background:var(--b)"></i>=<i data-c="p" role="img" aria-label="mor" data-en-label="purple" style="background:var(--p)"></i></span>
       <span><i data-c="r" role="img" aria-label="kırmızı" data-en-label="red" style="background:var(--r)"></i>+<i data-c="y" role="img" aria-label="sarı" data-en-label="yellow" style="background:var(--y)"></i>=<i data-c="o" role="img" aria-label="turuncu" data-en-label="orange" style="background:var(--o)"></i></span>
+    </div>
+      <button class="guc" id="undo" type="button" aria-label="Geri al" data-en-label="Undo" disabled><i style="background-image:url(img/geri.webp)"></i><b></b></button>
+      <button class="guc" id="gSure" type="button" aria-label="15 saniye ekle" data-en-label="Add 15 seconds" disabled><i style="background-image:url(img/saat.webp)"></i><b></b><small>+15</small></button>
+      <button class="guc" id="gMakas" type="button" aria-label="Makas koy" data-en-label="Place scissors" aria-pressed="false" disabled><i style="background-image:url(img/makas.webp)"></i><b></b></button>
+      <button class="guc tarif" id="gTarif" type="button" aria-label="Renk tarifi" data-en-label="Color recipe" aria-expanded="false" aria-controls="rx" hidden><i class="noktalar"></i></button>
     </div>
     <p id="hint"></p>
   </footer>

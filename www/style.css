@@ -27,7 +27,7 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .btn.resim{width:44px;height:44px;padding:0;background:center/contain no-repeat;box-shadow:none;border-radius:50%;filter:drop-shadow(0 3px 3px rgba(100,60,150,.3))}
 .btn.resim:active{transform:translateY(2px) scale(.96);box-shadow:none}
 .btn.resim:disabled{opacity:.38;filter:grayscale(.7)}
-#undo{background-image:url(img/geri.webp)} #retry{background-image:url(img/bastan.webp)} #sound{background-image:url(img/ses.webp)} #sound.off{background-image:url(img/sessiz.webp)}
+#duraklat{background-image:url(img/top-mor.webp);display:grid;place-items:center} #duraklat i{width:14px;height:16px;border-left:5px solid #fff7ea;border-right:5px solid #fff7ea;box-sizing:border-box;border-radius:2px} #retry{background-image:url(img/bastan.webp)} #sound{background-image:url(img/ses.webp)} #sound.off{background-image:url(img/sessiz.webp)}
 .saat{width:30px;height:30px;flex:none;background:url(img/saat.webp) center/contain no-repeat;filter:drop-shadow(0 2px 2px rgba(100,60,150,.3))}
 .timer.low .saat{animation:beat .5s ease-in-out infinite}
 .tost{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;background:#fffaf4;color:var(--ink);font:700 22px var(--display);padding:14px 22px;border-radius:20px;box-shadow:0 4px 0 rgba(120,80,170,.25),0 14px 30px rgba(90,50,140,.3);text-align:center;white-space:nowrap;pointer-events:none;animation:tost .9s ease both}
@@ -59,7 +59,21 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .go:active{transform:translateY(3px);box-shadow:0 1px 0 #dc962a}
 .go.alt{margin-top:2px;background:#f1e6fa;color:var(--ink);box-shadow:0 4px 0 #cdb6e6}
 .foot{min-height:66px;display:flex;flex-direction:column;align-items:center;gap:8px}
-.rx{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;color:var(--ink);font:700 14px var(--display);background:var(--panel);border-radius:14px;padding:6px 12px;box-shadow:var(--golge)}
+.gucler{position:relative;display:flex;justify-content:center;gap:10px}
+.guc{position:relative;width:58px;height:50px;border:0;border-radius:16px;background:#fffaf4;box-shadow:0 4px 0 rgba(120,80,170,.28),0 8px 14px rgba(110,70,160,.16);cursor:pointer;display:grid;place-items:center;padding:0;transition:transform .08s,filter .08s}
+.guc i{width:32px;height:32px;background:center/contain no-repeat}
+.guc b{position:absolute;right:-5px;top:-7px;min-width:20px;height:20px;border-radius:10px;background:var(--p);color:#fff;font:700 12px/20px var(--display);padding:0 5px;box-sizing:border-box;font-variant-numeric:tabular-nums}
+.guc b:empty{display:none}
+.guc small{position:absolute;left:0;right:0;bottom:1px;font:700 10px var(--display);color:var(--ink)}
+.guc:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(120,80,170,.28)}
+.guc:disabled{cursor:default;filter:grayscale(.8) opacity(.55)}
+.guc:disabled b{background:#9a8aa8}
+.guc[aria-pressed=true],.guc[aria-expanded=true]{outline:3px solid var(--p);outline-offset:2px}
+.guc:focus-visible{outline:3px solid var(--p);outline-offset:3px}
+.guc[hidden]{display:none}
+.guc.tarif{margin-left:8px}
+.guc .noktalar{width:34px;height:14px;background:radial-gradient(circle at 7px 7px,var(--b) 0 6px,transparent 6.5px),radial-gradient(circle at 17px 7px,var(--y) 0 6px,transparent 6.5px),radial-gradient(circle at 27px 7px,var(--g) 0 6px,transparent 6.5px)}
+.rx{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);z-index:3;width:max-content;max-width:94vw;display:flex;flex-wrap:nowrap;justify-content:center;gap:6px 14px;color:var(--ink);font:700 14px var(--display);background:#fffaf4;border-radius:14px;padding:8px 14px;box-shadow:0 4px 0 rgba(120,80,170,.25),0 10px 20px rgba(90,50,140,.3)}
 .rx[hidden]{display:none}
 .rx span{display:inline-flex;align-items:center;gap:5px}
 .rx i{width:16px;height:16px;border-radius:6px;display:inline-block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.15);position:relative}
@@ -150,7 +164,7 @@ body.ana-acik{background-image:url(img/ana.webp);background-position:center bott
 
 /* açılış: sistem açılış ekranıyla aynı ilk kare; animasyon tuvalde, sonunda zemin solar ve gökyüzü açılır */
 .acilis{position:fixed;inset:0;z-index:50;background:#c59af1;display:grid;place-items:center;transition:opacity .25s ease;touch-action:none}
-.acilis.ac{opacity:0;pointer-events:none}
+.acilis.ac{opacity:0}   /* solarken de dokunuşu tutar: geçmek için yapılan dokunuş alttaki düğmeye gitmesin */
 .acilis img{width:192px;height:192px;transition:opacity .15s linear}
 .acilis img.git{opacity:0}
 .acilis canvas{position:absolute;inset:0;width:100%;height:100%}

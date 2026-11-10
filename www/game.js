@@ -41,6 +41,7 @@ let cell = 60, dpr = 1, state = 'play', timeLeft = 0, running = false, drag = nu
 let threads = new Map();   // tutulan parçanın komşularıyla arasındaki hamur iplikleri: q → { v: 0…1 doluluk, seam, color }
 let kesim = null;   // dolan makas ölçüsü { dx, dy, v }
 let ekSure = 0, gecisT = 0;   // ekSure: üç kayıptan sonra eklenen süre · gecisT: sıradaki bölüme geçiş zamanlayıcısı
+let durak = false, makasKoy = false;   // durak: duraklatıldı (süre durur, tahta gizlenir) · makasKoy: makas güçlendiricisi için kare seçiliyor
 let geri = null, geriKalan = 0;   // geri: son yapışmanın olduğu sürüklemenin başındaki durum
 
 /* ---------- şekiller ---------- */
@@ -109,8 +110,8 @@ function setup(i) {
   st.pieces.forEach(giydir);
   ekSure = i < ASIL && (save.fails?.[i + 1] || 0) >= 3 ? 10 : 0;   // aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir
   state = 'play'; timeLeft = Lv.t + ekSure; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1;
-  threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null;
-  $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); $('rx').hidden = i < 20; $('rx').classList.toggle('damgali', !!save.damga);   // renk tarifi karışımın öğretildiği 21. bölümden itibaren
+  threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null; durak = false; makasKoy = false; cv.style.visibility = '';
+  $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); tarif(false); $('gTarif').hidden = i < 20; $('rx').classList.toggle('damgali', !!save.damga);   // renk tarifi düğmesi karışımın öğretildiği 21. bölümden itibaren
   $('lvlNo').textContent = i < ASIL ? L('Bölüm ', 'Level ') + (i + 1) : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
   paintUndo(); layout();
   window.Olcum?.event('level_start', { level: i + 1 });
@@ -192,7 +193,7 @@ function olaylar(p, ev) {
 // Kazanma / çıkmaz denetimi (her yapışma, kalıba oturma ve kesimden sonra)
 function denetle(p) {
   if (state !== 'play') return;
-  if (st.pieces.length === 0) { state = 'won'; running = false; wonAt = 0; kazanKaydet(); }
+  if (st.pieces.length === 0) { state = 'won'; running = false; wonAt = 0; kazanKaydet(); paintUndo(); }
   else if (Coz.cikmaz(st, cz, 20000, 80)) lose('doom', K.doomed(st) || (st.pieces.includes(p) ? p : st.pieces[0]));
 }
 // Makas: çok kareli parça açık makasa doğru itilince dolan ölçü. Dolunca parça o kareye girer, makasın üstündeki kare kopar,
@@ -293,7 +294,7 @@ function showOv(t, p, b, fn, b2, fn2) {
 }
 let kayipTur = '';
 function lose(kind, piece) {
-  state = 'lost'; kayipTur = kind; running = false; drag = null; threads = new Map();
+  state = 'lost'; kayipTur = kind; makasKoy = false; paintUndo(); running = false; drag = null; threads = new Map();
   if (li < ASIL) { save.fails = { ...save.fails, [li + 1]: (save.fails?.[li + 1] || 0) + 1 }; App.persist(); }
   const now = performance.now(), yine = L('Tekrar dene', 'Try again');
   // ne kadar yaklaşıldı: kaç kalıp doldu; süre bittiyse yaklaşık kaç saniye eksik kaldı (kalan en kısa çözümden)
@@ -304,27 +305,77 @@ function lose(kind, piece) {
     piece.shakeT = now; buzz([30, 50, 70]); tone(210, .4, 'sawtooth', 80, .07, .25);
     const open = st.holes.filter(h => !h.filled);
     const msg = PARTS[piece.color] && !open.some(h => h.color === piece.color) ? NAME[piece.color] + L(' renkte kalıp yok. Bu parça artık hiçbir yere giremez.', ' has no mold. This piece cannot go anywhere now.') : L('Bu parça artık hiçbir kalıba uymuyor.', 'This piece no longer fits any mold.');
-    after = { at: now + 1400, fn: () => geri && geriKalan > 0
+    after = { at: now + 1400, fn: () => geriOlur()
       ? showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin, L('Geri al', 'Undo'), geriAl, yine, () => setup(li))
       : showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin + ek, yine, () => setup(li)) };
   } else {
     buzz([60, 40, 60]); tone(210, .45, 'sawtooth', 70, .08); geri = null; paintUndo();
     let eksik = '';
     try { const r = Coz.ara(cz, K.clone(st), { cap: 2500 }); if (r.cozuldu) { const sn = Math.max(1, Math.round(r.kare + 2 * r.hamle)); eksik = L(` Yaklaşık ${sn} saniye daha gerekiyordu.`, ` About ${sn} more seconds were needed.`); } } catch {}
-    showOv(L('Süre bitti', 'Time is up'), L('Parçalar kalıba yetişmedi.', 'The pieces did not reach the molds in time.') + yakin + eksik + ek, yine, () => setup(li));
+    const metin = L('Parçalar kalıba yetişmedi.', 'The pieces did not reach the molds in time.') + yakin + eksik + ek;
+    stok('sure') > 0 ? showOv(L('Süre bitti', 'Time is up'), metin, L('+15 sn ile devam et', 'Continue with +15 s'), surDevam, yine, () => setup(li)) : showOv(L('Süre bitti', 'Time is up'), metin, yine, () => setup(li));
   }
 }
 // Geri alma: son yapışmanın olduğu sürüklemenin başına döner. Süre geri gelmez.
 function geriAl() {
-  if (!geri || geriKalan <= 0 || state === 'won' || timeLeft <= 0) return;   // süre bittiyse geri alma işe yaramaz: hak harcanmaz
-  geriKalan--; st = geri; geri = null; cz = Coz.hazirla(st);
+  if (!geriOlur() || state === 'won' || timeLeft <= 0 || durak) return;   // süre bittiyse geri alma işe yaramaz: hak harcanmaz
+  if (geriKalan > 0) geriKalan--; else harca('geri');   // önce bölümün ücretsiz hakkı, sonra stok
+  st = geri; geri = null; cz = Coz.hazirla(st);
   st.pieces.forEach(giydir); for (const h of st.holes) h.shown = h.filled;
   state = 'play'; running = true; drag = null; sinks = []; rings = []; after = null; threads = new Map(); kesim = null;
   $('ov').hidden = true; paintUndo(); layout();
   buzz(10); tone(520, .12, 'sine', 300, .06);
   window.Olcum?.event('undo', { level: li + 1 });
 }
-const paintUndo = () => { const b = $('undo'); b.hidden = !CFG.geriHak; b.disabled = !(geri && geriKalan > 0); };
+/* ---------- güçlendiriciler, duraklatma, renk tarifi ---------- */
+// Stok kayıtta durur (save.bst). Para kararı verilene dek her oyuncu üçer taneyle başlar; test seçeneği (bütün bölümler açık) açıkken stok azalmaz.
+// Hiçbir bölüm güçlendirici istemez (çözücü kanıtlar); bunlar yalnız kolaylıktır.
+const stok = k => save.hepsiAcik ? 9 : Math.max(0, save.bst?.[k] | 0);
+function harca(k) {
+  if (!save.hepsiAcik) { save.bst = { ...save.bst, [k]: stok(k) - 1 }; App.persist(); }
+  window.Olcum?.event('booster_use', { level: li + 1, booster: k });
+}
+const geriOlur = () => !!geri && (geriKalan > 0 || stok('geri') > 0);
+function paintUndo() {
+  const oyun = state === 'play' && !durak, yaz = (id, n, acik) => { const b = $(id); b.disabled = !acik; b.querySelector('b').textContent = n > 0 ? n : ''; };
+  yaz('undo', geriKalan + stok('geri'), geriOlur() && state !== 'won' && !durak);
+  yaz('gSure', stok('sure'), oyun && stok('sure') > 0);
+  yaz('gMakas', stok('makas'), oyun && stok('makas') > 0);
+  $('gMakas').setAttribute('aria-pressed', String(makasKoy));
+}
+// +15 sn: oyun sırasında süreye eklenir. Süre bitince çıkan kartta da "devam et" olarak sunulur (surDevam).
+function sureEkle() {
+  if (state !== 'play' || durak || stok('sure') <= 0) return;
+  harca('sure'); timeLeft += 15; shownS = -1; paintUndo(); buzz(12); tone(660, .1, 'triangle', 990, .06); tone(990, .16, 'triangle', 0, .05, .09);
+}
+function surDevam() {
+  if (state !== 'lost' || kayipTur !== 'time' || stok('sure') <= 0) return;
+  harca('sure'); state = 'play'; timeLeft = 15; running = false; shownS = -1; after = null; $('ov').hidden = true; paintUndo();   // süre ilk dokunuşta yeniden işler
+}
+// Makas: oyuncu boş bir zemin karesi seçer, oraya tek kullanımlık makas karesi konur. Sonrası oyundaki makas kuralıyla aynıdır.
+function makasSec() {
+  if (state !== 'play' || durak || stok('makas') <= 0) return;
+  makasKoy = !makasKoy; paintUndo();
+  $('hint').textContent = makasKoy ? L('Makası koyacağın boş kareye dokun. Çok kareli parçayı ona doğru itince keser.', 'Tap an empty square to place the scissors. Push a multi-square piece into it to cut.') : L(...Lv.hint);
+}
+function makasKonur(gx, gy) {
+  const k = K.key(gx, gy), dolu = gx < 0 || gy < 0 || gx >= st.W || gy >= st.H || st.walls.has(k) || st.pieces.some(p => p.cells.some(c => c[0] === gx && c[1] === gy))
+    || st.holes.some(h => h.cells.some(c => c[0] === gx && c[1] === gy)) || st.makas.some(m => m.x === gx && m.y === gy);
+  if (dolu) { buzz(20); tone(180, .1, 'square', 140, .04); return; }
+  st.makas.push({ x: gx, y: gy, open: true, hold: false }); cz = Coz.hazirla(st); geri = null;   // geri alma makası geri getirmez
+  harca('makas'); makasKoy = false; $('hint').textContent = L(...Lv.hint); paintUndo();
+  buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
+}
+// Renk tarifi: düğmeye basınca çubuğun üstünde yatay bir şerit olarak açılır, yeniden basınca ya da dışına dokununca kapanır.
+function tarif(ac) { $('rx').hidden = !ac; $('gTarif').setAttribute('aria-expanded', String(!!ac)); }
+// Duraklatma: süre durur ve tahta gizlenir (duraklatıp tahtaya bakarak düşünülmesin).
+function duraklat() {
+  if (state !== 'play' || durak) return;
+  durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
+  showOv(L('Duraklatıldı', 'Paused'), L('Süre durdu. Hazır olunca devam et.', 'The timer is stopped. Continue when you are ready.'), L('Devam et', 'Continue'), devam, L('Bölümlere dön', 'Back to levels'), () => App.ekran.goster('yol'));
+}
+function devam() { if (!durak) return; durak = false; cv.style.visibility = ''; $('ov').hidden = true; $('hint').textContent = L(...Lv.hint); paintUndo(); }
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && running) duraklat(); });   // uygulama arka plana geçince
 // Bölüm arası reklam: yalnız kazanınca, sıradaki tahta gelmeden önce. İlk 10 bölümde yok, sonra 3 bölümde bir (iki reklam arası en az 90 sn: ads.js).
 async function sonraki(i) {
   if (!save.noads && li < ASIL && li + 1 > 10 && save.wins % 3 === 0) await (App.bekle ? App.bekle.sar(Ads.interstitial(), 'top') : Ads.interstitial());
@@ -361,8 +412,9 @@ function win() {
 /* ---------- girdi ---------- */
 function pos(e) { const r = cv.getBoundingClientRect(); return [e.clientX - r.left - PAD, e.clientY - r.top - PAD]; }
 cv.addEventListener('pointerdown', e => {
-  if (state !== 'play' || drag) return;
+  if (state !== 'play' || drag || durak) return;
   const [x, y] = pos(e), gx = Math.floor(x / cell), gy = Math.floor(y / cell);
+  if (makasKoy) { e.preventDefault(); return makasKonur(gx, gy); }
   const p = st.pieces.find(q => q.cells.some(c => c[0] === gx && c[1] === gy));
   if (!p) return;
   e.preventDefault();
@@ -378,7 +430,9 @@ cv.addEventListener('pointermove', e => {
 const drop = e => { if (drag && e.pointerId === drag.id) birak(); };
 cv.addEventListener('pointerup', drop); cv.addEventListener('pointercancel', drop);
 $('retry').onclick = () => setup(li);
-$('undo').onclick = geriAl;
+$('undo').onclick = geriAl; $('gSure').onclick = sureEkle; $('gMakas').onclick = makasSec; $('duraklat').onclick = duraklat;
+$('gTarif').onclick = e => { e.stopPropagation(); tarif($('rx').hidden); };
+document.addEventListener('pointerdown', e => { if (!$('rx').hidden && !e.target.closest('#rx,#gTarif')) tarif(false); });
 const paintSound = () => { $('sound').classList.toggle('off', !save.sound); $('sound').setAttribute('aria-pressed', String(save.sound)); };
 $('sound').onclick = () => { save.sound = !save.sound; App.persist(); paintSound(); };
 paintSound();
@@ -677,7 +731,7 @@ function el(now) {
 
 /* ---------- döngü ---------- */
 function update(dt, now) {
-  if (state === 'play' && running) {
+  if (state === 'play' && running && !durak) {
     timeLeft -= dt;
     if (timeLeft <= 0) { timeLeft = 0; lose('time'); }
   }
@@ -765,5 +819,6 @@ App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= 
     },
     get hazir() { return !!blokGri; }, parcacik: () => IMG.parcacik, el: () => IMG.el,
   },
-  dur() { running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
+  duraklat, devam, sureEkle, makasSec, get durakta() { return durak; }, get stok() { return { geri: stok('geri'), sure: stok('sure'), makas: stok('makas') }; },
+  dur() { if (durak) $('ov').hidden = true; durak = false; makasKoy = false; cv.style.visibility = ''; running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
 })();

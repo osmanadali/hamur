@@ -148,7 +148,8 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await o.page.click('#ovB'); await o.page.waitForTimeout(200);
     const s = await o.d();
     check('oyun.geri', 'Geri al: yapışmanın olduğu sürüklemenin başına döner, bölüm sürer; hak bir kez', iki && s.durum === 'play' && s.boy === '11111' && s.geri === 0 && !s.btn && !s.ov, `${s.durum} · parçalar ${s.boy} · kalan hak ${s.geri}`);
-    // ikinci yanlışta geri alma yok
+    // ikinci yanlışta geri alma yok (stok boşken; stok varsa oradan harcanır: bkz. güçlendirici testleri)
+    await o.page.evaluate(() => { window.__hamur.save.bst = { geri: 0, sure: 0, makas: 0 }; });
     await o.basla(0, 0); await o.gotur(1, 0, 150); await o.birak(); await o.page.waitForTimeout(1800);
     const iki2 = await o.page.evaluate(() => [window.__hamur.oyun.durum, document.getElementById('ovB2').hidden]);
     check('oyun.geri.tek', 'İkinci yanlış yapışmada geri alma önerilmez', iki2[0] === 'lost' && iki2[1] === true, iki2.join(' · '));
@@ -170,7 +171,7 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await z.ctx.close();
     // aynı bölümde üç kayıp → sıradaki denemede 10 sn fazla; kazanınca sayaç silinir
     const u = await ac({ save: { level: 1, fails: { 1: 2 } } });
-    await u.basla(0, 1); await u.gotur(1, 1, 100); await u.birak(); await u.page.evaluate(() => { window.__hamur.oyun.sure = .1; }); await u.page.waitForTimeout(500);
+    await u.basla(0, 1); await u.gotur(1, 1, 100); await u.birak(); await u.page.evaluate(() => { window.__hamur.save.bst = { geri: 0, sure: 0, makas: 0 }; window.__hamur.oyun.sure = .1; }); await u.page.waitForTimeout(500);
     const metin = await u.page.evaluate(() => document.getElementById('ovP').textContent); await u.page.click('#ovB'); await u.page.waitForTimeout(150);
     const yeni = await u.page.evaluate(() => window.__hamur.oyun.sure), ks = await getSave(u.page);
     check('oyun.eksure', 'Aynı bölümde üç kez kaybedince sıradaki denemede 10 saniye eklenir; kayıpta ne kadar yaklaşıldığı yazılır', yeni === 40 && ks.fails?.[1] === 3 && /10 saniye/.test(metin) && /saniye daha gerekiyordu/.test(metin), `${yeni} sn · "${metin}"`);

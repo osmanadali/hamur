@@ -9,11 +9,14 @@
 const kap = document.getElementById('acilis'), App = window.__hamur, O = App && App.oyun, S = O && O.sahne;
 const splashKapat = () => { try { window.Capacitor?.Plugins?.SplashScreen?.hide?.({ fadeOutDuration: 0 }); } catch {} };
 if (!kap) return splashKapat();
-if (!S || window.__hamurEkran || window.__hamurAcilis === 0 || O.deneme) { kap.remove(); return splashKapat(); }
+let atla = false; try { atla = !!sessionStorage.getItem('hamurAcilisAtla'); sessionStorage.removeItem('hamurAcilisAtla'); } catch {}   // dil değişimi sayfayı yeniler: açılış yeniden oynamaz
+if (!S || atla || window.__hamurEkran || window.__hamurAcilis === 0 || O.deneme) { kap.remove(); return splashKapat(); }
+kap.dataset.canli = '1';
+const ekranlar = [...document.querySelectorAll('.ekran')]; for (const e of ekranlar) e.inert = true;   // açılış sürerken alttaki düğmeler klavyeye kapalı
 requestAnimationFrame(() => requestAnimationFrame(splashKapat));   // web'in ilk karesi çizildikten sonra sistem ekranı kalkar: sıçrama olmaz
 
 const cv = kap.querySelector('canvas'), c = cv.getContext('2d'), ikon = kap.querySelector('img'), yazi = kap.querySelector('p');
-const ilk = !(App.save.done || []).length, RM = S.RM, HUCRE = 70;   // 70 px: birleşik iki kare, ikondaki figürle aynı genişlikte
+const ilk = !(App.save.done || []).length, RM = S.RM, HUCRE = Math.max(40, Math.min(70, Math.floor((innerWidth / 2 - 8) / 2.5)));   // 70 px: birleşik iki kare, ikondaki figürle aynı genişlikte; dar ekranda küçülür
 let W = 0, H = 0, dpr = 1, bitti = false, t0 = 0, son = 0, birlesti = 0, tutma = null, kendi = false;
 const mavi = S.parca([[0, 0]], 'b'), sari = S.parca([[1, 0]], 'y'); let yesil = null;
 mavi.ifade = 'sag'; sari.ifade = 'sol';
@@ -25,12 +28,14 @@ boyut(); addEventListener('resize', boyut);
 function birles(now) {
   birlesti = now; yesil = S.parca([[0, 0], [1, 0]], 'g'); yesil.ifade = 'mutlu'; S.karistir(yesil, ['b', 'y'], now);
   if (!RM) for (let i = 0; i < 7; i++) { const a = Math.random() * 6.283, v = HUCRE * (.6 + Math.random()); unlar.push({ x: HUCRE, y: HUCRE * .5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - HUCRE * .3, l: 0, m: .6 + Math.random() * .3, k: i % 3, r: HUCRE * (.32 + Math.random() * .22), a }); }
-  // tek kısa ses: yapışma, ardından küçük bir çınlama
-  Ses.buzz([16, 40, 16]); Ses.fx(300, .16, 'sine', 150, .16); Ses.fx(640, .09, 'triangle', 880, .05, .03); Ses.fx(1319, .22, 'triangle', 0, .06, .2); Ses.fx(1760, .3, 'triangle', 0, .05, .32);
+  // tek kısa ses: yapışma, ardından küçük bir çınlama. Tarayıcı dokunuştan önce ses çalmaz (sonraya biriktirir): o durumda ses atlanır.
+  const sesli = !!window.Capacitor?.isNativePlatform?.() || !!navigator.userActivation?.hasBeenActive;
+  Ses.buzz([16, 40, 16]); if (sesli) Ses.fx(300, .16, 'sine', 150, .16); if (sesli) { Ses.fx(640, .09, 'triangle', 880, .05, .03); Ses.fx(1319, .22, 'triangle', 0, .06, .2); Ses.fx(1760, .3, 'triangle', 0, .05, .32); }
   yazi.hidden = true;
 }
 function bitir(hizli) {
   if (bitti) return; bitti = true;
+  for (const e of ekranlar) e.inert = false;
   if (ilk && birlesti) App.ekran.oyna(1);   // ilk açılış: doğrudan 1. bölüm
   kap.style.transitionDuration = hizli || RM ? '.15s' : '.25s'; kap.classList.add('ac');   // zemin solar: gökyüzü açılır
   setTimeout(() => { kap.remove(); removeEventListener('resize', boyut); removeEventListener('keydown', tus); }, 300);
@@ -38,6 +43,9 @@ function bitir(hizli) {
 function kare(now) {
   if (bitti && !kap.isConnected) return;
   requestAnimationFrame(kare);
+  try { ciz(now); } catch (e) { bitir(true); }   // çizim hatası uygulamayı kilitlemesin
+}
+function ciz(now) {
   if (!t0) { if (!S.hazir && now - son0 < 700) return; t0 = now; son = now; ikon.classList.add('git'); }
   const dt = Math.min(.05, (now - son) / 1000), t = now - t0; son = now;
   c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H); c.translate(W / 2 - HUCRE, H / 2 - HUCRE / 2);
@@ -77,10 +85,10 @@ kap.addEventListener('pointerdown', e => {
   const [x, y] = yer(e);
   if (Math.abs(x - (mavi.ox + HUCRE / 2)) < HUCRE * 1.3 && Math.abs(y - HUCRE / 2) < HUCRE * 1.3) { tutma = { id: e.pointerId, x0: x - mavi.ox }; mavi.lift = 1; try { kap.setPointerCapture(e.pointerId); } catch {} Ses.fx(520, .07, 'sine', 700, .05); Ses.buzz(6); }
 });
-kap.addEventListener('pointermove', e => { if (tutma && tutma.id === e.pointerId && !birlesti) mavi.ox = Math.max(-ARA - HUCRE, Math.min(0, yer(e)[0] - tutma.x0)); });
+kap.addEventListener('pointermove', e => { if (tutma && tutma.id === e.pointerId && !birlesti) mavi.ox = Math.max(-ARA, Math.min(0, yer(e)[0] - tutma.x0)); });
 const birak = e => { if (tutma && tutma.id === e.pointerId) { tutma = null; mavi.lift = 0; } };
 kap.addEventListener('pointerup', birak); kap.addEventListener('pointercancel', birak);
-function tus(e) { if (bitti) return; if (!ilk) return bitir(true); if ((e.key === 'Enter' || e.key === ' ') && !birlesti) { kendi = true; e.preventDefault(); } }
+function tus(e) { if (bitti) return; if (!ilk) return bitir(true); if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!birlesti) kendi = true; } }
 addEventListener('keydown', tus);
 if (ilk) { yazi.textContent = L('Maviyi sarıya sürükle', 'Drag blue onto yellow'); yazi.hidden = false; mavi.ox = -ARA; }
 else { mavi.ox = -uzak(); sari.ox = uzak(); }
