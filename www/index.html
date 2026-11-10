@@ -9,14 +9,34 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- Prototip görünümü. Görsel kimlik (3. aşama) onaylanınca ekranlar ve tasarım sistemi buraya işlenir. -->
-<div class="app" id="app">
+<!-- Ekranlar: ana ekran, bölüm yolu, tepsi koleksiyonu, oyun. Görsellerde yazı yoktur; bütün metin ve sayılar koddan gelir. -->
+<section class="ekran" id="sAna" hidden>
+  <header class="ust"><span></span><button class="top" id="bAyar" type="button" aria-label="Ayarlar" data-en-label="Settings"><i style="background-image:url(img/ayarlar.webp)"></i></button></header>
+  <div class="baslik-yeri" aria-hidden="true"><!-- logo: isim belli olunca --></div>
+  <img class="kahraman" src="img/karisim.webp" alt="" width="360" height="360">
+  <div class="ana-dugmeler">
+    <button class="hap sari buyuk" id="bOyna" type="button"><b data-en="Play">Oyna</b><small id="oynaNo"></small></button>
+    <div class="yan-yana">
+      <button class="hap mor" id="bYol" type="button" data-en="Levels">Bölümler</button>
+      <button class="hap yesil" id="bTepsi" type="button" data-en="Tray">Tepsi</button>
+    </div>
+  </div>
+</section>
+<section class="ekran" id="sYol" hidden>
+  <header class="ust"><button class="top" id="yolGeri" type="button" aria-label="Geri" data-en-label="Back"><i class="sola" style="background-image:url(img/oynat.webp)"></i></button><h2 data-en="Levels">Bölümler</h2><span class="bos"></span></header>
+  <div class="yol" id="yol"></div>
+</section>
+<section class="ekran" id="sTepsi" hidden>
+  <header class="ust"><button class="top" id="tepsiGeri" type="button" aria-label="Geri" data-en-label="Back"><i class="sola" style="background-image:url(img/oynat.webp)"></i></button><h2 data-en="Tray">Tepsi</h2><span class="bos"></span></header>
+  <p class="aciklama" data-en="Every 10 levels complete one figure.">Her 10 bölümde bir figür tamamlanır.</p>
+  <div class="figurler" id="figurler"></div>
+</section>
+<section class="ekran app" id="sOyun" hidden>
   <header class="hud">
     <div class="row">
-      <div class="nav" role="group" aria-label="Bölümler" data-en-label="Levels">
-        <button class="btn ikon" id="prev" type="button" aria-label="Önceki bölüm" data-en-label="Previous level">‹</button>
+      <div class="nav">
+        <button class="top cik" id="bCik" type="button" aria-label="Bölümlere dön" data-en-label="Back to levels"><i class="sola" style="background-image:url(img/oynat.webp)"></i></button>
         <span id="lvlNo" aria-live="polite">1</span>
-        <button class="btn ikon" id="next" type="button" aria-label="Sonraki bölüm" data-en-label="Next level">›</button>
       </div>
       <button class="btn resim" id="undo" type="button" aria-label="Geri al" data-en-label="Undo" disabled></button>
       <button class="btn resim" id="sound" type="button" aria-label="Ses" data-en-label="Sound"></button>
@@ -48,6 +68,13 @@
     </div>
     <p id="hint"></p>
   </footer>
+</section>
+<div class="ov tam" id="ayar" hidden>
+  <div class="panel" role="dialog" aria-labelledby="ayarT">
+    <button class="top kucuk kapat" id="ayarKapat" type="button" aria-label="Kapat" data-en-label="Close"><i style="background-image:url(img/kapat.webp)"></i></button>
+    <h2 id="ayarT" data-en="Settings">Ayarlar</h2>
+    <div class="secenekler" id="secenekler"></div>
+  </div>
 </div>
 <script src="i18n.js"></script>
 <script src="ses.js"></script>
@@ -59,5 +86,6 @@
 <script src="rules/cozucu.js"></script>
 <script src="bolumler.js"></script>
 <script src="game.js"></script>
+<script src="ekran.js"></script>
 </body>
 </html>

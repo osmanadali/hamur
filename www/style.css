@@ -13,7 +13,7 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color:var(--ink);font-family:var(--body);overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-.app{height:100%;max-width:540px;margin:0 auto;display:flex;flex-direction:column;gap:10px;padding-top:max(12px,env(safe-area-inset-top,0px));padding-bottom:max(12px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{gap:10px}
 .hud{display:flex;flex-direction:column;gap:10px}
 .row{display:flex;align-items:center;gap:8px}
 .nav{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
@@ -61,3 +61,79 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .rx i{width:16px;height:16px;border-radius:6px;display:inline-block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.15)}
 #hint{margin:0;color:var(--ink);font-size:14.5px;line-height:1.4;text-align:center;text-wrap:balance;max-width:42ch;text-shadow:0 1px 0 rgba(255,255,255,.6)}
 @media (prefers-reduced-motion:reduce){.timer.low #secs,.timer.low .saat,.tost{animation:none}}
+
+/* ---------- ekranlar ---------- */
+.ekran{height:100%;max-width:540px;margin:0 auto;display:flex;flex-direction:column;padding-top:max(12px,env(safe-area-inset-top,0px));padding-bottom:max(12px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ekran[hidden]{display:none}
+.ust{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px}
+.ust h2{margin:0;font:700 22px var(--display);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.ust .bos{width:52px}
+/* Düğmeler arayüz görsellerinden. Hap düğme ve panel dokuz dilimle (kenarı koruyarak) yazının uzunluğuna göre uzar.
+   Basılma (ezilip koyulaşma) ve pasif (grileşme) halleri kodla verilir. Gölge görselde yok, burada. */
+.hap{border-style:solid;border-color:transparent;border-width:18px 36px;border-image:url(img/hap-sari.webp) 46 96 fill / 18px 36px stretch;background:none;padding:2px 4px;min-height:58px;color:#5a3a08;font:700 18px var(--display);cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:0;filter:drop-shadow(0 5px 4px rgba(100,60,150,.3));transition:transform .08s,filter .08s}
+.hap.yesil{border-image-source:url(img/hap-yesil.webp);color:#1f4a12}
+.hap.mor{border-image-source:url(img/hap-mor.webp);color:#3b1d5c}
+.hap.buyuk{border-width:24px 48px;border-image-width:24px 48px;font-size:26px;min-height:80px;min-width:220px}
+.hap small{font:600 14px var(--body);opacity:.8}
+.hap:active{transform:translateY(3px) scale(.97);filter:drop-shadow(0 2px 2px rgba(100,60,150,.3)) brightness(.88)}
+.hap:disabled{filter:grayscale(1) opacity(.6);cursor:default}
+.top{width:52px;height:52px;border:0;padding:0;border-radius:50%;background:url(img/top-sari.webp) center/contain no-repeat;cursor:pointer;display:grid;place-items:center;filter:drop-shadow(0 4px 3px rgba(100,60,150,.3));transition:transform .08s,filter .08s}
+.top i{width:62%;height:62%;background:center/contain no-repeat}
+.top.kucuk{width:40px;height:40px;background-image:none}
+.top.kucuk i{width:100%;height:100%}
+.top:active{transform:translateY(2px) scale(.95);filter:drop-shadow(0 1px 1px rgba(100,60,150,.3)) brightness(.88)}
+.hap:focus-visible,.top:focus-visible,.durak:focus-visible,.secenek:focus-visible{outline:3px solid var(--p);outline-offset:3px}
+.panel{position:relative;border-style:solid;border-color:transparent;border-width:26px;border-image:url(img/panel.webp) 56 fill / 26px stretch;width:min(340px,92%);padding:4px 2px 2px;filter:drop-shadow(0 12px 18px rgba(80,40,130,.4))}
+.panel h2{margin:0 0 10px;font:700 22px var(--display);text-align:center}
+.panel .kapat{position:absolute;right:-30px;top:-34px}
+.ov.tam{position:fixed;z-index:10;border-radius:0}
+/* ana ekran */
+#sAna{align-items:center;gap:12px}
+#sAna .ust{align-self:stretch}
+.baslik-yeri{min-height:84px;flex:0 1 110px}
+.kahraman{width:min(78%,340px);height:auto;filter:drop-shadow(0 14px 12px rgba(90,50,140,.3));animation:salin 4.5s ease-in-out infinite}
+@keyframes salin{50%{transform:translateY(-8px) rotate(-1.5deg)}}
+.ana-dugmeler{margin-top:auto;margin-bottom:8vh;display:flex;flex-direction:column;align-items:center;gap:16px}
+.yan-yana{display:flex;gap:12px}
+/* bölüm yolu: karo alt alta dizilince ek yeri görünmez; bölüm 1 en altta */
+#sYol,#sTepsi{padding-left:0;padding-right:0}
+#sYol .ust,#sTepsi .ust{padding:0 16px}
+.yol{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column-reverse;scrollbar-width:none;border-radius:22px 22px 0 0}
+.yol::-webkit-scrollbar{display:none}
+.karo{position:relative;flex:none;width:100%;aspect-ratio:941/1672;background:url(img/yol.webp) center/100% 100% no-repeat}
+.durak{position:absolute;width:15%;aspect-ratio:1;transform:translate(-50%,-50%);border:0;padding:0;border-radius:50%;background:center/contain no-repeat;cursor:pointer;display:grid;place-items:center;font:700 clamp(15px,4.6vw,22px) var(--display);color:#6a3f10;filter:drop-shadow(0 4px 3px rgba(90,50,140,.35))}
+.durak.bos{background-image:url(img/kurabiye-bos.webp)}
+.durak.tamam{background-image:url(img/kurabiye-tamam.webp)}
+.durak.tamam span{position:absolute;left:50%;bottom:-6%;transform:translateX(-50%);background:#fffaf4;border-radius:10px;padding:0 7px;font-size:.72em;box-shadow:0 2px 0 rgba(120,80,170,.25)}
+.durak.siradaki{background-image:url(img/kurabiye-siradaki.webp);animation:nabiz 1.3s ease-in-out infinite}
+.durak.kilitli{background-image:url(img/kurabiye-kilitli.webp);cursor:default}
+.durak.yok{opacity:.55}
+.durak.figurlu::after{content:'';position:absolute;right:-14%;top:-14%;width:42%;height:42%;background:url(img/yildiz.webp) center/contain no-repeat}
+.durak:not(:disabled):active{transform:translate(-50%,-46%) scale(.94);filter:brightness(.9)}
+@keyframes nabiz{0%,100%{transform:translate(-50%,-50%) scale(1);filter:drop-shadow(0 4px 3px rgba(90,50,140,.35)) drop-shadow(0 0 0 rgba(255,214,90,0))}50%{transform:translate(-50%,-50%) scale(1.09);filter:drop-shadow(0 4px 3px rgba(90,50,140,.35)) drop-shadow(0 0 12px rgba(255,214,90,.95))}}
+/* tepsi koleksiyonu */
+.aciklama{margin:2px 16px 10px;text-align:center;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.figurler{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:6px 16px 20px;align-content:start}
+.figur{position:relative;background:var(--panel);border-radius:22px;box-shadow:var(--golge);padding:14px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.figur img{width:78%;height:auto;aspect-ratio:1}
+.figur .siluet{filter:brightness(0) opacity(.16)}
+.figur .dolu{position:absolute;top:14px;left:11%;filter:saturate(.9)}
+.figur b{font:700 17px var(--display);margin-top:6px}
+.figur small{color:var(--dim);font-weight:600;font-variant-numeric:tabular-nums}
+.figur.tamam{background:#fffaf4}
+.figur.tamam small{color:#3f9a2c}
+/* ayarlar */
+.secenekler{display:flex;flex-direction:column;gap:6px}
+.secenek{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;border:0;border-radius:14px;background:rgba(255,255,255,.55);padding:6px 12px;font:600 15px var(--body);color:var(--ink);text-align:left;cursor:pointer}
+.anahtar{flex:none;width:46px;height:26px;border-radius:13px;background:#cdbbe0;position:relative;transition:background .15s}
+.anahtar::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.secenek[aria-checked=true] .anahtar{background:#6cc24a}
+.secenek[aria-checked=true] .anahtar::after{transform:translateX(20px)}
+.secenek select{font:inherit;color:var(--ink);background:#fff;border:0;border-radius:10px;padding:6px 10px}
+/* oyun ekranı: bölümlere dönüş düğmesi, kutlamada figür */
+/* geri gitme: mor düğmede sola bakan üçgen (geri al oku yalnız hamle geri almadır) */
+.top .sola{transform:scaleX(-1);width:48%;height:48%;margin-right:8%}
+#yolGeri,#tepsiGeri,#bCik{background-image:url(img/top-mor.webp)}
+.top.cik{width:44px;height:44px}
+.tost img{display:block;width:120px;height:120px;margin:0 auto 6px}
+@media (prefers-reduced-motion:reduce){.kahraman,.durak.siradaki{animation:none}}

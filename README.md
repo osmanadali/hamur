@@ -16,6 +16,7 @@ Ray (`osmanadali/mobil-oyun`) ile aynı: hazır oyun motoru yok, düz JavaScript
 | `www/bolumler.js` | 60 bölüm. Üretilir, elle düzenlenmez |
 | `www/img/` | Oyundaki görseller (`docs/gorseller/` kaynaklarından küçültülür) |
 | `tools/uretici.cjs`, `tools/uretici/elle.cjs` | Bölüm üretici ve elle yazılan sabit bölümler |
+| `www/ekran.js` | Ekranlar: ana ekran, bölüm yolu, tepsi koleksiyonu, ayarlar |
 | `www/app.js` | Kabuk: kayıt, ayarlar, reklam ve mağaza bağlantısı |
 | `www/ses.js` | Ses, müzik, titreşim (Ray'den) |
 | `www/ads.js`, `www/shop.js`, `www/olcum.js` | Reklam, mağaza, ölçüm (Ray'den) |

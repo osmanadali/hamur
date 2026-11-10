@@ -33,7 +33,7 @@ const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).to
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
 const IMG = {};
-for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -111,9 +111,7 @@ function setup(i) {
   state = 'play'; timeLeft = Lv.t + ekSure; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1;
   threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null;
   $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); $('rx').hidden = i < 20;   // renk tarifi karışımın öğretildiği 21. bölümden itibaren
-  // Bölüm seçici (test sürümü: bütün bölümler açık). Bölüm yolu ekranı görsel kimlikle birlikte gelir.
-  $('lvlNo').textContent = i < ASIL ? (i + 1) + ' / ' + ASIL : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
-  $('prev').disabled = i <= 0 || i >= ASIL; $('next').disabled = i >= ASIL - 1;
+  $('lvlNo').textContent = i < ASIL ? L('Bölüm ', 'Level ') + (i + 1) : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
   paintUndo(); layout();
   window.Olcum?.event('level_start', { level: i + 1 });
 }
@@ -327,8 +325,10 @@ function win() {
   if (li >= ASIL) return showOv(L('Deneme tamam', 'Test complete'), kalan, L('Yeniden oyna', 'Play again'), () => setup(li));   // editörden gelen deneme bölümü
   const lastOne = li === ASIL - 1;
   if (!lastOne) {   // bölüm bitince menü açılmaz: kısa bir kutlama, sonra tahta kayar ve sıradaki bölüm gelir
-    const t = $('tost'); t.innerHTML = ''; t.append(L('Bölüm tamam!', 'Level complete!')); const k = document.createElement('small'); k.textContent = kalan; t.append(k); t.hidden = false;
-    const hedef = li + 1; clearTimeout(gecisT); gecisT = setTimeout(() => { if (state === 'won' && li === hedef - 1) sonraki(hedef); }, RM ? 1100 : 950);
+    const t = $('tost'), fig = App.oyun.figurAdi?.(li + 1); t.innerHTML = '';
+    if (fig) { const im = document.createElement('img'); im.src = fig.resim; im.alt = ''; t.append(im, fig.ad + L(' tamamlandı!', ' completed!')); } else t.append(L('Bölüm tamam!', 'Level complete!'));
+    const k = document.createElement('small'); k.textContent = kalan; t.append(k); t.hidden = false;
+    const hedef = li + 1; clearTimeout(gecisT); gecisT = setTimeout(() => { if (state === 'won' && li === hedef - 1) sonraki(hedef); }, fig ? 2200 : RM ? 1100 : 950);
     return;
   }
   showOv(lastOne ? L('Hepsi tamam', 'All done') : L('Bölüm tamam', 'Level complete'),
@@ -356,7 +356,6 @@ cv.addEventListener('pointermove', e => {
 const drop = e => { if (drag && e.pointerId === drag.id) birak(); };
 cv.addEventListener('pointerup', drop); cv.addEventListener('pointercancel', drop);
 $('retry').onclick = () => setup(li);
-$('prev').onclick = () => setup(li - 1); $('next').onclick = () => setup(li + 1);
 $('undo').onclick = geriAl;
 const paintSound = () => { $('sound').classList.toggle('off', !save.sound); $('sound').setAttribute('aria-pressed', String(save.sound)); };
 $('sound').onclick = () => { save.sound = !save.sound; App.persist(); paintSound(); };
@@ -401,9 +400,9 @@ function drawMakas(m, now) {
   ctx.globalAlpha = m.open ? 1 : .28;
   rr(-cell * .42, -cell * .42, cell * .84, cell * .84, cell * .16); ctx.fillStyle = 'rgba(255,255,255,' + (m.open ? .45 + .3 * v : .2) + ')'; ctx.fill();
   if (m.open) { ctx.setLineDash([cell * .07, cell * .07]); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,80,170,.55)'; ctx.stroke(); ctx.setLineDash([]); }
-  if (IMG.makas) {   // hamur makas: açıkken hafifçe sallanır, itilirken küçülüp döner (kapanır), kesince soluk kalır
-    const sal = m.open && !RM ? Math.sin(now / 520 + m.x * 2) * .08 : 0, w = cell * .78 * (1 - .22 * v);
-    ctx.rotate(sal - v * .5); ctx.drawImage(IMG.makas, -w / 2, -w / 2, w, w); ctx.restore(); return;
+  if (IMG.makas) {   // hamur makas: açıkken hafifçe sallanır, itilirken küçülüp döner (kapanır); kullanılınca kapalı makas görseli
+    const sal = m.open && !RM ? Math.sin(now / 520 + m.x * 2) * .08 : 0, w = cell * .78 * (1 - .22 * v), im = m.open ? IMG.makas : IMG['makas-kapali'] || IMG.makas;
+    ctx.globalAlpha = m.open ? 1 : .55; ctx.rotate(sal - v * .5); ctx.drawImage(im, -w / 2, -w / 2, w, w); ctx.restore(); return;
   }
   ctx.lineCap = 'round'; ctx.rotate(-Math.PI / 4);
   for (const s of [-1, 1]) {
@@ -433,6 +432,8 @@ function drawHole(h, now) {
     ctx.setLineDash([cell * .15, cell * .1]); ctx.lineDashOffset = RM ? 0 : -now / 60; ctx.lineCap = 'round';
     ctx.shadowColor = c; ctx.shadowBlur = cell * (.08 + .1 * nabiz);                // hafif parlama
     ctx.lineWidth = Math.max(3, cell * .075); ctx.strokeStyle = lighten(c, .15 * nabiz); ctx.stroke(h.path);
+    ctx.shadowBlur = 0; ctx.setLineDash([]);
+    if (save.damga) for (const [x, y] of h.cells) damga(h.color, (x + .5) * cell, (y + .5) * cell, .46, .38);
   }
   ctx.restore();
 }
@@ -501,6 +502,15 @@ function body(p, now) {
   }
   ctx.restore();
 }
+// Renk damgası (renk körlüğü; ayarlardan açılır): her rengin kendi şekli, parçanın yüzsüz karelerine ve kalıbın içine hafif kabartma
+// olarak basılır. Gri damga, alttaki rengin üstüne çarpılarak çizilir (rengin koyu tonu: kabartma).
+const DAMGA = { y: 0, r: 1, b: 2, g: 3, p: 4, o: 5 };   // sarı yıldız, kırmızı kalp, mavi damla, yeşil yaprak, mor ay, turuncu elmas
+function damga(renk, cx, cy, boy, a) {
+  const im = IMG.damgalar; if (!im || !save.damga) return;
+  const s = im.height, w = cell * boy;
+  ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'multiply';
+  ctx.drawImage(im, DAMGA[renk] * s, 0, s, s, cx - w / 2, cy - w / 2, w, w); ctx.restore();
+}
 // Yüz (kaynak: docs/gorseller/yuzler.png, 4×2 ifade): parçanın tek karesine yerleşir, ifade duruma göre değişir.
 // normalde sakin · sürüklenirken yöne bakar · süre azalınca telaşlı · yanlış yapışınca (ya da kaybedince) üzgün · kalıba oturunca mutlu
 const YUZ = { sakin: 0, mutlu: 1, kirp: 2, sol: 3, sag: 4, telas: 5, saskin: 6, uzgun: 7 };
@@ -558,6 +568,7 @@ function drawPiece(p, now, k, glow) {
     }
   }
   if (glow) { ctx.lineWidth = cell * .075; ctx.strokeStyle = rgba(C[glow], .6 + .3 * Math.sin(now / 90)); ctx.stroke(p.path); }
+  if (save.damga && !p.mix) p.cells.forEach((c, i) => { if (i !== p.face || p.cells.length === 1) damga(p.color, (c[0] - x0 + .5) * cell, (c[1] - y0 + (p.cells.length === 1 ? .8 : .5)) * cell, p.cells.length === 1 ? .26 : .5, .55); });   // tek karede yüzün altına küçük damga
   if (k > .25) face(p, now);
   ctx.restore();
 }
@@ -680,7 +691,7 @@ requestAnimationFrame(frame);
 
 window.__hamurCalm = () => !drag;   // sürükleme sırasında reklam yüklenmez (ads.js)
 // test robotu ve bölüm editörü için
-App.oyun = { CFG, PAD, setup, geriAl, LEVELS, get kesim() { return kesim && kesim.v; }, get st() { return st; }, get durum() { return state; }, get cell() { return cell; }, get bolum() { return li + 1; },
+App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= ASIL; }, ayarDegisti: () => paintSound(), get kesim() { return kesim && kesim.v; }, get st() { return st; }, get durum() { return state; }, get cell() { return cell; }, get bolum() { return li + 1; },
   get sure() { return timeLeft; }, set sure(v) { timeLeft = v; }, get drag() { return drag; }, get iplik() { return [...threads.values()].map(t => ({ v: t.v, ne: t.ne, renk: t.color })); },
   get geriKalan() { return geriKalan; }, get geriVar() { return !!geri; } };
 })();
