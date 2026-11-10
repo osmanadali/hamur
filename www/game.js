@@ -31,6 +31,7 @@ const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
 const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
 const tone = Ses.fx, buzz = Ses.buzz;
 
+const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
 let cell = 60, dpr = 1, state = 'play', timeLeft = 0, running = false, drag = null, sinks = [], parts = [], rings = [], after = null, wonAt = 0, shownS = -1, wallPath = null, last = performance.now();
 let threads = new Map();   // tutulan parçanın komşularıyla arasındaki hamur iplikleri: q → { v: 0…1 doluluk, seam, color }
@@ -98,7 +99,7 @@ function giydir(p) {
 }
 function setup(i) {
   li = i; Lv = LEVELS[i]; st = K.load(Lv); cz = Coz.hazirla(st);
-  save.level = i + 1; App.persist();
+  if (i < ASIL) { save.level = i + 1; App.persist(); }
   st.pieces.forEach(giydir);
   state = 'play'; timeLeft = Lv.t; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1;
   threads = new Map(); geri = null; geriKalan = CFG.geriHak;
@@ -256,7 +257,7 @@ async function sonraki(i) {
   setup(i);
 }
 function win() {
-  done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; App.persist();
+  if (li < ASIL) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; App.persist(); }
   const b = $('lvl' + li); if (b) b.classList.add('done');
   [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09));
   window.Olcum?.event('level_end', { level: li + 1, time_left: Math.ceil(timeLeft) });
@@ -527,6 +528,11 @@ function frame(now) {
   update(dt, now); draw(now);
   requestAnimationFrame(frame);
 }
+// Bölüm editöründen "Oyunda dene": bölüm adres çubuğunda gelir (#bolum=<JSON>), geçerliyse deneme bölümü olarak açılır.
+try {
+  const m = location.hash.match(/^#bolum=(.+)$/), Lx = m && JSON.parse(decodeURIComponent(m[1]));
+  if (Lx && !K.validate(Lx).length) { if (!Array.isArray(Lx.hint)) Lx.hint = [Lx.hint || '', Lx.hint || '']; LEVELS.push(Lx); li = LEVELS.length - 1; }
+} catch {}
 setup(li);
 if (window.ResizeObserver) new ResizeObserver(layout).observe(stage);
 else addEventListener('resize', layout);

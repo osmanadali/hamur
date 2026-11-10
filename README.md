@@ -10,14 +10,20 @@ Ray (`osmanadali/mobil-oyun`) ile aynı: hazır oyun motoru yok, düz JavaScript
 
 | Yol | İçerik |
 |---|---|
-| `www/app.js` | Kabuk: kayıt, ayarlar, reklam ve mağaza bağlantısı. Oyun prototipten buraya taşınacak. |
-| `www/rules/` | Kural çekirdeği (hareket, yapışma, karışım, kalıp, çıkmaz). Henüz boş. |
+| `www/rules/cekirdek.js` | Kural çekirdeği: hareket, yapışma, karışım, kalıp, bölüm doğrulaması |
+| `www/rules/cozucu.js` | Çözücü ve çıkmaz kanıtı |
+| `www/game.js` | Oyun: sürükleme, niyet okuma, çizim, geri alma (prototipten taşındı) |
+| `www/bolumler.js` | Bölümler (şimdilik prototipin beş bölümü) |
+| `www/app.js` | Kabuk: kayıt, ayarlar, reklam ve mağaza bağlantısı |
 | `www/ses.js` | Ses, müzik, titreşim (Ray'den) |
 | `www/ads.js`, `www/shop.js`, `www/olcum.js` | Reklam, mağaza, ölçüm (Ray'den) |
 | `www/i18n.js`, `tools/diller.cjs`, `tools/diller/` | `L('Türkçe', 'English')` ve öteki dillerin sözlükleri (Ray'den) |
-| `tools/hakem.cjs`, `tools/hakem/` | Test robotu (Playwright). Oyun kontrolleri `tools/hakem/*.cjs` altına eklenir. |
+| `tools/cozucu.cjs` | Çözücü komut satırı: bölümleri çözer, tabloyu yazar |
+| `tools/editor/` | Bölüm editörü (tarayıcıda; oyuna paketlenmez) |
+| `tools/hakem.cjs`, `tools/hakem/` | Test robotu (Playwright): kabuk, kurallar, çözücü, oyun, editör |
 | `tools/android/`, `tools/olcum-hazirla.cjs` | `cap add android` sonrası yerel proje hazırlığı |
 | `.github/workflows/` | `hakem.yml` (robot), `apk.yml` (test APK'sı, elle), `web.yml` (Pages, elle) |
+| `.claude/skills/hamur-kurallar/` | Kural seti, bölüm biçimi, terimler |
 
 ## Komutlar
 
@@ -27,6 +33,14 @@ npm run serve
 
 ```bash
 node tools/hakem.cjs --strict
+```
+
+```bash
+node tools/cozucu.cjs -v
+```
+
+```bash
+npm run editor
 ```
 
 ```bash

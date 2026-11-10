@@ -13,7 +13,8 @@ const SHOTS = path.join(OUT, 'shots');
 fs.mkdirSync(SHOTS, { recursive: true });
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg' };
-function serve() {
+function serve(ROOT_ = ROOT) {
+  const ROOT = ROOT_;
   return new Promise(res => {
     const s = http.createServer((q, r) => {
       let p = decodeURIComponent(q.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html';
@@ -89,7 +90,7 @@ async function inViewport(page, sel) {
   // varsayılan dil Türkçe: oyun cihaz dili tr değilse İngilizce açılır; İngilizce testi locale'i açıkça verir
   const _browser = await chromium.launch();
   const browser = { newContext: o => _browser.newContext({ locale: 'tr-TR', ...o }), close: () => _browser.close() };
-  const T = { browser, URL, ROOT, open, shot, getSave, inViewport, check, metrics, MOCK, SHOP_MOCK };
+  const T = { browser, URL, ROOT, serve, open, shot, getSave, inViewport, check, metrics, MOCK, SHOP_MOCK };
   const eklentiler = only => fs.readdirSync(path.join(__dirname, 'hakem')).filter(f => f.endsWith('.cjs') && (!only || f.includes(only))).sort();
 
   // geliştirirken yalnız bir dosya: node tools/hakem.cjs --only=cozucu (birleştirmeden önceki tam koşunun yerini tutmaz)

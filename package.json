@@ -10,6 +10,8 @@
     "android": "npx cap sync android && npx cap open android",
     "ios": "npx cap sync ios && npx cap open ios",
     "hakem": "node tools/hakem.cjs",
+    "cozucu": "node tools/cozucu.cjs",
+    "editor": "npx --yes http-server . -p 8081 -c-1 -o /tools/editor/",
     "assets": "node tools/make-assets.cjs"
   },
   "dependencies": {

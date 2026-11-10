@@ -2,7 +2,7 @@
 # Sonuç: Actions → çalıştırma → Summary (özet tablo) + "hakem" artifact (ekran görüntüleri).
 name: Hakem (test robotu)
 on:
-  push: { branches: [main], paths: ['www/**', 'tools/hakem.cjs', 'tools/hakem/**', 'tools/cozucu/**', '.github/workflows/hakem.yml'] }
+  push: { branches: [main], paths: ['www/**', 'tools/hakem.cjs', 'tools/hakem/**', 'tools/editor/**', '.github/workflows/hakem.yml'] }
   workflow_dispatch:
 jobs:
   hakem:
