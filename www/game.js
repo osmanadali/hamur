@@ -175,7 +175,7 @@ function olaylar(p, ev) {
 function denetle(p) {
   if (state !== 'play') return;
   if (st.pieces.length === 0) { state = 'won'; running = false; wonAt = 0; kazanKaydet(); }
-  else if (Coz.cikmaz(st, cz)) lose('doom', K.doomed(st) || (st.pieces.includes(p) ? p : st.pieces[0]));
+  else if (Coz.cikmaz(st, cz, 20000, 80)) lose('doom', K.doomed(st) || (st.pieces.includes(p) ? p : st.pieces[0]));
 }
 // Makas: çok kareli parça açık makasa doğru itilince dolan ölçü. Dolunca parça o kareye girer, makasın üstündeki kare kopar,
 // sürükleme biter ve bütün parçalar oldukları yerde kalır (cekirdek M3-M4). Kararsız parmak kesmez: karar görünür (makas kapanır).

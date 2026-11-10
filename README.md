@@ -2,7 +2,7 @@
 
 Renkli hamur parçalarını yapıştırıp şekil kurduğun ve o şekli süre bitmeden kalıbına oturttuğun, bölüm bölüm ilerleyen telefon oyunu. Çalışma adıdır.
 
-Plan: [docs/Hamur-Yol-Haritasi.pdf](docs/Hamur-Yol-Haritasi.pdf). Şu an 1. aşamadayız (kural ve çözücü).
+Plan: [docs/Hamur-Yol-Haritasi.pdf](docs/Hamur-Yol-Haritasi.pdf). 1. aşama (kural ve çözücü) ve 2. aşamanın kod tarafı (bölüm fabrikası, 60 bölüm) bitti; 2. aşamanın geçiş şartı 5 kişilik his testidir. 3. aşamadan (görsel kimlik) ilk geçiş oyunda.
 
 ## Yapı
 
@@ -13,7 +13,9 @@ Ray (`osmanadali/mobil-oyun`) ile aynı: hazır oyun motoru yok, düz JavaScript
 | `www/rules/cekirdek.js` | Kural çekirdeği: hareket, yapışma, karışım, kalıp, bölüm doğrulaması |
 | `www/rules/cozucu.js` | Çözücü ve çıkmaz kanıtı |
 | `www/game.js` | Oyun: sürükleme, niyet okuma, çizim, geri alma (prototipten taşındı) |
-| `www/bolumler.js` | Bölümler (şimdilik prototipin beş bölümü) |
+| `www/bolumler.js` | 60 bölüm. Üretilir, elle düzenlenmez |
+| `www/img/` | Oyundaki görseller (`docs/gorseller/` kaynaklarından küçültülür) |
+| `tools/uretici.cjs`, `tools/uretici/elle.cjs` | Bölüm üretici ve elle yazılan sabit bölümler |
 | `www/app.js` | Kabuk: kayıt, ayarlar, reklam ve mağaza bağlantısı |
 | `www/ses.js` | Ses, müzik, titreşim (Ray'den) |
 | `www/ads.js`, `www/shop.js`, `www/olcum.js` | Reklam, mağaza, ölçüm (Ray'den) |
@@ -23,7 +25,9 @@ Ray (`osmanadali/mobil-oyun`) ile aynı: hazır oyun motoru yok, düz JavaScript
 | `tools/hakem.cjs`, `tools/hakem/` | Test robotu (Playwright): kabuk, kurallar, çözücü, oyun, editör |
 | `tools/android/`, `tools/olcum-hazirla.cjs` | `cap add android` sonrası yerel proje hazırlığı |
 | `.github/workflows/` | `hakem.yml` (robot), `apk.yml` (test APK'sı, elle), `web.yml` (Pages, elle) |
-| `.claude/skills/hamur-kurallar/` | Kural seti, bölüm biçimi, terimler |
+| `.claude/skills/hamur-kurallar/` | Kural seti, makas karesi, bölüm biçimi, terimler |
+| `.claude/skills/hamur-bolum/` | Bölüm kabul ölçütleri, zorluk ritmi, mekanik takvimi |
+| `docs/gorseller/` | Hedef ve kaynak görseller |
 
 ## Komutlar
 
@@ -44,6 +48,10 @@ npm run editor
 ```
 
 ```bash
+node tools/uretici.cjs --yaz
+```
+
+```bash
 node tools/diller.cjs
 ```
 
@@ -51,6 +59,6 @@ node tools/diller.cjs
 
 - `release.yml`, `ios.yml`, `ios-release.yml`, `ios-iap.yml`, `tools/ios/`: mağaza kaydı ve reklam kimlikleri açılınca (7. aşama).
 - `tools/store-shots.cjs`, `tools/ikon.cjs`, `tools/make-assets.cjs`, bildirim simgesi: ikon ve ekranlar çizilince (3. aşama).
-- Müzik şimdilik Ray'in bestesi; görsel kimlikle birlikte yeniden yazılacak.
+- Müzik modülü Ray'in bestesiyle duruyor ama çalınmıyor; görsel kimlikle birlikte yeniden yazılacak.
 
 Paket adı (`com.osmanadali.hamur`) ve ürün kimlikleri (`hamur_reklamsiz`, `hamur_guclendirici`) taslaktır.

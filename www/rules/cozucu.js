@@ -40,7 +40,7 @@
     const holes = st.holes.map((h, i) => { const s = shapeOf(h.cells); return { i, color: h.color, shape: s, pos: s.y * W + s.x, cells: h.cells, n: h.cells.length, set: new Set(h.cells.map(c => c[1] * W + c[0])) }; });
     if (W > 10 || H > 10 || st.holes.length > 30 || (st.makas || []).length > 30 || st.pieces.length > 120) throw new Error('çözücü sınırı: tahta en çok 10×10, en çok 30 kalıp ve 30 makas');
     const makas = (st.makas || []).map((m, i) => ({ i, x: m.x, y: m.y, pos: m.y * W + m.x }));
-    return { W, H, wall, holes, makas, shapes: new Map(), comps: new Map(), fits: new Map(), fuses: new Map(), dead: new Map(), solv: new Map(), nodes: 0 };
+    return { W, H, wall, holes, makas, shapes: new Map(), comps: new Map(), fits: new Map(), fuses: new Map(), dead: new Map(), solv: new Map(), nodes: 0, asim: 0, pahali: false, son: 0 };
   }
   const intern = (ctx, s) => ctx.shapes.get(s.key) || (ctx.shapes.set(s.key, s), s);
   // Şeklin yalnız duvarlara göre gidebildiği yerler: comp[konum] = o konumun bağlı bileşeninin kimliği (en küçük konum), geçersizse -1.
@@ -127,10 +127,18 @@
   function kazanilir(ctx, ps, mask, tm = 0) {
     if (!ps.length) return true;
     const k = rKey(ps, mask, tm), m = ctx.dead.get(k); if (m !== undefined) return m;
-    if (++ctx.nodes > ctx.cap) { ctx.over = true; return true; }
+    if (++ctx.nodes > ctx.cap || (ctx.son && !(ctx.nodes & 127) && now() > ctx.son)) { ctx.over = true; return true; }
     const sigmali = p => !tm || p.s.cells.length === 1;
     let ok = true;
-    for (const p of ps) if (sigmali(p) && !yeriVar(ctx, p.color, p.s, mask, !!tm)) { ok = false; break; }
+    // renk sayımı (makas açıkken de geçerli gerekli koşul; kesme ve yapışma kare sayısını değiştirmez, ara renk geri ayrışmaz):
+    // her rengin kareleri, o rengi alabilecek açık kalıpların karelerine sığmalı
+    if (tm) {
+      const kare = {}, yer = {};
+      for (const p of ps) kare[p.color] = (kare[p.color] || 0) + p.s.cells.length;
+      for (const h of ctx.holes) if (mask >> h.i & 1) { yer[h.color] = (yer[h.color] || 0) + h.n; if (PARTS[h.color]) for (const a of PARTS[h.color]) yer[a] = (yer[a] || 0) + h.n; }
+      for (const c in kare) if (kare[c] > (yer[c] || 0)) { ok = false; break; }
+    }
+    if (ok) for (const p of ps) if (sigmali(p) && !yeriVar(ctx, p.color, p.s, mask, !!tm)) { ok = false; break; }
     if (ok) {
       ok = false;
       // kalıba oturma
@@ -160,8 +168,11 @@
   }
   const maskOf = st => st.holes.reduce((m, h, i) => h.filled ? m : m | 1 << i, 0);
   // true: kesin çıkmaz (kanıtlı). false: çıkmaz olduğu kanıtlanamadı (çözülebilir ya da bütçe yetmedi).
-  function cikmaz(st, ctx, cap = 20000) {
+  // cap: düğüm bütçesi · ms: süre bütçesi (oyunda donma olmasın). Bütçe aşılırsa "kanıtlanamadı" (false) döner; ctx.over ile anlaşılır.
+  function cikmaz(st, ctx, cap = 20000, ms = 0) {
     ctx = ctx || hazirla(st);
+    if (ctx.dead.size > 150000) { ctx.dead.clear(); ctx.fuses.clear(); }   // bellek sınırı (kalabalık makaslı tahtalar)
+    ctx.son = ms ? now() + ms : 0;
     const ps = st.pieces.map(p => { const s = intern(ctx, shapeOf(p.cells)), sh = shapeOf(p.cells); return { color: p.color, s, comp: compsOf(ctx, s).comp[sh.y * ctx.W + sh.x] }; });
     ctx.nodes = 0; ctx.cap = cap; ctx.over = false;
     const ok = kazanilir(ctx, ps, maskOf(st), (st.makas || []).reduce((m, t, i) => t.open ? m | 1 << i : m, 0));
@@ -252,7 +263,8 @@
           const c = { st: s, key: k, g: n.g + 1, yer: n.yer + (mv.tip === 'yer' ? 1 : 0), kare: n.kare + mv.d, ways: n.ways, par: n, mv };
           seen.set(k, c);
           if (!s.pieces.length) { wins.push(c); continue; }
-          if (cikmaz(s, ctx, 4000)) continue;
+          // kanıt bu tahtada bütçeyi aşıyorsa (kalabalık makaslı tahta) aramada her düğümde yeniden denenmez
+          if (!ctx.pahali) { if (cikmaz(s, ctx, 4000)) continue; if (ctx.over && ++ctx.asim > 20) ctx.pahali = true; }
           next.push(c);
         }
         if (kesildi) break;
