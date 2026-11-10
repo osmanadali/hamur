@@ -395,3 +395,10 @@ body.ana-acik .gok{opacity:1}
 #ovB2.cikis{border-image-source:url(img/hap-kirmizi.webp);color:#5c0f14}
 @media (max-height:680px){.card{padding:14px}.card h2{font-size:27px}.card img{max-height:15vh}}
 @media (prefers-reduced-motion:reduce){.card,#ov{animation:none}}
+
+/* ayarlar penceresi de aynı kalıpta: mat lila hamur gövde, koyu iç satırlar */
+.panel{border:5px solid #8a68cf;border-image:none;border-radius:36px;background:#b79be8 url(img/doku.webp) center/140px;background-blend-mode:soft-light;padding:18px 16px 16px;width:min(350px,92%);box-shadow:0 8px 0 #6f4fb8,0 24px 44px rgba(35,10,75,.5);filter:none}
+.panel .kapat{right:-14px;top:-14px}
+.panel .secenek{background:rgba(70,35,125,.34);color:#fff9ee}
+.panel .surum,.panel small{color:#fff3e0}
+#ayar{background:rgba(55,28,95,.74)}

@@ -895,5 +895,13 @@ App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= 
     get hazir() { return !!blokGri; }, parcacik: () => IMG.parcacik, el: () => IMG.el,
   },
   gunlukNo, bugun, get gunluk() { return gunluk; }, duraklat, devam, sureEkle, makasSec, get durakta() { return durak; }, get stok() { return { geri: stok('geri'), sure: stok('sure'), makas: stok('makas') }; },
-  dur() { if (durak) $('ov').hidden = true; durak = false; makasKoy = false; cv.style.visibility = ''; running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
+  // Bölüm başlangıç penceresi: ana ekrandan ya da yoldan girince (bölümden bölüme geçerken çıkmaz). Süre zaten ilk dokunuşta başlar.
+  giris() {
+    const y = save.yildiz?.[li + 1], kapat = () => { $('ov').hidden = true; };
+    showOv(gunluk ? L('Günlük kalıp', 'Daily mold') : L('Bölüm ', 'Level ') + (li + 1),
+      (y ? yildizYazi(y) + '\n' : '') + L(`Süre ${Math.round(timeLeft)} sn · Geri al ×${geriKalan + stok('geri')} · +15 sn ×${stok('sure')} · Makas ×${stok('makas')}`, `Time ${Math.round(timeLeft)} s · Undo ×${geriKalan + stok('geri')} · +15 s ×${stok('sure')} · Scissors ×${stok('makas')}`),
+      L('Oyna', 'Play'), kapat);
+    $('ovP').style.whiteSpace = 'pre-line'; $('ovX').hidden = false; $('ovX').onclick = () => App.ekran.goster('ana');
+  },
+  dur() { if (durak || state === 'play') $('ov').hidden = true; durak = false; makasKoy = false; cv.style.visibility = ''; running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
 })();

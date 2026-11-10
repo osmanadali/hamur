@@ -36,8 +36,8 @@ function goster(ad) {
   if (ad === 'tepsi') tepsi();
   window.Olcum?.event('screen_view', { screen_name: ad });
 }
-function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, false); }
-function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik'); O.setup(O.gunlukNo(), true); }   // günlük kalıp: canlı arka plan
+function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, false); O.giris(); }
+function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik'); O.setup(O.gunlukNo(), true); O.giris(); }   // günlük kalıp: canlı arka plan
 
 /* ---------- ana ekran ---------- */
 function ana() {
