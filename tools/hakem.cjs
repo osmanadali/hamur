@@ -36,6 +36,7 @@ function check(id, name, pass, detail = '', severity = 'high') {
 // Capacitor eklentilerinin sahtesi: reklam, titreşim, paylaşım çağrılarını kaydeder.
 const MOCK = `
   window.__log = { ads: [], hap: 0, share: [], raf: 0, errors: [] };
+  if (!window.__acilisTest) window.__hamurAcilis = 0;   // açılış animasyonu yalnız kendi testinde oynar
   if (!window.__anaEkran) window.__hamurEkran = 'oyun';   // robot doğrudan oyun ekranında başlar; ekran testleri __anaEkran ile ana ekrandan başlar
   const _raf = window.requestAnimationFrame.bind(window);
   window.requestAnimationFrame = cb => { window.__log.raf++; return _raf(cb); };

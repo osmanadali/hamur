@@ -19,7 +19,7 @@ const CFG = {
 };
 
 const $ = id => document.getElementById(id);
-const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
+const cv = $('cv'), stage = $('stage'); let ctx = cv.getContext('2d');   // ctx: açılış animasyonu aynı çizimi kendi tuvalinde kullanır (bkz. sahne)
 const css = getComputedStyle(document.documentElement), C = {};
 for (const k of ['r', 'y', 'b', 'g', 'o', 'p', 'mat', 'field', 'grid', 'rule', 'wall', 'pit']) C[k] = css.getPropertyValue('--' + k).trim();
 const NAME = { r: L('Kırmızı', 'Red'), y: L('Sarı', 'Yellow'), b: L('Mavi', 'Blue'), g: L('Yeşil', 'Green'), o: L('Turuncu', 'Orange'), p: L('Mor', 'Purple') };
@@ -327,7 +327,7 @@ function geriAl() {
 const paintUndo = () => { const b = $('undo'); b.hidden = !CFG.geriHak; b.disabled = !(geri && geriKalan > 0); };
 // Bölüm arası reklam: yalnız kazanınca, sıradaki tahta gelmeden önce. İlk 10 bölümde yok, sonra 3 bölümde bir (iki reklam arası en az 90 sn: ads.js).
 async function sonraki(i) {
-  if (!save.noads && li < ASIL && li + 1 > 10 && save.wins % 3 === 0) await Ads.interstitial();
+  if (!save.noads && li < ASIL && li + 1 > 10 && save.wins % 3 === 0) await (App.bekle ? App.bekle.sar(Ads.interstitial(), 'top') : Ads.interstitial());
   const eski = li;
   if (!RM && cv.animate) { try { await cv.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(-55%)', opacity: 0 }], { duration: 230, easing: 'ease-in' }).finished; } catch {} }
   if (li !== eski || (App.ekran && App.ekran.acik !== 'oyun')) return;   // bu arada başka bölüme geçildi
@@ -538,6 +538,7 @@ function damga(renk, cx, cy, boy, a) {
 const DIKEY = { yukari: 0, asagi: 1 };
 const YUZ = { sakin: 0, mutlu: 1, kirp: 2, sol: 3, sag: 4, telas: 5, saskin: 6, uzgun: 7 };
 function ifade(p, now) {
+  if (p.ifade) return p.ifade;   // açılış sahnesi ifadeyi kendisi verir
   if (state === 'lost' || (p.shakeT && now - p.shakeT < 1600)) return 'uzgun';
   if (state === 'won' || sinks.some(s => s.p === p)) return 'mutlu';
   if (state === 'play' && running && timeLeft < 10) return 'telas';
@@ -547,7 +548,7 @@ function ifade(p, now) {
     if (drag.p === p) {   // tutulan parça gittiği yöne bakar (dört yön); durunca son baktığı yerde kalır
       const h = drag.hist, a = h[Math.max(0, h.length - 6)], oyn = Math.hypot(drag.px - a.x, drag.py - a.y) > 2, y = yaslan();
       dx = oyn ? drag.px - a.x : y[0] * cell; dy = oyn ? drag.py - a.y : y[1] * cell;
-      if (Math.hypot(dx, dy) > cell * .08) p.bak = yon(dx, dy);
+      if ((oyn || !p.bak) && Math.hypot(dx, dy) > cell * .08) p.bak = yon(dx, dy);
       return p.bak || 'sag';
     }
     const c = center(drag.p), d = center(p); dx = c[0] - d[0]; dy = c[1] - d[1];
@@ -667,10 +668,10 @@ function el(now) {
   const im = IMG.el;
   if (!im || li !== 0 || running || drag || state !== 'play' || done.size > 0 || st.pieces.length < 2) return;
   const a = center(st.pieces[0]), b = center(st.pieces[1]), yon = Math.sign(b[0] - a[0]) || 1;
-  const hx = b[0] - yon * cell, T = 2400, t = (now % T) / T, u = t < .15 ? 0 : t < .7 ? (t - .15) / .55 : 1, e = RM ? .5 : u * u * (3 - 2 * u);
+  const hx = b[0] - yon * cell, T = 2400, t = (now % T) / T, u = t < .15 ? 0 : t < .7 ? (t - .15) / .55 : 1, e = RM ? 0 : u * u * (3 - 2 * u);
   const x = a[0] + (hx - a[0]) * e, y = a[1] + (b[1] - a[1]) * e + cell * .12, w = cell * 1.6, bas = t > .08 && t < .8 ? .92 : 1;
   ctx.globalAlpha = RM ? 1 : Math.min(1, t * 12, (1 - t) * 7);
-  ctx.drawImage(im, x - w * .07 * bas, y - w * .07 * bas, w * bas, w * bas * im.height / im.width);
+  ctx.drawImage(im, x - w * .23 * bas, y - w * .18 * bas, w * bas, w * bas * im.height / im.width);
   ctx.globalAlpha = 1;
 }
 
@@ -743,5 +744,26 @@ window.__hamurCalm = () => !drag;   // sürükleme sırasında reklam yüklenmez
 App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= ASIL; }, ayarDegisti: () => { paintSound(); $('rx').classList.toggle('damgali', !!save.damga); }, get kesim() { return kesim && kesim.v; }, get st() { return st; }, get durum() { return state; }, get cell() { return cell; }, get bolum() { return li + 1; },
   get sure() { return timeLeft; }, set sure(v) { timeLeft = v; }, get drag() { return drag; }, get iplik() { return [...threads.values()].map(t => ({ v: t.v, ne: t.ne, renk: t.color })); },
   get geriKalan() { return geriKalan; }, get geriVar() { return !!geri; },
+  // Açılış animasyonu oyunun kendi parça çizimini ve karışımını kullanır: verilen tuvalde, verilen kare boyuyla çizer.
+  sahne: {
+    MIXMS, RM, renk: C,
+    parca: (cells, color) => giydir({ cells, color }),
+    karistir(p, eski, now) {   // eski: karelerin karışmadan önceki renk harfleri; yeni renk p.color. Temas noktası karelerin ortası.
+      const [x0, y0] = p.cells[0]; let mx = 0, my = 0; for (const c of p.cells) { mx += c[0] + .5 - x0; my += c[1] + .5 - y0; } mx /= p.cells.length; my /= p.cells.length;
+      p.mix = { t0: now, cols: eski, lead: lighten(C[p.color], .42), srcs: [C[eski[0]], C[eski[eski.length - 1]]], seed: Math.random() * 6, ox: mx, oy: my, maxR: Math.max(...p.cells.map(c => Math.hypot(c[0] + .5 - x0 - mx, c[1] + .5 - y0 - my))) + .8 };
+      p.pv += 1.5;
+    },
+    ciz(c2, hucre, olcek, parcalar, now, dt) {
+      const e = [ctx, cell, dpr]; ctx = c2; cell = hucre; dpr = olcek;
+      try {
+        for (const p of parcalar) {
+          p.pv += (-300 * p.pulse - 16 * p.pv) * dt; p.pulse += p.pv * dt;
+          if (p.mix && now - p.mix.t0 >= MIXMS) p.mix = null;
+          p.path = relPath(p); drawPiece(p, now, 1);
+        }
+      } finally { [ctx, cell, dpr] = e; }
+    },
+    get hazir() { return !!blokGri; }, parcacik: () => IMG.parcacik, el: () => IMG.el,
+  },
   dur() { running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
 })();

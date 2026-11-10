@@ -52,4 +52,37 @@ module.exports = async ({ browser, URL, open, shot, getSave, inViewport, check }
     check('ekran.figur', '10. bölüm bitince tamamlanan figür kutlanır', ad === 'Kedi', String(ad));
     await ctx.close();
   }
+  {
+    // Açılış animasyonu: olağan açılışta kendiliğinden oynar ve ana ekrana geçer; dokununca hemen geçilir
+    const AC = 'window.__anaEkran = 1; window.__acilisTest = 1;';
+    const { ctx, page, errors } = await open(browser, URL, { init: AC, save: { done: on(3), level: 4 } });
+    const ilkKare = await page.evaluate(() => { const a = document.getElementById('acilis'); return !!a && getComputedStyle(a).backgroundColor; });
+    await page.waitForTimeout(2600);
+    const son = await page.evaluate(() => [!document.getElementById('acilis'), window.__hamur.ekran.acik]);
+    check('acilis.olagan', 'Açılış animasyonu oynar (ilk kare düz #c59af1), sonra ana ekran açılır', ilkKare === 'rgb(197, 154, 241)' && son.join() === 'true,ana' && !errors.length, errors[0] || `${ilkKare} · ${son.join(' · ')}`);
+    await page.reload(); await page.waitForTimeout(250); await page.mouse.click(195, 300); await page.waitForTimeout(500);
+    const gec = await page.evaluate(() => !document.getElementById('acilis'));
+    check('acilis.gec', 'Açılışa dokununca animasyon geçilir', gec, String(gec));
+    await ctx.close();
+  }
+  {
+    // İlk açılış: animasyon kendiliğinden oynamaz; oyuncu maviyi sarıya sürükler, sonra 1. bölüm başlar
+    const { ctx, page, errors } = await open(browser, URL, { init: 'window.__anaEkran = 1; window.__acilisTest = 1;' });
+    await page.waitForTimeout(2600);
+    const bekler = await page.evaluate(() => [!!document.getElementById('acilis'), document.querySelector('#acilis p')?.textContent]);
+    const vp = page.viewportSize(), x = vp.width / 2 - 70 - 105 + 35, y = vp.height / 2;
+    await page.mouse.move(x, y); await page.mouse.down(); for (let i = 1; i <= 12; i++) { await page.mouse.move(x + i * 9, y); await page.waitForTimeout(16); } await page.mouse.up();
+    await page.waitForTimeout(2200);
+    const son = await page.evaluate(() => [!document.getElementById('acilis'), window.__hamur.ekran.acik, window.__hamur.oyun.bolum]);
+    check('acilis.ilk', 'İlk açılışta animasyon bekler; mavi sarıya sürüklenince karışır ve 1. bölüm başlar', bekler[0] && !!bekler[1] && son.join() === 'true,oyun,1' && !errors.length, errors[0] || `${bekler.join(' · ')} → ${son.join(' · ')}`);
+    await ctx.close();
+  }
+  {
+    // Bekleme göstergesi: kısa işte görünmez, 500 ms'yi geçince hamur şeridi çıkar, iş bitince kalkar
+    const { ctx, page } = await open(browser, URL, { init: 'window.__anaEkran = 1;' });
+    const r = await page.evaluate(async () => { const B = window.__hamur.bekle, el = document.getElementById('bekle'), bek = ms => new Promise(f => setTimeout(f, ms));
+      await B.sar(bek(120)); const kisa = el.hidden; const p = B.sar(bek(900)); await bek(700); const uzun = !el.hidden && el.className; await p; return [kisa, uzun, el.hidden].join(); });
+    check('bekle', 'Bekleme: kısa işte gösterge çıkmaz; 500 ms geçince hamur şeridi çıkar, bitince kalkar', r === 'true,bekle b-serit,true', r);
+    await ctx.close();
+  }
 };

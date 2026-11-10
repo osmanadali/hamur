@@ -52,7 +52,7 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .card img{width:100%;height:auto;border-radius:18px;display:block}
 .card img[hidden]{display:none}
 .card{max-height:100%;overflow-y:auto;box-sizing:border-box}
-@media (max-height:680px){.card{padding:14px 16px;gap:6px}.card img{aspect-ratio:5/2;object-fit:cover}.card h2{font-size:23px}}
+@media (max-height:680px){.card{padding:14px 16px;gap:6px}.card img{width:auto;max-width:100%;max-height:16vh;align-self:center}.card h2{font-size:23px}}
 .card h2{margin:0;font:700 28px/1.1 var(--display);text-wrap:balance}
 .card p{margin:0;color:var(--dim);font-size:15px;line-height:1.4;text-wrap:balance}
 .go{margin-top:8px;height:50px;border:0;border-radius:18px;background:linear-gradient(#ffd75e,#ffbd33);color:#5a3a08;font:700 17px var(--display);cursor:pointer;box-shadow:0 4px 0 #dc962a}
@@ -147,3 +147,34 @@ body.ana-acik{background-image:url(img/ana.webp);background-position:center bott
 .top.cik{width:44px;height:44px}
 .tost img{display:block;width:120px;height:120px;margin:0 auto 6px}
 @media (prefers-reduced-motion:reduce){.durak.siradaki{animation:none}}
+
+/* açılış: sistem açılış ekranıyla aynı ilk kare; animasyon tuvalde, sonunda zemin solar ve gökyüzü açılır */
+.acilis{position:fixed;inset:0;z-index:50;background:#c59af1;display:grid;place-items:center;transition:opacity .25s ease;touch-action:none}
+.acilis.ac{opacity:0;pointer-events:none}
+.acilis img{width:192px;height:192px;transition:opacity .15s linear}
+.acilis img.git{opacity:0}
+.acilis canvas{position:absolute;inset:0;width:100%;height:100%}
+.acilis p{position:absolute;left:0;right:0;top:calc(50% + 86px);margin:0;text-align:center;font:700 19px var(--display);color:#4a2d5e}
+.acilis p[hidden]{display:none}
+/* ekran geçişi: un bulutu soldan sağa geçer, alttaki yeni ekran belirir; hareket azaltmada yalnız düz solma */
+.gecis{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+.gecis i{position:absolute;top:-10%;bottom:-10%;left:0;width:170%;transform:translateX(-105%);filter:blur(7px);
+  background:radial-gradient(ellipse 34% 52% at 50% 50%,#fffaf2 0 60%,rgba(255,250,242,0) 100%),radial-gradient(circle at 30% 22%,#fffaf2 0 13%,rgba(255,250,242,0) 22%),radial-gradient(circle at 68% 80%,#fffaf2 0 14%,rgba(255,250,242,0) 23%),radial-gradient(circle at 26% 76%,rgba(255,250,242,.9) 0 11%,rgba(255,250,242,0) 20%),radial-gradient(circle at 72% 20%,rgba(255,250,242,.9) 0 11%,rgba(255,250,242,0) 20%)}
+.gecis.oyna i{animation:un-sil .25s linear}
+@keyframes un-sil{from{transform:translateX(-105%)}to{transform:translateX(62%)}}
+.ekran.giris{animation:giris .25s ease-out}
+@keyframes giris{from{opacity:0}}
+/* bekleme göstergeleri (kodla çizilir) */
+.bekle{position:fixed;inset:0;z-index:45;display:grid;place-items:center;background:rgba(120,85,165,.32)}
+.bekle[hidden]{display:none}
+.bekle .serit,.bekle .yumak{display:none}
+.bekle.b-serit .serit{display:block;position:relative;width:190px;height:70px}
+.serit .hamur{position:absolute;left:0;top:32px;height:24px;width:190px;border-radius:12px;background:#f6e3bd;box-shadow:inset 0 -5px 0 rgba(170,120,60,.25),0 4px 6px rgba(80,40,130,.25);transform-origin:left center;animation:hamur-ac 1.4s ease-in-out infinite}
+.serit .oklava{position:absolute;left:0;top:14px;width:26px;height:58px;border-radius:13px;background:linear-gradient(90deg,#c98b52,#e9b57c 45%,#c98b52);box-shadow:0 3px 5px rgba(80,40,130,.3);animation:oklava 1.4s ease-in-out infinite}
+.serit .oklava::before,.serit .oklava::after{content:'';position:absolute;left:8px;width:10px;height:12px;border-radius:5px;background:#a86f3d}
+.serit .oklava::before{top:-10px}.serit .oklava::after{bottom:-10px}
+@keyframes hamur-ac{0%,100%{transform:scaleX(.3)}50%{transform:scaleX(1)}}
+@keyframes oklava{0%,100%{transform:translateX(44px)}50%{transform:translateX(172px)}}
+.bekle.b-top .yumak{display:block;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3d6,#f1d9a8 70%);box-shadow:inset 0 -7px 0 rgba(170,120,60,.25),0 6px 8px rgba(80,40,130,.3);animation:yogur 1s ease-in-out infinite}
+@keyframes yogur{0%,100%{transform:scale(1,1) rotate(0)}25%{transform:scale(1.22,.78) rotate(8deg)}50%{transform:scale(.86,1.14) rotate(0)}75%{transform:scale(1.18,.82) rotate(-8deg)}}
+@media (prefers-reduced-motion:reduce){.gecis.oyna i{animation:none}.serit .hamur,.serit .oklava,.bekle.b-top .yumak{animation-duration:3s}}

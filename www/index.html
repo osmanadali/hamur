@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Açılış: ilk kare sistem açılış ekranıyla aynı (düz zemin, ortada ikon); animasyon acilis.js'te -->
+<div class="acilis" id="acilis"><img src="img/acilis.webp" alt="" width="192" height="192"><canvas aria-hidden="true"></canvas><p hidden></p></div>
 <!-- Ekranlar: ana ekran, bölüm yolu, tepsi koleksiyonu, oyun. Görsellerde yazı yoktur; bütün metin ve sayılar koddan gelir. -->
 <section class="ekran" id="sAna" hidden>
   <header class="ust"><span></span><button class="top" id="bAyar" type="button" aria-label="Ayarlar" data-en-label="Settings"><i style="background-image:url(img/ayarlar.webp)"></i></button></header>
@@ -71,6 +73,9 @@
     <p id="hint"></p>
   </footer>
 </section>
+<!-- Ekran geçişi: un bulutu silmesi (250 ms). Bekleme: 500 ms'yi geçince oklavayla açılan hamur şeridi; reklam ve satın almada yoğrulan hamur topu. -->
+<div class="gecis" id="gecis" aria-hidden="true"><i></i></div>
+<div class="bekle" id="bekle" role="status" aria-label="Bekleyin" data-en-label="Please wait" hidden><div class="serit"><i class="hamur"></i><i class="oklava"></i></div><div class="yumak"></div></div>
 <div class="ov tam" id="ayar" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="ayarT">
     <button class="top kucuk kapat" id="ayarKapat" type="button" aria-label="Kapat" data-en-label="Close"><i style="background-image:url(img/kapat.webp)"></i></button>
@@ -89,5 +94,6 @@
 <script src="bolumler.js"></script>
 <script src="game.js"></script>
 <script src="ekran.js"></script>
+<script src="acilis.js"></script>
 </body>
 </html>

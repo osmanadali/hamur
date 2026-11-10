@@ -29,6 +29,10 @@ const MA = bul(path.join(A, 'app/src/main/java'), 'MainActivity.java');
 yama(MA, /import com\.getcapacitor\.BridgeActivity;\s*public class MainActivity extends BridgeActivity \{\}/,
   `import android.os.Bundle;\nimport androidx.activity.EdgeToEdge;\nimport com.getcapacitor.BridgeActivity;\n\npublic class MainActivity extends BridgeActivity {\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        EdgeToEdge.enable(this);\n    }\n}`, 'EdgeToEdge.enable');
 
+// 3b) Açılış ekranı: düz #c59af1 zemin, ortada ikon (Android 12+ sistem açılış ekranı). Eski sürümlerde assets/splash.png'den üretilen görsel.
+yama(path.join(A, 'app/src/main/res/values/styles.xml'), '<item name="android:background">@drawable/splash</item>',
+  '<item name="android:background">@drawable/splash</item>\n        <item name="windowSplashScreenBackground">#c59af1</item>', 'Açılış zemini #c59af1');
+
 // 4) SDK düzeyleri: Play hedef API ≥ 35 ister (2025-08'den beri); Play Billing minSdk ≥ 23
 const VG = path.join(A, 'variables.gradle'), vg = rd(VG), sdk = k => +(vg.match(new RegExp(k + '\\s*=\\s*(\\d+)')) || [])[1];
 const [mn, tg, cp] = ['minSdkVersion', 'targetSdkVersion', 'compileSdkVersion'].map(sdk);
