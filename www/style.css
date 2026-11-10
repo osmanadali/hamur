@@ -58,7 +58,10 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .rx{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;color:var(--ink);font:700 14px var(--display);background:var(--panel);border-radius:14px;padding:6px 12px;box-shadow:var(--golge)}
 .rx[hidden]{display:none}
 .rx span{display:inline-flex;align-items:center;gap:5px}
-.rx i{width:16px;height:16px;border-radius:6px;display:inline-block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.15)}
+.rx i{width:16px;height:16px;border-radius:6px;display:inline-block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.15);position:relative}
+.rx.damgali i{width:22px;height:22px}
+.rx.damgali i::after{content:"";position:absolute;inset:2px;background:url(img/damgalar.webp) 0 0/600% 100% no-repeat;mix-blend-mode:multiply;opacity:.8}
+.rx.damgali i[data-c=r]::after{background-position:20% 0}.rx.damgali i[data-c=b]::after{background-position:40% 0}.rx.damgali i[data-c=g]::after{background-position:60% 0}.rx.damgali i[data-c=p]::after{background-position:80% 0}.rx.damgali i[data-c=o]::after{background-position:100% 0}
 #hint{margin:0;color:var(--ink);font-size:14.5px;line-height:1.4;text-align:center;text-wrap:balance;max-width:42ch;text-shadow:0 1px 0 rgba(255,255,255,.6)}
 @media (prefers-reduced-motion:reduce){.timer.low #secs,.timer.low .saat,.tost{animation:none}}
 
@@ -79,13 +82,13 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .hap:disabled{filter:grayscale(1) opacity(.6);cursor:default}
 .top{width:52px;height:52px;border:0;padding:0;border-radius:50%;background:url(img/top-sari.webp) center/contain no-repeat;cursor:pointer;display:grid;place-items:center;filter:drop-shadow(0 4px 3px rgba(100,60,150,.3));transition:transform .08s,filter .08s}
 .top i{width:62%;height:62%;background:center/contain no-repeat}
-.top.kucuk{width:40px;height:40px;background-image:none}
+.top.kucuk{width:44px;height:44px;padding:2px;box-sizing:border-box;background-image:none}
 .top.kucuk i{width:100%;height:100%}
 .top:active{transform:translateY(2px) scale(.95);filter:drop-shadow(0 1px 1px rgba(100,60,150,.3)) brightness(.88)}
 .hap:focus-visible,.top:focus-visible,.durak:focus-visible,.secenek:focus-visible{outline:3px solid var(--p);outline-offset:3px}
 .panel{position:relative;border-style:solid;border-color:transparent;border-width:26px;border-image:url(img/panel.webp) 56 fill / 26px stretch;width:min(340px,92%);padding:4px 2px 2px;filter:drop-shadow(0 12px 18px rgba(80,40,130,.4))}
 .panel h2{margin:0 0 10px;font:700 22px var(--display);text-align:center}
-.panel .kapat{position:absolute;right:-30px;top:-34px}
+.panel .kapat{position:absolute;right:-32px;top:-36px}
 .ov.tam{position:fixed;z-index:10;border-radius:0}
 /* ana ekran */
 #sAna{align-items:center;gap:12px}
@@ -95,6 +98,8 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 @keyframes salin{50%{transform:translateY(-8px) rotate(-1.5deg)}}
 .ana-dugmeler{margin-top:auto;margin-bottom:8vh;display:flex;flex-direction:column;align-items:center;gap:16px}
 .yan-yana{display:flex;gap:12px}
+@media (max-height:560px){#sAna{overflow-y:auto}#sAna>*{flex-shrink:0}.baslik-yeri{display:none}.kahraman{width:auto;height:min(34vh,340px)}.ana-dugmeler{margin-bottom:12px}}
+@media (max-height:560px) and (orientation:landscape){#sAna{flex-direction:row;justify-content:center;gap:28px;position:relative;max-width:none}#sAna .ust{position:absolute;top:12px;right:16px;align-self:auto}.kahraman{height:min(52vh,340px)}.ana-dugmeler{margin:0}}
 /* bölüm yolu: karo alt alta dizilince ek yeri görünmez; bölüm 1 en altta */
 #sYol,#sTepsi{padding-left:0;padding-right:0}
 #sYol .ust,#sTepsi .ust{padding:0 16px}
@@ -115,9 +120,11 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .aciklama{margin:2px 16px 10px;text-align:center;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.6)}
 .figurler{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:6px 16px 20px;align-content:start}
 .figur{position:relative;background:var(--panel);border-radius:22px;box-shadow:var(--golge);padding:14px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
-.figur img{width:78%;height:auto;aspect-ratio:1}
+.figur>img,.figur .resim{width:78%;height:auto;aspect-ratio:1}
+.figur .resim{position:relative}
+.figur .resim img{display:block;width:100%;height:100%}
 .figur .siluet{filter:brightness(0) opacity(.16)}
-.figur .dolu{position:absolute;top:14px;left:11%;filter:saturate(.9)}
+.figur .dolu{position:absolute;inset:0;filter:saturate(.9)}
 .figur b{font:700 17px var(--display);margin-top:6px}
 .figur small{color:var(--dim);font-weight:600;font-variant-numeric:tabular-nums}
 .figur.tamam{background:#fffaf4}
@@ -129,7 +136,7 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .anahtar::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
 .secenek[aria-checked=true] .anahtar{background:#6cc24a}
 .secenek[aria-checked=true] .anahtar::after{transform:translateX(20px)}
-.secenek select{font:inherit;color:var(--ink);background:#fff;border:0;border-radius:10px;padding:6px 10px}
+.secenek select{font:inherit;color:var(--ink);background:#fff;border:0;border-radius:10px;padding:6px 10px;min-height:44px}
 /* oyun ekranı: bölümlere dönüş düğmesi, kutlamada figür */
 /* geri gitme: mor düğmede sola bakan üçgen (geri al oku yalnız hamle geri almadır) */
 .top .sola{transform:scaleX(-1);width:48%;height:48%;margin-right:8%}

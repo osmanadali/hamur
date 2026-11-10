@@ -110,7 +110,7 @@ function setup(i) {
   ekSure = i < ASIL && (save.fails?.[i + 1] || 0) >= 3 ? 10 : 0;   // aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir
   state = 'play'; timeLeft = Lv.t + ekSure; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1;
   threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null;
-  $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); $('rx').hidden = i < 20;   // renk tarifi karışımın öğretildiği 21. bölümden itibaren
+  $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); $('rx').hidden = i < 20; $('rx').classList.toggle('damgali', !!save.damga);   // renk tarifi karışımın öğretildiği 21. bölümden itibaren
   $('lvlNo').textContent = i < ASIL ? L('Bölüm ', 'Level ') + (i + 1) : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
   paintUndo(); layout();
   window.Olcum?.event('level_start', { level: i + 1 });
@@ -327,7 +327,7 @@ async function sonraki(i) {
   if (!save.noads && li < ASIL && li + 1 > 10 && save.wins % 3 === 0) await Ads.interstitial();
   const eski = li;
   if (!RM && cv.animate) { try { await cv.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(-55%)', opacity: 0 }], { duration: 230, easing: 'ease-in' }).finished; } catch {} }
-  if (li !== eski) return;   // bu arada başka bölüme geçildi
+  if (li !== eski || (App.ekran && App.ekran.acik !== 'oyun')) return;   // bu arada başka bölüme geçildi
   setup(i);
   if (!RM && cv.animate) cv.animate([{ transform: 'translateX(55%)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 260, easing: 'ease-out' });
 }
@@ -452,7 +452,7 @@ function drawHole(h, now) {
     ctx.shadowColor = c; ctx.shadowBlur = cell * (.08 + .1 * nabiz);                // hafif parlama
     ctx.lineWidth = Math.max(3, cell * .075); ctx.strokeStyle = lighten(c, .15 * nabiz); ctx.stroke(h.path);
     ctx.shadowBlur = 0; ctx.setLineDash([]);
-    if (save.damga) for (const [x, y] of h.cells) damga(h.color, (x + .5) * cell, (y + .5) * cell, .46, .38);
+    if (save.damga) for (const [x, y] of h.cells) damga(h.color, (x + .5) * cell, (y + .5) * cell, .46, .6);
   }
   ctx.restore();
 }
@@ -595,7 +595,7 @@ function drawPiece(p, now, k, glow) {
     }
   }
   if (glow) { ctx.lineWidth = cell * .075; ctx.strokeStyle = rgba(C[glow], .6 + .3 * Math.sin(now / 90)); ctx.stroke(p.path); }
-  if (save.damga && !p.mix) p.cells.forEach((c, i) => { if (i !== p.face || p.cells.length === 1) damga(p.color, (c[0] - x0 + .5) * cell, (c[1] - y0 + (p.cells.length === 1 ? .8 : .5)) * cell, p.cells.length === 1 ? .26 : .5, .55); });   // tek karede yüzün altına küçük damga
+  if (save.damga && !p.mix) p.cells.forEach((c, i) => { if (i !== p.face || p.cells.length === 1) damga(p.color, (c[0] - x0 + .5) * cell, (c[1] - y0 + (p.cells.length === 1 ? .23 : .5)) * cell, p.cells.length === 1 ? .32 : .5, .75); });   // tek karede yüzün üstüne (alna) küçük damga
   if (k > .25) face(p, now);
   ctx.restore();
 }
@@ -737,7 +737,8 @@ requestAnimationFrame(frame);
 
 window.__hamurCalm = () => !drag;   // sürükleme sırasında reklam yüklenmez (ads.js)
 // test robotu ve bölüm editörü için
-App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= ASIL; }, ayarDegisti: () => paintSound(), get kesim() { return kesim && kesim.v; }, get st() { return st; }, get durum() { return state; }, get cell() { return cell; }, get bolum() { return li + 1; },
+App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= ASIL; }, ayarDegisti: () => { paintSound(); $('rx').classList.toggle('damgali', !!save.damga); }, get kesim() { return kesim && kesim.v; }, get st() { return st; }, get durum() { return state; }, get cell() { return cell; }, get bolum() { return li + 1; },
   get sure() { return timeLeft; }, set sure(v) { timeLeft = v; }, get drag() { return drag; }, get iplik() { return [...threads.values()].map(t => ({ v: t.v, ne: t.ne, renk: t.color })); },
-  get geriKalan() { return geriKalan; }, get geriVar() { return !!geri; } };
+  get geriKalan() { return geriKalan; }, get geriVar() { return !!geri; },
+  dur() { running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
 })();

@@ -62,15 +62,15 @@
   </main>
   <footer class="foot">
     <div class="rx" id="rx" hidden>
-      <span><i style="background:var(--b)"></i>+<i style="background:var(--y)"></i>=<i style="background:var(--g)"></i></span>
-      <span><i style="background:var(--r)"></i>+<i style="background:var(--b)"></i>=<i style="background:var(--p)"></i></span>
-      <span><i style="background:var(--r)"></i>+<i style="background:var(--y)"></i>=<i style="background:var(--o)"></i></span>
+      <span><i data-c="b" role="img" aria-label="mavi" data-en-label="blue" style="background:var(--b)"></i>+<i data-c="y" role="img" aria-label="sarı" data-en-label="yellow" style="background:var(--y)"></i>=<i data-c="g" role="img" aria-label="yeşil" data-en-label="green" style="background:var(--g)"></i></span>
+      <span><i data-c="r" role="img" aria-label="kırmızı" data-en-label="red" style="background:var(--r)"></i>+<i data-c="b" role="img" aria-label="mavi" data-en-label="blue" style="background:var(--b)"></i>=<i data-c="p" role="img" aria-label="mor" data-en-label="purple" style="background:var(--p)"></i></span>
+      <span><i data-c="r" role="img" aria-label="kırmızı" data-en-label="red" style="background:var(--r)"></i>+<i data-c="y" role="img" aria-label="sarı" data-en-label="yellow" style="background:var(--y)"></i>=<i data-c="o" role="img" aria-label="turuncu" data-en-label="orange" style="background:var(--o)"></i></span>
     </div>
     <p id="hint"></p>
   </footer>
 </section>
 <div class="ov tam" id="ayar" hidden>
-  <div class="panel" role="dialog" aria-labelledby="ayarT">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="ayarT">
     <button class="top kucuk kapat" id="ayarKapat" type="button" aria-label="Kapat" data-en-label="Close"><i style="background-image:url(img/kapat.webp)"></i></button>
     <h2 id="ayarT" data-en="Settings">Ayarlar</h2>
     <div class="secenekler" id="secenekler"></div>

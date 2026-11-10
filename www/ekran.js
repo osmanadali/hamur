@@ -13,6 +13,7 @@ const acikMi = n => save.hepsiAcik || n <= siradaki();
 
 function goster(ad) {
   acik = ad;
+  if (ad !== 'oyun') O.dur();   // oyundan çıkınca süre, bekleyen bölüm geçişi ve reklam durur
   for (const [k, id] of Object.entries(EKRAN)) $(id).hidden = k !== ad;
   if (ad === 'ana') ana();
   if (ad === 'yol') yol();
@@ -64,7 +65,7 @@ function tepsi() {
     const v = figurDurum(k), kart = document.createElement('div'); kart.className = 'figur' + (v >= 10 ? ' tamam' : '');
     const im = document.createElement('img'); im.src = `img/figur-${k + 1}.webp`; im.alt = ''; im.width = im.height = 256;
     // tamamlanmamış figür: alttan yukarı doğru, biten bölüm sayısı kadar dolar
-    if (v < 10) { const dolu = document.createElement('img'); dolu.src = im.src; dolu.alt = ''; dolu.className = 'dolu'; dolu.style.clipPath = `inset(${100 - v * 10}% 0 0 0)`; im.className = 'siluet'; kart.append(im, dolu); } else kart.append(im);
+    if (v < 10) { const dolu = document.createElement('img'); dolu.src = im.src; dolu.alt = ''; dolu.className = 'dolu'; dolu.style.clipPath = `inset(${100 - v * 10}% 0 0 0)`; im.className = 'siluet'; const sar = document.createElement('div'); sar.className = 'resim'; sar.append(im, dolu); kart.append(sar); } else kart.append(im);
     const b = document.createElement('b'); b.textContent = L(...ad);
     const s = document.createElement('small'); s.textContent = v >= 10 ? L('Tamamlandı', 'Completed') : `${v} / 10`;
     kart.append(b, s); kart.setAttribute('role', 'img'); kart.setAttribute('aria-label', `${L(...ad)}: ${s.textContent}`);
@@ -90,10 +91,19 @@ function ayar() {
   // dil: değişince sayfa yenilenir (metinler yüklemede seçilir)
   const d = document.createElement('div'); d.className = 'secenek dil'; d.append(Object.assign(document.createElement('span'), { textContent: L('Dil', 'Language') }));
   const sel = document.createElement('select'); sel.id = 'sec-dil'; sel.setAttribute('aria-label', L('Dil', 'Language'));
-  for (const [k, ad] of window.HAMUR_LANGS.filter(x => x[0] === 'tr' || x[0] === 'en')) sel.add(new Option(ad, k, false, k === window.HAMUR_LANG));
+  for (const [k, ad] of window.HAMUR_LANGS) sel.add(new Option(ad, k, false, k === window.HAMUR_LANG));
   sel.onchange = () => { save.lang = sel.value; App.persist(); location.reload(); };
   d.append(sel); el.appendChild(d);
-  $('ayar').hidden = false;
+  ayarOnce = document.activeElement;
+  for (const id of Object.values(EKRAN)) $(id).inert = true;   // arkadaki düğmeler klavye ve ekran okuyucuya kapalı
+  $('ayar').hidden = false; $('ayarKapat').focus();
+}
+let ayarOnce = null;
+function ayarKapat() {
+  if ($('ayar').hidden) return;
+  $('ayar').hidden = true;
+  for (const id of Object.values(EKRAN)) $(id).inert = false;
+  if (ayarOnce && ayarOnce.isConnected) ayarOnce.focus(); ayarOnce = null;
 }
 
 /* ---------- bağlantılar ---------- */
@@ -101,10 +111,11 @@ $('bOyna').onclick = () => oyna(siradaki());
 $('bYol').onclick = () => goster('yol'); $('bTepsi').onclick = () => goster('tepsi');
 $('yolGeri').onclick = $('tepsiGeri').onclick = () => goster('ana');
 $('bCik').onclick = () => goster('yol');
-$('bAyar').onclick = ayar; $('ayarKapat').onclick = () => { $('ayar').hidden = true; };
-$('ayar').addEventListener('click', e => { if (e.target === $('ayar')) $('ayar').hidden = true; });
+$('bAyar').onclick = ayar; $('ayarKapat').onclick = ayarKapat;
+$('ayar').addEventListener('click', e => { if (e.target === $('ayar')) ayarKapat(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') ayarKapat(); });
 // Android geri tuşu: oyun → bölüm yolu → ana ekran
-window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) $('ayar').hidden = true; else if (acik === 'oyun') goster('yol'); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
+window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') goster('yol'); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
 
 // Oyun bir figürü tamamlayan bölümü bildirir (kutlama yazısı için)
 O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10}.webp` } : null;
