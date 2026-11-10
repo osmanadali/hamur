@@ -33,7 +33,7 @@ const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).to
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
 const IMG = {};
-for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -569,7 +569,7 @@ function govde(p, renkOf, cukur = .2) {
 // Yeni renk daire olarak değil girdap maskesiyle yayılır: piksel, (maske × 0,45 + temas noktasına uzaklık × 0,55) eşiğin altındaysa
 // yeni rengi alır; eşik süre boyunca 0'dan 1'e çıkar. Sınırda iki rengin karışımı (açık ton) ince bir şerit olarak görünür.
 // Parça küçük olduğu için ayrı, düşük çözünürlüklü tuvalde hesaplanır (kare başına KR piksel). Maske kodla üretilir (girdap + dalga).
-const KR = 36;
+const KR = 36; let maske = null;   // girdap-maske görseli (128×128 gri); yüklenmezse kodla üretilen girdap kullanılır
 function girdap(x, y, ox, oy, s) { const dx = x - ox, dy = y - oy, r = Math.hypot(dx, dy) / KR, a = Math.atan2(dy, dx); return clamp(.5 + .32 * Math.sin(a * 3 + r * 4.2 + s) + .18 * Math.sin(x / KR * 5.1 + s * 2) * Math.sin(y / KR * 4.3 - s), 0, 1); }
 function karisimHazirla(p, m) {
   const xs = p.cells.map(c => c[0]), ys = p.cells.map(c => c[1]), [x0, y0] = p.cells[0], mnx = Math.min(...xs), mny = Math.min(...ys), w = (Math.max(...xs) - mnx + 1) * KR, h = (Math.max(...ys) - mny + 1) * KR;
@@ -577,7 +577,7 @@ function karisimHazirla(p, m) {
   const boya = hex => { const c = tuval(), x = c.getContext('2d'), e = [ctx, cell]; ctx = x; cell = KR; x.translate((x0 - mnx) * KR, (y0 - mny) * KR); try { govde(p, () => hex); } finally { [ctx, cell] = e; } return c; };
   m.yeni = boya(C[p.color]); m.serit = boya(m.lead); m.mask = tuval(); m.tmp = tuval(); m.mx = m.mask.getContext('2d'); m.tx = m.tmp.getContext('2d'); m.id = m.mx.createImageData(w, h);
   const ox = (x0 - mnx + m.ox) * KR, oy = (y0 - mny + m.oy) * KR, R = m.maxR * KR, T = m.T = new Float32Array(w * h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) T[y * w + x] = girdap(x, y, ox, oy, m.seed) * .45 + Math.min(1, Math.hypot(x - ox, y - oy) / R) * .55;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) T[y * w + x] = (maske ? maske[(((y * 1.4 + m.seed * 20) | 0) & 127) * 512 + (((x * 1.4 + m.seed * 31) | 0) & 127) * 4] / 255 : girdap(x, y, ox, oy, m.seed)) * .45 + Math.min(1, Math.hypot(x - ox, y - oy) / R) * .55;
   m.w = w; m.h = h; m.dx = mnx - x0; m.dy = mny - y0; m.n = p.cells.length;
 }
 function body(p, now) {
