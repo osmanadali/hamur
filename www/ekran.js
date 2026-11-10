@@ -138,12 +138,12 @@ function ayarKapat() {
 $('bOyna').onclick = () => oyna(siradaki()); $('bGunluk').onclick = gunlukAc;
 $('bYol').onclick = () => goster('yol'); $('bTepsi').onclick = () => goster('tepsi');
 $('yolGeri').onclick = $('tepsiGeri').onclick = () => goster('ana');
-$('bCik').onclick = () => goster('ana');   // oyundan çıkınca ana ekran
+$('bCik').onclick = () => O.cikisSor();   // oyundan çıkınca ana ekran
 $('bAyar').onclick = ayar; $('ayarKapat').onclick = ayarKapat;
 $('ayar').addEventListener('click', e => { if (e.target === $('ayar')) ayarKapat(); });
 addEventListener('keydown', e => { if (e.key === 'Escape') ayarKapat(); });
 // Android geri tuşu: oyun → bölüm yolu → ana ekran
-window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') goster('ana'); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
+window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') O.cikisSor(); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
 
 // Oyun bir figürü tamamlayan bölümü bildirir (kutlama yazısı için)
 O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10}.webp` } : null;

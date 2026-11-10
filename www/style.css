@@ -440,3 +440,5 @@ body.ana-acik .gok{opacity:1}
 #lvlNo.done{color:#fff6d8}
 .hap.gunluk{white-space:nowrap;font-size:18px;gap:6px}
 .hap.gunluk i{width:26px;height:26px}
+
+#ovEk[hidden],.secenekler[hidden]{display:none}   /* anahtarlar yalnız duraklatma penceresinde */

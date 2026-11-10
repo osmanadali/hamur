@@ -403,6 +403,13 @@ function duraklat() {
     const ciz = () => b.setAttribute('aria-checked', String(acik())); b.onclick = () => { save[k] = !acik(); App.persist(); ciz(); paintSound(); App.ekran.muzik?.(); buzz(8); }; ciz(); ek.appendChild(b);
   }
 }
+// Bölüm sürerken çıkmak isteyene sorulur (can sistemi gelirse "1 can kaybedeceksin" uyarısı buraya yazılır).
+function cikisSor() {
+  if (state !== 'play' || !running || durak) return App.ekran.goster('ana');
+  durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
+  showOv(L('Çıkılsın mı?', 'Quit level?'), L('Bu bölümdeki ilerlemen kaybolur.', 'Your progress in this level will be lost.'), L('Devam et', 'Keep playing'), devam, L('Çık', 'Quit'), () => App.ekran.goster('ana'));
+  $('ovB2').classList.add('cikis');
+}
 function devam() { if (!durak) return; durak = false; cv.style.visibility = ''; $('ov').hidden = true; $('hint').textContent = L(...Lv.hint); paintUndo(); }
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && running) duraklat(); });   // uygulama arka plana geçince
 // Bölüm arası reklam: yalnız kazanınca, sıradaki tahta gelmeden önce. İlk 10 bölümde yok, sonra 3 bölümde bir (iki reklam arası en az 90 sn: ads.js).
@@ -896,7 +903,7 @@ App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= 
     },
     get hazir() { return !!blokGri; }, parcacik: () => IMG.parcacik, el: () => IMG.el,
   },
-  gunlukNo, bugun, get gunluk() { return gunluk; }, duraklat, devam, sureEkle, makasSec, get durakta() { return durak; }, get stok() { return { geri: stok('geri'), sure: stok('sure'), makas: stok('makas') }; },
+  cikisSor, gunlukNo, bugun, get gunluk() { return gunluk; }, duraklat, devam, sureEkle, makasSec, get durakta() { return durak; }, get stok() { return { geri: stok('geri'), sure: stok('sure'), makas: stok('makas') }; },
   // Bölüm başlangıç penceresi: ana ekrandan ya da yoldan girince (bölümden bölüme geçerken çıkmaz). Süre zaten ilk dokunuşta başlar.
   giris() {
     const y = save.yildiz?.[li + 1], kapat = () => { $('ov').hidden = true; basla(); };
