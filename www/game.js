@@ -366,8 +366,14 @@ async function reklamDevam() {   // kaybedince: ödüllü reklam izleyip 15 sn i
   let oldu = false; try { oldu = (await (App.bekle ? App.bekle.sar(Ads.rewarded(), 'top') : Ads.rewarded())) === 'earned'; } catch {}
   if (oldu && state === 'lost') canlan();
 }
+// Şerit yazısı: şerit kavisli olduğu için yazı da aynı yay üstünde dizilir (SVG textPath). Uzun yazı küçülür.
+function seritYazi(m) {
+  const b = document.createElement('b'), boy = m.length > 17 ? 22 : m.length > 13 ? 27 : m.length > 9 ? 33 : 42;
+  b.innerHTML = `<svg viewBox="0 0 480 317" aria-hidden="true"><path id="seritYay" d="M88,182 Q240,144 392,182" fill="none"/><text font-size="${boy}" text-anchor="middle"><textPath href="#seritYay" startOffset="50%"></textPath></text></svg>`;
+  b.querySelector('textPath').textContent = m; b.setAttribute('aria-label', m); return b;
+}
 let bilgiT = 0;
-function bilgi(m) { const t = $('tost'); t.innerHTML = ''; t.append(Object.assign(document.createElement('b'), { textContent: m })); t.hidden = false; clearTimeout(bilgiT); bilgiT = setTimeout(() => { if (state === 'play') t.hidden = true; }, 1100); }   // kısa ekran bildirimi
+function bilgi(m) { const t = $('tost'); t.innerHTML = ''; t.append(seritYazi(m)); t.hidden = false; clearTimeout(bilgiT); bilgiT = setTimeout(() => { if (state === 'play') t.hidden = true; }, 1100); }   // kısa ekran bildirimi
 function basla() { if (state === 'play' && !durak && !(li === 0 && done.size === 0)) { running = true; paintUndo(); } }   // süreyi başlatır; öğretici ilk bölüm ilk dokunuşu bekler
 function surDevam() {
   if (state !== 'lost' || kayipTur !== 'time' || stok('sure') <= 0) return;
@@ -445,7 +451,7 @@ function win() {
   if (!lastOne) {   // bölüm bitince menü açılmaz: kısa bir kutlama, sonra tahta kayar ve sıradaki bölüm gelir
     const t = $('tost'), fig = App.oyun.figurAdi?.(li + 1); t.innerHTML = '';
     if (fig) App.ekran.kutla(fig);   // figür tamamlandı: tam ekran kutlama
-    t.append(Object.assign(document.createElement('b'), { textContent: fig ? fig.ad + L(' tamamlandı!', ' completed!') : L('Bölüm tamam!', 'Level complete!') }));
+    t.append(seritYazi(fig ? fig.ad + L(' tamamlandı!', ' completed!') : L('Bölüm tamam!', 'Level complete!')));
     const y = document.createElement('span'); y.className = 'yildiz'; for (let k = 0; k < 3; k++) { const yi = document.createElement('i'); if (k >= sonYildiz) yi.className = 'bos'; y.appendChild(yi); } t.append(y);
     const k = document.createElement('small'); k.textContent = kalan; t.append(k); t.hidden = false;
     const hedef = li + 1; clearTimeout(gecisT); gecisT = setTimeout(() => { if (state === 'won' && li === hedef - 1) sonraki(hedef); }, fig ? 3400 : RM ? 1100 : 950);

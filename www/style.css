@@ -442,3 +442,16 @@ body.ana-acik .gok{opacity:1}
 .hap.gunluk i{width:26px;height:26px}
 
 #ovEk[hidden],.secenekler[hidden]{display:none}   /* anahtarlar yalnız duraklatma penceresinde */
+
+/* şerit: gerçek oranında, yazı yay üstünde */
+.tost b{aspect-ratio:480/317;padding:0;display:block}
+.tost b svg{width:100%;height:100%;display:block}
+.tost b text{font-family:var(--baslik);fill:#7a2d55}
+.tost .yildiz{margin-top:-8%}
+/* bölümler başlığındaki bulut yarı saydam */
+#sYol .ust{background:linear-gradient(rgba(160,130,215,.75),rgba(160,130,215,0) 85%)}
+#sYol .ust::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.6;pointer-events:none;background:url(img/bulut-2.webp) center -52px/250px no-repeat,url(img/bulut-1.webp) -46px -40px/210px no-repeat,url(img/bulut-4.webp) right -44px top -38px/210px no-repeat}
+/* oyun ekranı: alttaki ipucu beyaz ve konturlu */
+#hint{color:#fffaf0;text-shadow:-1px -1px 0 #4a2d5e,1px -1px 0 #4a2d5e,-1px 1px 0 #4a2d5e,1px 1px 0 #4a2d5e,0 2px 0 #4a2d5e;font-size:17px}
+/* ana ekran: düğmeler ekranın ortasına yakın (tek elle erişim) */
+.ana-dugmeler{margin-top:7vh}
