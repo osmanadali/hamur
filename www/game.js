@@ -38,8 +38,10 @@ for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', '
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
 let cell = 60, dpr = 1, state = 'play', timeLeft = 0, running = false, drag = null, sinks = [], parts = [], rings = [], after = null, wonAt = 0, shownS = -1, wallPath = null, last = performance.now();
+let egil = new Map();   // yapışabilecek kadar yaklaşan parçalar birbirine doğru eğilir: p → karşısındaki parça
 let threads = new Map();   // tutulan parçanın komşularıyla arasındaki hamur iplikleri: q → { v: 0…1 doluluk, seam, color }
 let kesim = null;   // dolan makas ölçüsü { dx, dy, v }
+let gunluk = false, ekGuc = 0;   // gunluk: günlük kalıp oynanıyor (ilerlemeye yazılmaz) · ekGuc: güçlendiriciyle eklenen süre (yıldıza sayılmaz)
 let ekSure = 0, gecisT = 0;   // ekSure: üç kayıptan sonra eklenen süre · gecisT: sıradaki bölüme geçiş zamanlayıcısı
 let durak = false, makasKoy = false;   // durak: duraklatıldı (süre durur, tahta gizlenir) · makasKoy: makas güçlendiricisi için kare seçiliyor
 let geri = null, geriKalan = 0;   // geri: son yapışmanın olduğu sürüklemenin başındaki durum
@@ -104,15 +106,18 @@ function giydir(p) {
   let f = 0; p.cells.forEach((c, j) => { const b = p.cells[f]; if (c[1] < b[1] || (c[1] === b[1] && c[0] < b[0])) f = j; });
   return Object.assign(p, { ox: 0, oy: 0, pulse: 0, pv: 0, lift: 0, face: f, seed: Math.random() * 9, mix: null, flash: null, shakeT: 0 });
 }
-function setup(i) {
+// Günlük kalıp: herkes aynı gün aynı bölümü oynar (11-50 arası havuzdan, güne göre). İlerlemeye yazılmaz; sonuç paylaşılabilir.
+const bugun = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5), gunlukNo = () => 10 + (bugun() * 7919) % 40;
+function setup(i, g) {
+  gunluk = g === undefined ? gunluk && i === li : !!g; ekGuc = 0;
   li = i; Lv = LEVELS[i]; st = K.load(Lv); cz = Coz.hazirla(st);
-  if (i < ASIL) { save.level = i + 1; App.persist(); }
+  if (i < ASIL && !gunluk) { save.level = i + 1; App.persist(); }
   st.pieces.forEach(giydir);
-  ekSure = i < ASIL && (save.fails?.[i + 1] || 0) >= 3 ? 10 : 0;   // aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir
+  ekSure = i < ASIL && !gunluk && (save.fails?.[i + 1] || 0) >= 3 ? 10 : 0;   // aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir
   state = 'play'; timeLeft = Lv.t + ekSure; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1;
   threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null; durak = false; makasKoy = false; cv.style.visibility = '';
   $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); tarif(false); $('gTarif').hidden = i < 20; $('rx').classList.toggle('damgali', !!save.damga);   // renk tarifi düğmesi karışımın öğretildiği 21. bölümden itibaren
-  $('lvlNo').textContent = i < ASIL ? L('Bölüm ', 'Level ') + (i + 1) : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
+  $('lvlNo').textContent = gunluk ? L('Günlük kalıp', 'Daily mold') : i < ASIL ? L('Bölüm ', 'Level ') + (i + 1) : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
   paintUndo(); layout();
   window.Olcum?.event('level_start', { level: i + 1 });
 }
@@ -175,7 +180,7 @@ function olaylar(p, ev) {
       if (e.mixed) p.mix = { t0: now, cols: e.cols, lead: lighten(C[e.color], .42), srcs: [a, b], seed: Math.random() * 6, ox: mx, oy: my };
       else if (p.mix) p.mix.cols = p.mix.cols.concat(e.cols.slice(p.mix.cols.length));
       if (p.mix) p.mix.maxR = Math.max(...p.cells.map(c => Math.hypot(c[0] + .5 - x0 - p.mix.ox, c[1] + .5 - y0 - p.mix.oy))) + .8;
-      p.mutluT = now + (e.mixed ? MIXMS : 0) + 900;
+      p.mutluT = now + (e.mixed ? MIXMS : 0) + 900; p.ezT = now; Ses.pat(.14, 1100, 220, .28); if (e.mixed) Ses.pat(.5, 700, 300, .1, .1);   // ezilip uzar; şlap
       p.flash = { t0: now, segs: e.seam.map(s => [s[0] - x0, s[1] - y0, s[2], s[3]]) };
       p.pv += 1.5;
       burst((x0 + mx) * cell, (y0 + my) * cell, [a, b], 7, cell * 2.6); un((x0 + mx) * cell, (y0 + my) * cell, 4);
@@ -219,7 +224,7 @@ function kes(p, dx, dy) {
   if (!e) return;
   for (const q of e.parts) { giydir(q); q.ox = p.ox - dx * cell; q.oy = p.oy - dy * cell; q.pv = 1.2; q.path = relPath(q); }
   for (const [x, y] of e.at) { burst((x + .5) * cell, (y + .5) * cell, [C[p.color], '#ffffff'], 10, cell * 2.4); }
-  buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
+  Ses.pat(.05, 7000, 3000, .22); Ses.pat(.06, 6000, 2500, .2, .07); buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
   for (const s of e.sonra) olaylar(s.p, s.ev);
   denetle(e.parts.find(q => st.pieces.includes(q)) || st.pieces[0]);
 }
@@ -296,11 +301,11 @@ function showOv(t, p, b, fn, b2, fn2) {
 let kayipTur = '';
 function lose(kind, piece) {
   state = 'lost'; kayipTur = kind; makasKoy = false; paintUndo(); running = false; drag = null; threads = new Map();
-  if (li < ASIL) { save.fails = { ...save.fails, [li + 1]: (save.fails?.[li + 1] || 0) + 1 }; App.persist(); }
+  if ((li < ASIL && !gunluk)) { save.fails = { ...save.fails, [li + 1]: (save.fails?.[li + 1] || 0) + 1 }; App.persist(); }
   const now = performance.now(), yine = L('Tekrar dene', 'Try again');
   // ne kadar yaklaşıldı: kaç kalıp doldu; süre bittiyse yaklaşık kaç saniye eksik kaldı (kalan en kısa çözümden)
   const dolu = st.holes.filter(h => h.filled).length, yakin = st.holes.length > 1 ? L(` ${st.holes.length} kalıptan ${dolu} tanesi doldu.`, ` ${dolu} of ${st.holes.length} molds were filled.`) : '';
-  const ek = (save.fails?.[li + 1] || 0) === 3 && li < ASIL ? L(' Sıradaki denemede 10 saniye fazlan var.', ' You get 10 extra seconds on the next try.') : '';
+  const ek = (save.fails?.[li + 1] || 0) === 3 && (li < ASIL && !gunluk) ? L(' Sıradaki denemede 10 saniye fazlan var.', ' You get 10 extra seconds on the next try.') : '';
   window.Olcum?.event('level_fail', { level: li + 1, reason: kind, time_left: Math.ceil(timeLeft) });
   if (kind === 'doom') {
     piece.shakeT = now; buzz([30, 50, 70]); tone(210, .4, 'sawtooth', 80, .07, .25);
@@ -314,7 +319,8 @@ function lose(kind, piece) {
     let eksik = '';
     try { const r = Coz.ara(cz, K.clone(st), { cap: 2500 }); if (r.cozuldu) { const sn = Math.max(1, Math.round(r.kare + 2 * r.hamle)); eksik = L(` Yaklaşık ${sn} saniye daha gerekiyordu.`, ` About ${sn} more seconds were needed.`); } } catch {}
     const metin = L('Parçalar kalıba yetişmedi.', 'The pieces did not reach the molds in time.') + yakin + eksik + ek;
-    stok('sure') > 0 ? showOv(L('Süre bitti', 'Time is up'), metin, L('+15 sn ile devam et', 'Continue with +15 s'), surDevam, yine, () => setup(li)) : showOv(L('Süre bitti', 'Time is up'), metin, yine, () => setup(li));
+    stok('sure') > 0 ? showOv(L('Süre bitti', 'Time is up'), metin, L('+15 sn ile devam et', 'Continue with +15 s'), surDevam, yine, () => setup(li))
+      : Ads.online() ? showOv(L('Süre bitti', 'Time is up'), metin, L('Reklam izle: +15 sn', 'Watch an ad: +15 s'), reklamDevam, yine, () => setup(li)) : showOv(L('Süre bitti', 'Time is up'), metin, yine, () => setup(li));
   }
 }
 // Geri alma: son yapışmanın olduğu sürüklemenin başına döner. Süre geri gelmez.
@@ -347,11 +353,20 @@ function paintUndo() {
 // +15 sn: oyun sırasında süreye eklenir. Süre bitince çıkan kartta da "devam et" olarak sunulur (surDevam).
 function sureEkle() {
   if (state !== 'play' || durak || stok('sure') <= 0) return;
-  harca('sure'); timeLeft += 15; shownS = -1; paintUndo(); buzz(12); tone(660, .1, 'triangle', 990, .06); tone(990, .16, 'triangle', 0, .05, .09);
+  harca('sure'); timeLeft += 15; ekGuc += 15; shownS = -1; paintUndo(); buzz(12); tone(660, .1, 'triangle', 990, .06); tone(990, .16, 'triangle', 0, .05, .09);
+}
+// Yıldız: kalan süreye göre (güçlendiriciyle eklenen süre sayılmaz). %45 ve üstü üç, %25 ve üstü iki, bitirmek bir yıldız.
+const yildizSay = () => { const r = (timeLeft - ekGuc) / (Lv.t + ekSure); return r >= .45 ? 3 : r >= .25 ? 2 : 1; };
+const yildizYazi = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+function canlan() { state = 'play'; timeLeft = 15; ekGuc = 999; running = false; shownS = -1; after = null; $('ov').hidden = true; paintUndo(); }   // süre ilk dokunuşta yeniden işler; devam eden bölüm bir yıldız
+async function reklamDevam() {   // kaybedince: ödüllü reklam izleyip 15 sn ile devam
+  if (state !== 'lost' || kayipTur !== 'time') return;
+  let oldu = false; try { oldu = (await (App.bekle ? App.bekle.sar(Ads.rewarded(), 'top') : Ads.rewarded())) === 'earned'; } catch {}
+  if (oldu && state === 'lost') canlan();
 }
 function surDevam() {
   if (state !== 'lost' || kayipTur !== 'time' || stok('sure') <= 0) return;
-  harca('sure'); state = 'play'; timeLeft = 15; running = false; shownS = -1; after = null; $('ov').hidden = true; paintUndo();   // süre ilk dokunuşta yeniden işler
+  harca('sure'); canlan();   // süre ilk dokunuşta yeniden işler
 }
 // Makas: oyuncu boş bir zemin karesi seçer, oraya tek kullanımlık makas karesi konur. Sonrası oyundaki makas kuralıyla aynıdır.
 function makasSec() {
@@ -365,7 +380,7 @@ function makasKonur(gx, gy) {
   if (dolu) { buzz(20); tone(180, .1, 'square', 140, .04); return; }
   st.makas.push({ x: gx, y: gy, open: true, hold: false }); cz = Coz.hazirla(st); geri = null;   // geri alma makası geri getirmez
   harca('makas'); makasKoy = false; $('hint').textContent = L(...Lv.hint); paintUndo();
-  buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
+  Ses.pat(.05, 7000, 3000, .22); Ses.pat(.06, 6000, 2500, .2, .07); buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
 }
 // Renk tarifi: düğmeye basınca çubuğun üstünde yatay bir şerit olarak açılır, yeniden basınca ya da dışına dokununca kapanır.
 function tarif(ac) { $('rx').hidden = !ac; $('gTarif').setAttribute('aria-expanded', String(!!ac)); }
@@ -379,7 +394,7 @@ function devam() { if (!durak) return; durak = false; cv.style.visibility = ''; 
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && running) duraklat(); });   // uygulama arka plana geçince
 // Bölüm arası reklam: yalnız kazanınca, sıradaki tahta gelmeden önce. İlk 10 bölümde yok, sonra 3 bölümde bir (iki reklam arası en az 90 sn: ads.js).
 async function sonraki(i) {
-  if (!save.noads && li < ASIL && li + 1 > 10 && save.wins % 3 === 0) await (App.bekle ? App.bekle.sar(Ads.interstitial(), 'top') : Ads.interstitial());
+  if (!save.noads && (li < ASIL && !gunluk) && li + 1 > 10 && save.wins % 3 === 0) await (App.bekle ? App.bekle.sar(Ads.interstitial(), 'top') : Ads.interstitial());
   const eski = li;
   if (!RM && cv.animate) { try { await cv.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(-55%)', opacity: 0 }], { duration: 230, easing: 'ease-in' }).finished; } catch {} }
   if (li !== eski || (App.ekran && App.ekran.acik !== 'oyun')) return;   // bu arada başka bölüme geçildi
@@ -387,20 +402,30 @@ async function sonraki(i) {
   if (!RM && cv.animate) cv.animate([{ transform: 'translateX(55%)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 260, easing: 'ease-out' });
 }
 // Kazanç, tahta boşaldığı an kayda yazılır (bindirme gelmeden başka bölüme geçilse de kaybolmaz). Deneme bölümü ilerlemeye yazmaz.
+let sonYildiz = 1;
+function paylas() {
+  const m = L(`Hamur günlük kalıp: ${yildizYazi(sonYildiz)} · ${Math.ceil(timeLeft)} sn kaldı`, `Dough daily mold: ${yildizYazi(sonYildiz)} · ${Math.ceil(timeLeft)} s left`);
+  try { const P = window.Capacitor?.Plugins?.Share; if (P) return P.share({ text: m }); if (navigator.share) return navigator.share({ text: m }); navigator.clipboard?.writeText(m); $('ovP').textContent = L('Sonuç panoya kopyalandı.', 'Result copied to clipboard.'); } catch {}
+}
 function kazanKaydet() {
-  if (li < ASIL) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; if (save.fails?.[li + 1]) { save.fails = { ...save.fails }; delete save.fails[li + 1]; } App.persist(); $('lvlNo').classList.add('done'); }
-  window.Olcum?.event('level_end', { level: li + 1, time_left: Math.ceil(timeLeft) });
+  if ((li < ASIL && !gunluk)) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; if (save.fails?.[li + 1]) { save.fails = { ...save.fails }; delete save.fails[li + 1]; } App.persist(); $('lvlNo').classList.add('done'); }
+  sonYildiz = yildizSay();
+  if (li < ASIL && !gunluk) { save.yildiz = { ...save.yildiz, [li + 1]: Math.max(save.yildiz?.[li + 1] || 0, sonYildiz) }; App.persist(); }
+  if (gunluk) { save.gunluk = { gun: bugun(), bitti: true, sure: Math.ceil(timeLeft), yildiz: sonYildiz }; App.persist(); }
+  window.Olcum?.event('level_end', { level: li + 1, time_left: Math.ceil(timeLeft), stars: sonYildiz, daily: gunluk });
 }
 function win() {
   konfeti();
   [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09));
   Ads.warm();
   const kalan = L('Kalan süre ', 'Time left: ') + Math.ceil(timeLeft) + L(' sn.', ' s.');
+  if (gunluk) return showOv(L('Günlük kalıp tamam', 'Daily mold done'), yildizYazi(sonYildiz) + ' · ' + kalan + L(' Yarın yeni kalıp var.', ' A new mold comes tomorrow.'), L('Paylaş', 'Share'), paylas, L('Ana ekran', 'Home'), () => App.ekran.goster('ana'));
   if (li >= ASIL) return showOv(L('Deneme tamam', 'Test complete'), kalan, L('Yeniden oyna', 'Play again'), () => setup(li));   // editörden gelen deneme bölümü
   const lastOne = li === ASIL - 1;
   if (!lastOne) {   // bölüm bitince menü açılmaz: kısa bir kutlama, sonra tahta kayar ve sıradaki bölüm gelir
     const t = $('tost'), fig = App.oyun.figurAdi?.(li + 1); t.innerHTML = '';
     if (fig) { const im = document.createElement('img'); im.src = fig.resim; im.alt = ''; t.append(im, fig.ad + L(' tamamlandı!', ' completed!')); } else t.append(L('Bölüm tamam!', 'Level complete!'));
+    const y = document.createElement('span'); y.className = 'yildiz'; y.textContent = yildizYazi(sonYildiz); t.append(y);
     const k = document.createElement('small'); k.textContent = kalan; t.append(k); t.hidden = false;
     const hedef = li + 1; clearTimeout(gecisT); gecisT = setTimeout(() => { if (state === 'won' && li === hedef - 1) sonraki(hedef); }, fig ? 2200 : RM ? 1100 : 950);
     return;
@@ -422,7 +447,7 @@ cv.addEventListener('pointerdown', e => {
   try { cv.setPointerCapture(e.pointerId); } catch {}
   drag = { p, id: e.pointerId, gi: p.cells.findIndex(c => c[0] === gx && c[1] === gy), offx: x / cell - gx - .5, offy: y / cell - gy - .5, px: x, py: y,
     hist: [{ t: performance.now(), x, y }], snap: CFG.geriHak ? K.clone(st) : null };
-  running = true; p.pv += .9; tone(520, .07, 'sine', 700, .05); buzz(6);
+  running = true; p.pv += .9; Ses.pat(.05, 1600, 600, .1); tone(520, .07, 'sine', 700, .05); buzz(6);
 });
 cv.addEventListener('pointermove', e => {
   if (!drag || e.pointerId !== drag.id) return;
@@ -649,7 +674,8 @@ function drawPiece(p, now, k, glow) {
   let sh = 0;
   if (p.shakeT && now - p.shakeT < 800) { const t = (now - p.shakeT) / 800; sh = Math.sin((now - p.shakeT) / 26) * cell * .07 * (1 - t); }
   ctx.save();
-  ctx.translate(cx + p.ox + sh, cy + p.oy); ctx.scale(s, s); ctx.translate(-cx + x0 * cell, -cy + y0 * cell);
+  const eh = egil.get(p), ek = eh && !RM ? clamp((center(eh)[0] + eh.ox - cx - p.ox) / cell, -1, 1) * .1 : 0, ez = p.ezT && now - p.ezT < 320 && !RM ? Math.sin((now - p.ezT) / 320 * Math.PI) * .13 : 0;
+  ctx.translate(cx + p.ox + sh, cy + p.oy); ctx.scale(s * (1 + ez), s * (1 - ez)); if (ek) ctx.transform(1, 0, -ek, 1, 0, 0); ctx.translate(-cx + x0 * cell, -cy + y0 * cell);
   ctx.save();   // yumuşak gölge
   ctx.translate(0, cell * (.07 + .1 * p.lift) * k); ctx.shadowColor = 'rgba(60,25,100,' + (.5 * k) + ')'; ctx.shadowBlur = cell * (.14 + .3 * p.lift) * dpr; ctx.shadowOffsetY = cell * .03 * dpr;
   ctx.fillStyle = 'rgba(60,25,100,' + (.2 * k) + ')'; ctx.fill(p.path); ctx.restore();
@@ -712,11 +738,11 @@ function draw(now) {
     const t = (now - s.t0) / 340;
     drawPiece(s.p, now, t < 0 ? 1 : 1 - Math.min(1, t) * Math.min(1, t));
   }
-  const glow = new Map();
+  const glow = new Map(); egil = new Map();
   if (drag) for (const q of st.pieces) {
     if (q === drag.p) continue;
     const nc = fuseColor(drag.p.color, q.color);
-    if (nc && gap(drag.p, q) <= 2) { glow.set(q, nc); glow.set(drag.p, nc); }
+    if (nc && gap(drag.p, q) <= 2) { glow.set(q, nc); glow.set(drag.p, nc); egil.set(q, drag.p); egil.set(drag.p, q); }
   }
   for (const p of st.pieces) if (!drag || p !== drag.p) drawPiece(p, now, 1, glow.get(p));
   if (drag) drawPiece(drag.p, now, 1, glow.get(drag.p));
@@ -776,7 +802,7 @@ function update(dt, now) {
     if (now - s.t0 >= 340) {
       s.h.shown = true; s.gone = true; rings.push({ h: s.h, t0: now });
       const [x, y] = center(s.p); burst(x, y, [C[s.h.color], '#ffffff'], 9, cell * 3); un(x, y, 3 + Math.min(4, s.p.cells.length));
-      buzz(22); tone(170, .2, 'sine', 85, .2); tone(784, .16, 'triangle', 0, .07, .08); tone(1175, .24, 'triangle', 0, .06, .16);
+      Ses.pat(.2, 600, 90, .32); buzz(22); tone(170, .2, 'sine', 85, .2); tone(784, .16, 'triangle', 0, .07, .08); tone(1175, .24, 'triangle', 0, .06, .16);
     }
   }
   sinks = sinks.filter(s => !s.gone);
@@ -806,7 +832,7 @@ try {
   const m = location.hash.match(/^#bolum=(.+)$/), Lx = m && JSON.parse(decodeURIComponent(m[1]));
   if (Lx && !K.validate(Lx).length) { if (!Array.isArray(Lx.hint)) Lx.hint = [Lx.hint || '', Lx.hint || '']; LEVELS.push(Lx); li = LEVELS.length - 1; }
 } catch {}
-try { setup(li); } catch (e) { if (li < ASIL) throw e; LEVELS.length = ASIL; setup(li = clamp((save.level || 1) - 1, 0, ASIL - 1)); }   // bozuk deneme bölümü: kayıtlı bölüme dön
+try { setup(li); } catch (e) { if ((li < ASIL && !gunluk)) throw e; LEVELS.length = ASIL; setup(li = clamp((save.level || 1) - 1, 0, ASIL - 1)); }   // bozuk deneme bölümü: kayıtlı bölüme dön
 if (window.ResizeObserver) new ResizeObserver(layout).observe(stage);
 else addEventListener('resize', layout);
 requestAnimationFrame(frame);
@@ -837,6 +863,6 @@ App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= 
     },
     get hazir() { return !!blokGri; }, parcacik: () => IMG.parcacik, el: () => IMG.el,
   },
-  duraklat, devam, sureEkle, makasSec, get durakta() { return durak; }, get stok() { return { geri: stok('geri'), sure: stok('sure'), makas: stok('makas') }; },
+  gunlukNo, bugun, get gunluk() { return gunluk; }, duraklat, devam, sureEkle, makasSec, get durakta() { return durak; }, get stok() { return { geri: stok('geri'), sure: stok('sure'), makas: stok('makas') }; },
   dur() { if (durak) $('ov').hidden = true; durak = false; makasKoy = false; cv.style.visibility = ''; running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
 })();

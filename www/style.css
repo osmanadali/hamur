@@ -6,12 +6,13 @@
   --ink:#4a2d5e; --dim:#7b5f92; --warn:#ee4f5a;
   --r:#f0525a; --y:#ffc531; --b:#3f8cf2; --g:#6cc24a; --o:#ff8d3a; --p:#a274e0;
   --golge:0 3px 0 rgba(120,80,170,.22),0 8px 18px rgba(110,70,160,.16);
-  --display:'Trebuchet MS',system-ui,sans-serif; --baslik:'Titan One','Trebuchet MS',system-ui,sans-serif;
+  --display:'Titan One','Trebuchet MS',system-ui,sans-serif; --baslik:'Titan One','Trebuchet MS',system-ui,sans-serif;
   --body:'Segoe UI',system-ui,sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
+html{font-synthesis:none}   /* Titan One tek kalınlık: tarayıcı sahte kalın üretmesin */
 body{background:linear-gradient(180deg,#b9a1ea 0%,#cdb0ee 34%,#f0c3e0 68%,#ffd9c2 100%) fixed;color:var(--ink);font-family:var(--body);overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .app{gap:10px}
 .hud{display:flex;flex-direction:column;gap:10px}
@@ -273,3 +274,15 @@ body.oyun-acik .gok b{opacity:.55;scale:.8}
 .gok{--px:0;--py:0}
 .gok i{translate:calc(var(--px) * 6px) calc(var(--py) * 4px);transition:translate .25s ease-out}
 .gok b{translate:calc(var(--px) * 16px) calc(var(--py) * 10px);transition:translate .25s ease-out}
+
+/* yıldızlar: süre çubuğunda iki çentik (%25 ve %45), yolda kurabiyenin altında, kutlamada */
+.bar{position:relative}
+.bar::before,.bar::after{content:'';position:absolute;top:0;bottom:0;width:2px;background:rgba(90,50,140,.5);z-index:1}
+.bar::before{left:25%}.bar::after{left:45%}
+.durak em{position:absolute;left:50%;top:-16%;transform:translateX(-50%);font:400 .6em var(--display);font-style:normal;color:#ffc531;letter-spacing:1px;white-space:nowrap;-webkit-text-stroke:.6px #8a5a10;text-shadow:0 1px 0 rgba(90,50,10,.4)}
+.tost .yildiz{display:block;font-size:26px;color:#ffc531;-webkit-text-stroke:1px #8a5a10;letter-spacing:3px}
+/* günlük kalıp */
+.hap.gunluk{display:inline-flex;align-items:center;gap:8px}
+.hap.gunluk i{width:30px;height:30px;background:url(img/gunluk.webp) center/contain no-repeat;flex:none}
+body.gunluk-acik{background:#f3c6dc url(img/gok2.webp) center/cover no-repeat fixed}
+body.gunluk-acik .gok{opacity:0}

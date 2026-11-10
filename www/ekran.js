@@ -28,7 +28,7 @@ const bekle = (() => {
 App.bekle = bekle;
 function goster(ad) {
   if (acik && acik !== ad) gecis(ad);
-  acik = ad; document.body.classList.toggle('ana-acik', ad === 'ana'); document.body.classList.toggle('oyun-acik', ad === 'oyun');
+  acik = ad; document.body.classList.toggle('ana-acik', ad === 'ana'); document.body.classList.toggle('oyun-acik', ad === 'oyun'); document.body.classList.remove('gunluk-acik');
   if (ad !== 'oyun') O.dur();   // oyundan çıkınca süre, bekleyen bölüm geçişi ve reklam durur
   for (const [k, id] of Object.entries(EKRAN)) $(id).hidden = k !== ad;
   if (ad === 'ana') ana();
@@ -36,11 +36,13 @@ function goster(ad) {
   if (ad === 'tepsi') tepsi();
   window.Olcum?.event('screen_view', { screen_name: ad });
 }
-function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1); }
+function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, false); }
+function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik'); O.setup(O.gunlukNo(), true); }   // günlük kalıp: canlı arka plan
 
 /* ---------- ana ekran ---------- */
 function ana() {
   const n = siradaki(), hepsi = (save.done || []).length >= N;
+  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '');
   $('oynaNo').textContent = hepsi ? L('Hepsi tamam', 'All done') : L('Bölüm ', 'Level ') + n;
 }
 
@@ -61,6 +63,7 @@ function yol() {
       b.classList.add(durum); b.dataset.no = n;
       b.setAttribute('aria-label', L('Bölüm ', 'Level ') + n + (durum === 'tamam' ? L(', tamamlandı', ', completed') : durum === 'kilitli' ? L(', kilitli', ', locked') : ''));
       if (durum === 'kilitli') b.disabled = true; else { const s = document.createElement('span'); s.textContent = n; b.appendChild(s); b.onclick = () => oyna(n); }
+      if (durum === 'tamam') { const y = save.yildiz?.[n] || 1, e = document.createElement('em'); e.textContent = '★'.repeat(y) + '☆'.repeat(3 - y); b.appendChild(e); }
       if (n % 10 === 0) b.classList.add('figurlu');   // her 10. bölüm bir figürü tamamlar
       if (n === sira) hedef = b;
       karo.appendChild(b);
@@ -127,7 +130,7 @@ function ayarKapat() {
 }
 
 /* ---------- bağlantılar ---------- */
-$('bOyna').onclick = () => oyna(siradaki());
+$('bOyna').onclick = () => oyna(siradaki()); $('bGunluk').onclick = gunlukAc;
 $('bYol').onclick = () => goster('yol'); $('bTepsi').onclick = () => goster('tepsi');
 $('yolGeri').onclick = $('tepsiGeri').onclick = () => goster('ana');
 $('bCik').onclick = () => goster('yol');

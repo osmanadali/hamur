@@ -128,5 +128,18 @@ window.Ses = (() => {
       navigator.vibrate?.(p);
     } catch {}
   }
-  return { init: f => { A = f; }, tone, fx, buzz, haptic, Music, ctx: () => ac };
+  // Hamur sesi: kısa gürültü patlaması, alçak geçiren süzgeç f1'den f2'ye kayar (şlap, pıt, makas). pat(süre, f1, f2, ses düzeyi, gecikme)
+  let gurultu = null;
+  function pat(d, f1, f2, v, dl) {
+    if (!A().sound) return;
+    try {
+      ensureAC();
+      if (!gurultu) { gurultu = ac.createBuffer(1, ac.sampleRate * .5, ac.sampleRate); const b = gurultu.getChannelData(0); for (let i = 0; i < b.length; i++) b[i] = Math.random() * 2 - 1; }
+      const t = ac.currentTime + (dl || 0), s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = gurultu; f.type = 'lowpass'; f.Q.value = 6; f.frequency.setValueAtTime(f1, t); f.frequency.exponentialRampToValueAtTime(Math.max(40, f2), t + d);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v || .2, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      s.connect(f); f.connect(g); g.connect(ac.destination); s.start(t, Math.random() * .3, d + .05);
+    } catch {}
+  }
+  return { init: f => { A = f; }, tone, fx, pat, buzz, haptic, Music, ctx: () => ac };
 })();
