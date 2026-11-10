@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#ead8f6">
 <title>Hamur</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/ikon-192.png">
+<link rel="apple-touch-icon" href="img/ikon-192.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +15,6 @@
 <section class="ekran" id="sAna" hidden>
   <header class="ust"><span></span><button class="top" id="bAyar" type="button" aria-label="Ayarlar" data-en-label="Settings"><i style="background-image:url(img/ayarlar.webp)"></i></button></header>
   <div class="baslik-yeri" aria-hidden="true"><!-- logo: isim belli olunca --></div>
-  <img class="kahraman" src="img/karisim.webp" alt="" width="360" height="360">
   <div class="ana-dugmeler">
     <button class="hap sari buyuk" id="bOyna" type="button"><b data-en="Play">Oyna</b><small id="oynaNo"></small></button>
     <div class="yan-yana">
@@ -53,6 +54,7 @@
     <div class="tost" id="tost" role="status" hidden></div>
     <div class="ov" id="ov" hidden>
       <div class="card" role="dialog" aria-labelledby="ovT">
+        <img id="ovR" alt="" width="520" height="412" hidden>
         <h2 id="ovT"></h2>
         <p id="ovP"></p>
         <button class="go" id="ovB" type="button"></button>

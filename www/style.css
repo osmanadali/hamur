@@ -49,6 +49,10 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .ov{position:absolute;inset:0;display:grid;place-items:center;background:rgba(120,85,165,.38);border-radius:22px}
 .ov[hidden]{display:none}
 .card{background:#fffaf4;border-radius:26px;padding:24px 22px 20px;width:min(290px,88%);text-align:center;display:flex;flex-direction:column;gap:10px;box-shadow:0 5px 0 rgba(120,80,170,.25),0 20px 40px rgba(90,50,140,.35)}
+.card img{width:100%;height:auto;border-radius:18px;display:block}
+.card img[hidden]{display:none}
+.card{max-height:100%;overflow-y:auto;box-sizing:border-box}
+@media (max-height:680px){.card{padding:14px 16px;gap:6px}.card img{aspect-ratio:5/2;object-fit:cover}.card h2{font-size:23px}}
 .card h2{margin:0;font:700 28px/1.1 var(--display);text-wrap:balance}
 .card p{margin:0;color:var(--dim);font-size:15px;line-height:1.4;text-wrap:balance}
 .go{margin-top:8px;height:50px;border:0;border-radius:18px;background:linear-gradient(#ffd75e,#ffbd33);color:#5a3a08;font:700 17px var(--display);cursor:pointer;box-shadow:0 4px 0 #dc962a}
@@ -91,15 +95,14 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .panel .kapat{position:absolute;right:-32px;top:-36px}
 .ov.tam{position:fixed;z-index:10;border-radius:0}
 /* ana ekran */
+body.ana-acik{background-image:url(img/ana.webp);background-position:center bottom}
 #sAna{align-items:center;gap:12px}
 #sAna .ust{align-self:stretch}
-.baslik-yeri{min-height:84px;flex:0 1 110px}
-.kahraman{width:min(78%,340px);height:auto;filter:drop-shadow(0 14px 12px rgba(90,50,140,.3));animation:salin 4.5s ease-in-out infinite}
-@keyframes salin{50%{transform:translateY(-8px) rotate(-1.5deg)}}
-.ana-dugmeler{margin-top:auto;margin-bottom:8vh;display:flex;flex-direction:column;align-items:center;gap:16px}
+.baslik-yeri{flex:0 1 clamp(8px,22vh - 80px,120px)}
+.ana-dugmeler{display:flex;flex-direction:column;align-items:center;gap:16px}
 .yan-yana{display:flex;gap:12px}
-@media (max-height:560px){#sAna{overflow-y:auto}#sAna>*{flex-shrink:0}.baslik-yeri{display:none}.kahraman{width:auto;height:min(34vh,340px)}.ana-dugmeler{margin-bottom:12px}}
-@media (max-height:560px) and (orientation:landscape){#sAna{flex-direction:row;justify-content:center;gap:28px;position:relative;max-width:none}#sAna .ust{position:absolute;top:12px;right:16px;align-self:auto}.kahraman{height:min(52vh,340px)}.ana-dugmeler{margin:0}}
+@media (max-height:560px){#sAna{overflow-y:auto}#sAna>*{flex-shrink:0}.baslik-yeri{display:none}}
+@media (max-height:560px) and (orientation:landscape){#sAna{justify-content:center;position:relative;max-width:none}#sAna .ust{position:absolute;top:12px;right:16px;align-self:auto}body.ana-acik{background-position:center 80%}}
 /* bölüm yolu: karo alt alta dizilince ek yeri görünmez; bölüm 1 en altta */
 #sYol,#sTepsi{padding-left:0;padding-right:0}
 #sYol .ust,#sTepsi .ust{padding:0 16px}
@@ -143,4 +146,4 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 #yolGeri,#tepsiGeri,#bCik{background-image:url(img/top-mor.webp)}
 .top.cik{width:44px;height:44px}
 .tost img{display:block;width:120px;height:120px;margin:0 auto 6px}
-@media (prefers-reduced-motion:reduce){.kahraman,.durak.siradaki{animation:none}}
+@media (prefers-reduced-motion:reduce){.durak.siradaki{animation:none}}

@@ -287,10 +287,13 @@ function birak() {
 function showOv(t, p, b, fn, b2, fn2) {
   $('ovT').textContent = t; $('ovP').textContent = p; $('ovB').textContent = b; $('ovB').onclick = fn;
   $('ovB2').hidden = !b2; if (b2) { $('ovB2').textContent = b2; $('ovB2').onclick = fn2; }
+  const r = state === 'won' ? 'kazanc' : state === 'lost' ? (kayipTur === 'time' ? 'kayip-sure' : 'kayip-yapisma') : '';   // sonuç görseli; yazı ve düğmeler altında
+  $('ovR').hidden = !r; if (r) $('ovR').src = 'img/' + r + '.webp';
   $('ov').hidden = false;
 }
+let kayipTur = '';
 function lose(kind, piece) {
-  state = 'lost'; running = false; drag = null; threads = new Map();
+  state = 'lost'; kayipTur = kind; running = false; drag = null; threads = new Map();
   if (li < ASIL) { save.fails = { ...save.fails, [li + 1]: (save.fails?.[li + 1] || 0) + 1 }; App.persist(); }
   const now = performance.now(), yine = L('Tekrar dene', 'Try again');
   // ne kadar yaklaşıldı: kaç kalıp doldu; süre bittiyse yaklaşık kaç saniye eksik kaldı (kalan en kısa çözümden)

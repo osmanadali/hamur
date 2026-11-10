@@ -12,7 +12,7 @@ const siradaki = () => { for (let n = 1; n <= N; n++) if (!bitti(n)) return n; r
 const acikMi = n => save.hepsiAcik || n <= siradaki();
 
 function goster(ad) {
-  acik = ad;
+  acik = ad; document.body.classList.toggle('ana-acik', ad === 'ana');
   if (ad !== 'oyun') O.dur();   // oyundan çıkınca süre, bekleyen bölüm geçişi ve reklam durur
   for (const [k, id] of Object.entries(EKRAN)) $(id).hidden = k !== ad;
   if (ad === 'ana') ana();
