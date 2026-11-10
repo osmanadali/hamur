@@ -2,7 +2,7 @@
    Tek ekran: üstte gösterge şeridi, ortada tahta, altta renk tarifi ve tek satır ipucu.
    Tasarım sistemi (renk, yazı ölçeği, boşluk, köşe, düğme, kart) 3. aşamada onaylanınca burada kesinleşir. */
 :root{
-  --desk:#ead8f6; --panel:rgba(255,255,255,.78); --mat:#e3d2f1; --field:#efe4f8; --grid:rgba(120,85,165,.2); --rule:#b9a3d2; --wall:#f6f1fa; --pit:#cfbbe6;
+  --desk:#ead8f6; --panel:rgba(255,255,255,.78); --mat:#e3d2f1; --field:#efe4f8; --grid:rgba(120,85,165,.2); --rule:#b9a3d2; --wall:#f6f1fa; --pit:#bda6d8;
   --ink:#4a2d5e; --dim:#7b5f92; --warn:#ee4f5a;
   --r:#f0525a; --y:#ffc531; --b:#3f8cf2; --g:#6cc24a; --o:#ff8d3a; --p:#a274e0;
   --golge:0 3px 0 rgba(120,80,170,.22),0 8px 18px rgba(110,70,160,.16);

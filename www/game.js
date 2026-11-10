@@ -32,8 +32,8 @@ const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
 const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
-const IMG = {}; let dokuDesen = null;
-for (const ad of ['tepsi', 'doku', 'duvar']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'doku') dokuDesen = ctx.createPattern(im, 'repeat'); }; im.src = 'img/' + ad + '.webp'; }
+const IMG = {};
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -373,29 +373,26 @@ function drawMakas(m, now) {
   }
   ctx.restore();
 }
+// Kalıp: tepsiye gömülü çukur. İçte koyu üst gölge, kenarda hedef renkte kesikli ve hafif parlayan çizgi. Dolunca hamur çukura oturur.
 function drawHole(h, now) {
-  // kurabiye kalıbı: tepsiye gömülü çukur, parçanın renginde kalın kenar. Dolunca hamurla dolar.
-  const c = C[h.color], kenar = Math.max(3, cell * .085);
+  const c = C[h.color], [hx, hy] = h.cells[0];
   ctx.save();
   if (h.shown) {
-    ctx.fillStyle = c; ctx.fill(h.path); dokula(h.path, 0, 0, .8);
-    ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .12; ctx.strokeStyle = 'rgba(60,30,90,.28)'; ctx.translate(0, cell * .05); ctx.stroke(h.path); ctx.restore();
-    ctx.lineWidth = kenar; ctx.strokeStyle = lighten(c, .45); ctx.stroke(h.path);
+    ctx.fillStyle = C.pit; ctx.fill(h.path);
+    ctx.save(); ctx.clip(h.path); ctx.translate(hx * cell, hy * cell + cell * .03); govde(h, () => koyu(c, .9), .05); ctx.restore();
+    ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .12; ctx.strokeStyle = 'rgba(50,20,80,.3)'; ctx.translate(0, cell * .05); ctx.stroke(h.path); ctx.restore();
   } else {
     ctx.fillStyle = C.pit; ctx.fill(h.path);
-    ctx.fillStyle = rgba(c, .46 + (RM ? 0 : .07 * Math.sin(now / 520))); ctx.fill(h.path);
-    ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .2; ctx.strokeStyle = 'rgba(60,30,90,.3)'; ctx.translate(0, cell * .08); ctx.stroke(h.path); ctx.restore();
-    ctx.lineWidth = kenar; ctx.strokeStyle = c; ctx.stroke(h.path);
-    ctx.lineWidth = Math.max(1, kenar * .3); ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.save(); ctx.translate(-kenar * .18, -kenar * .22); ctx.stroke(h.path); ctx.restore();
+    // içte koyu üst gölge (çukur derinliği): kenar çizgisinin gölgesi aşağı düşürülür ve kalıbın içine kırpılır; her şekilde kenarı izler
+    ctx.save(); ctx.clip(h.path);
+    ctx.lineWidth = cell * .1; ctx.strokeStyle = 'rgba(40,10,70,.45)';
+    ctx.shadowColor = 'rgba(40,10,70,.9)'; ctx.shadowBlur = cell * .2 * dpr; ctx.shadowOffsetY = cell * .14 * dpr; ctx.stroke(h.path); ctx.stroke(h.path);
+    ctx.restore();
+    const nabiz = RM ? .5 : .5 + .5 * Math.sin(now / 420);
+    ctx.setLineDash([cell * .15, cell * .1]); ctx.lineDashOffset = RM ? 0 : -now / 60; ctx.lineCap = 'round';
+    ctx.shadowColor = c; ctx.shadowBlur = cell * (.08 + .1 * nabiz);                // hafif parlama
+    ctx.lineWidth = Math.max(3, cell * .075); ctx.strokeStyle = lighten(c, .15 * nabiz); ctx.stroke(h.path);
   }
-  ctx.restore();
-}
-// Hamur dokusu: tek gri doku, rengin üstüne bindirilir (altı renk ve bütün şekiller aynı küçük dosyadan çıkar)
-function dokula(path, ox, oy, a) {
-  if (!dokuDesen) return;
-  ctx.save(); ctx.clip(path);
-  dokuDesen.setTransform(new DOMMatrix().translate(ox, oy).scale(cell * 2.4 / 384));
-  ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = a; ctx.fillStyle = dokuDesen; ctx.fillRect(-12 * cell, -12 * cell, 24 * cell, 24 * cell);
   ctx.restore();
 }
 function blob(x, y, R, now, s) {
@@ -407,80 +404,118 @@ function blob(x, y, R, now, s) {
   }
   ctx.closePath();
 }
-function body(p, sh, dy, now) {
-  const [x0, y0] = p.cells[0], m = p.mix;
-  ctx.save(); ctx.translate(0, dy); ctx.clip(p.path);
-  if (m) {
-    const t = Math.min(1, (now - m.t0) / MIXMS);
-    p.cells.forEach((c, i) => { ctx.fillStyle = tint(C[m.cols[i]], sh); ctx.fillRect((c[0] - x0) * cell - 2, (c[1] - y0) * cell - 2, cell + 4, cell + 4); });
-    // yeni renk temas noktasından yayılır
-    const R = m.maxR * cell * 1.3 * (1 - Math.pow(1 - t, 2.2)), ox = m.ox * cell, oy = m.oy * cell;
-    blob(ox, oy, R, now, m.seed); ctx.fillStyle = tint(m.lead, sh); ctx.fill();
-    blob(ox, oy, Math.max(0, R - cell * .28) * .95, now, m.seed + 2); ctx.fillStyle = tint(C[p.color], sh); ctx.fill();
-    if (sh === 1) {
-      ctx.lineWidth = cell * .07; ctx.lineCap = 'round';
-      for (let i = 0; i < 4; i++) {
-        const r2 = R * (.2 + .17 * i);
-        if (r2 < 4) continue;
-        const a = m.seed + i * 1.7 + t * (5 + i);
-        ctx.strokeStyle = rgba(m.srcs[i % 2], .55 * (1 - t));
-        ctx.beginPath(); ctx.arc(ox, oy, r2, a, a + 1.8); ctx.stroke();
-      }
-    }
-  } else {
-    ctx.fillStyle = tint(C[p.color], sh); ctx.fillRect(-12 * cell, -12 * cell, 24 * cell, 24 * cell);
+// Boyalı yastık: parca-blok görseli × renk. Çarpma bloğun ortalama grisine göre normallenir (piksel = renk × gri / ortalama gri):
+// bloğun ortalama tonu rengin kendisini verir, renkler kararmaz; doku ve kenar gölgesi kalır. Renk başına bir kez hesaplanır.
+const BLOK = 128, boyali = new Map(); let blokGri = null, blokOrt = 1;
+function blokHazirla(im) {
+  const c = document.createElement('canvas'); c.width = c.height = BLOK;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, BLOK, BLOK);
+  const d = x.getImageData(0, 0, BLOK, BLOK).data, g = new Uint8ClampedArray(BLOK * BLOK * 2); let s = 0, n = 0;
+  for (let i = 0; i < BLOK * BLOK; i++) { g[i * 2] = d[i * 4]; g[i * 2 + 1] = d[i * 4 + 3]; if (d[i * 4 + 3] > 200) { s += d[i * 4]; n++; } }
+  blokGri = g; blokOrt = s / Math.max(1, n); boyali.clear();
+}
+function yastik(hex) {
+  let c = boyali.get(hex); if (c || !blokGri) return c || null;
+  c = document.createElement('canvas'); c.width = c.height = BLOK;
+  const x = c.getContext('2d'), id = x.createImageData(BLOK, BLOK), o = id.data, [r, g, b] = rgb(hex);
+  for (let i = 0; i < BLOK * BLOK; i++) { const k = blokGri[i * 2] / blokOrt; o[i * 4] = r * k; o[i * 4 + 1] = g * k; o[i * 4 + 2] = b * k; o[i * 4 + 3] = blokGri[i * 2 + 1]; }
+  x.putImageData(id, 0, 0); if (boyali.size > 80) boyali.clear(); boyali.set(hex, c); return c;
+}
+const koyu = (h, s) => '#' + rgb(h).map(v => Math.round(v * s).toString(16).padStart(2, '0')).join('');
+// Parçanın gövdesi: her kare ayrı yastık olarak kalır. Komşu iki karenin arası aynı renkle dolar, dikişte hafif bir çukur gölgesi olur.
+// renkOf(i): i. karenin rengi (#rrggbb). Çizim parçanın ilk karesinin köşesine göredir. cukur: dikiş gölgesinin koyuluğu.
+function govde(p, renkOf, cukur = .2) {
+  const [x0, y0] = p.cells[0], S = new Set(p.cells.map(c => c[0] + ',' + c[1])), ins = cell * .02, rad = cell * .2, dolu = (x, y) => S.has(x + ',' + y);
+  const dik = (sp, hex, x, y, w, h) => { if (sp) ctx.drawImage(sp, BLOK * .32, BLOK * .32, BLOK * .36, BLOK * .36, x, y, w, h); else { ctx.fillStyle = hex; ctx.fillRect(x, y, w, h); } };
+  p.cells.forEach((c, i) => {   // köprüler
+    const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell, sag = dolu(c[0] + 1, c[1]), alt = dolu(c[0], c[1] + 1);
+    if (sag) dik(sp, hex, X + cell - rad, Y + rad * .85, rad * 2, cell - rad * 1.7);
+    if (alt) dik(sp, hex, X + rad * .85, Y + cell - rad, cell - rad * 1.7, rad * 2);
+    if (sag && alt && dolu(c[0] + 1, c[1] + 1)) dik(sp, hex, X + cell - rad, Y + cell - rad, rad * 2, rad * 2);
+  });
+  p.cells.forEach((c, i) => {   // yastıklar
+    const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell;
+    if (sp) ctx.drawImage(sp, X + ins, Y + ins, cell - 2 * ins, cell - 2 * ins); else { rr(X + ins, Y + ins, cell - 2 * ins, cell - 2 * ins, rad); ctx.fillStyle = hex; ctx.fill(); }
+  });
+  if (cukur > 0) for (const c of p.cells) {   // dikiş çukuru
+    const X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell, w = cell * .09;
+    if (dolu(c[0] + 1, c[1])) { const g = ctx.createLinearGradient(X + cell - w, 0, X + cell + w, 0); g.addColorStop(0, 'rgba(45,15,70,0)'); g.addColorStop(.5, 'rgba(45,15,70,' + cukur + ')'); g.addColorStop(1, 'rgba(45,15,70,0)'); ctx.fillStyle = g; ctx.fillRect(X + cell - w, Y + rad * .85, 2 * w, cell - rad * 1.7); }
+    if (dolu(c[0], c[1] + 1)) { const g = ctx.createLinearGradient(0, Y + cell - w, 0, Y + cell + w); g.addColorStop(0, 'rgba(45,15,70,0)'); g.addColorStop(.5, 'rgba(45,15,70,' + cukur + ')'); g.addColorStop(1, 'rgba(45,15,70,0)'); ctx.fillStyle = g; ctx.fillRect(X + rad * .85, Y + cell - w, cell - rad * 1.7, 2 * w); }
+  }
+}
+// Renk karışımı: kareler önce eski renkleriyle durur, yeni renk temas noktasından dalgalı kenarla yayılır.
+// Yayılan renk de aynı yastıklarla çizildiği için doku görünür kalır.
+function body(p, now) {
+  const m = p.mix;
+  if (!m) return govde(p, () => C[p.color]);
+  const t = Math.min(1, (now - m.t0) / MIXMS), R = m.maxR * cell * 1.3 * (1 - Math.pow(1 - t, 2.2)), ox = m.ox * cell, oy = m.oy * cell;
+  govde(p, i => C[m.cols[i]]);
+  ctx.save(); blob(ox, oy, R, now, m.seed); ctx.clip(); govde(p, () => m.lead); ctx.restore();                                   // öncü: açık ton
+  ctx.save(); blob(ox, oy, Math.max(0, R - cell * .28) * .95, now, m.seed + 2); ctx.clip(); govde(p, () => C[p.color]); ctx.restore();   // arkasından yeni renk
+  ctx.save(); ctx.clip(p.path); ctx.lineWidth = cell * .07; ctx.lineCap = 'round';
+  for (let i = 0; i < 4; i++) {
+    const r2 = R * (.2 + .17 * i); if (r2 < 4) continue;
+    const a = m.seed + i * 1.7 + t * (5 + i);
+    ctx.strokeStyle = rgba(m.srcs[i % 2], .45 * (1 - t)); ctx.beginPath(); ctx.arc(ox, oy, r2, a, a + 1.8); ctx.stroke();
   }
   ctx.restore();
 }
-function face(p, now) {
-  const [x0, y0] = p.cells[0], f = p.cells[p.face], fx = (f[0] - x0 + .5) * cell, fy = (f[1] - y0 + .5) * cell;
-  const panic = state === 'play' && running && timeLeft < 10;
-  let lx = Math.sin(now / 1700 + p.seed) * .5, ly = Math.cos(now / 2300 + p.seed) * .3;
+// Yüz (kaynak: docs/gorseller/yuzler.png, 4×2 ifade): parçanın tek karesine yerleşir, ifade duruma göre değişir.
+// normalde sakin · sürüklenirken yöne bakar · süre azalınca telaşlı · yanlış yapışınca (ya da kaybedince) üzgün · kalıba oturunca mutlu
+const YUZ = { sakin: 0, mutlu: 1, kirp: 2, sol: 3, sag: 4, telas: 5, saskin: 6, uzgun: 7 };
+function ifade(p, now) {
+  if (state === 'lost' || (p.shakeT && now - p.shakeT < 1600)) return 'uzgun';
+  if (state === 'won' || sinks.some(s => s.p === p)) return 'mutlu';
+  if (state === 'play' && running && timeLeft < 10) return 'telas';
   if (drag) {
-    const t = drag.p === p ? [drag.px, drag.py] : center(drag.p), dx = t[0] - (x0 * cell + fx), dy = t[1] - (y0 * cell + fy), d = Math.hypot(dx, dy) || 1;
-    lx = dx / d; ly = dy / d;
+    let dx;
+    if (drag.p === p) { const h = drag.hist, a = h[Math.max(0, h.length - 6)]; dx = Math.abs(drag.px - a.x) > 2 ? drag.px - a.x : yaslan()[0] * cell; if (Math.abs(dx) > cell * .08) p.bak = dx < 0 ? 'sol' : 'sag'; return p.bak || 'sag'; }
+    dx = center(drag.p)[0] - center(p)[0];
+    return Math.abs(dx) < cell * .4 ? 'sakin' : dx < 0 ? 'sol' : 'sag';
   }
-  const blink = ((now + p.seed * 900) % 3800) < 130 ? .15 : 1, es = cell * (panic ? .078 : .062), g = cell * .15, ey = fy - cell * .05;
-  const jx = panic && !RM ? Math.sin(now / 38 + p.seed) * cell * .012 : 0;
-  for (const s of [-1, 1]) {
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(fx + s * g + jx, ey, es, es * 1.15 * blink, 0, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = '#3a2440'; ctx.beginPath(); ctx.ellipse(fx + s * g + jx + lx * es * .4, ey + ly * es * .4 * blink, es * .55, es * .62 * blink, 0, 0, 6.2832); ctx.fill();
-  }
-  ctx.fillStyle = 'rgba(255,110,150,.38)';   // yanaklar
-  for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(fx + s * g * 1.75 + jx, fy + cell * .07, cell * .06, cell * .04, 0, 0, 6.2832); ctx.fill(); }
-  ctx.strokeStyle = 'rgba(60,35,60,.8)'; ctx.lineWidth = Math.max(1.5, cell * .032); ctx.lineCap = 'round'; ctx.beginPath();
-  if (panic) ctx.ellipse(fx + jx, fy + cell * .16, cell * .035, cell * .05, 0, 0, 6.2832);
-  else ctx.arc(fx, fy + cell * .07, cell * .075, .2 * Math.PI, .8 * Math.PI);
-  ctx.stroke();
+  p.bak = null;
+  return ((now + p.seed * 900) % 4200) < 140 ? 'kirp' : 'sakin';
 }
+function face(p, now) {
+  const [x0, y0] = p.cells[0], f = p.cells[p.face], fx = (f[0] - x0 + .5) * cell, fy = (f[1] - y0 + .5) * cell, ne = ifade(p, now);
+  const jx = ne === 'telas' && !RM ? Math.sin(now / 38 + p.seed) * cell * .014 : 0, im = IMG.yuzler;
+  if (im) {
+    const sw = im.width / 4, sh = im.height / 2, i = YUZ[ne] || 0, w = cell * .8, h = w * sh / sw;
+    ctx.drawImage(im, (i % 4) * sw, (i / 4 | 0) * sh, sw, sh, fx - w / 2 + jx, fy + cell * .27 - h, w, h);
+    return;
+  }
+  // görsel yüklenmediyse: iki nokta göz, yay ağız
+  ctx.fillStyle = '#4a322c'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(fx + s * cell * .15 + jx, fy - cell * .05, cell * .055, 0, 6.2832); ctx.fill(); }
+  ctx.strokeStyle = '#4a322c'; ctx.lineWidth = Math.max(1.5, cell * .035); ctx.lineCap = 'round'; ctx.beginPath();
+  ne === 'uzgun' ? ctx.arc(fx, fy + cell * .19, cell * .07, 1.2 * Math.PI, 1.8 * Math.PI) : ctx.arc(fx, fy + cell * .07, cell * .075, .2 * Math.PI, .8 * Math.PI); ctx.stroke();
+}
+// Parça: altında yumuşak gölge (tutulunca büyür), koyu yan yüz (kalınlık), üstte mat yastıklar. Parlak vurgu yok.
 function drawPiece(p, now, k, glow) {
-  const [x0, y0] = p.cells[0], depth = cell * (.12 + .05 * p.lift) * k, up = cell * .06 * p.lift * k;
+  const [x0, y0] = p.cells[0], depth = cell * (.1 + .04 * p.lift) * k, up = cell * .07 * p.lift * k;
   const [cx, cy] = center(p), s = (1 + p.pulse) * (1 + .03 * p.lift);
   let sh = 0;
   if (p.shakeT && now - p.shakeT < 800) { const t = (now - p.shakeT) / 800; sh = Math.sin((now - p.shakeT) / 26) * cell * .07 * (1 - t); }
   ctx.save();
   ctx.translate(cx + p.ox + sh, cy + p.oy); ctx.scale(s, s); ctx.translate(-cx + x0 * cell, -cy + y0 * cell);
-  ctx.save(); ctx.translate(0, cell * .08 + up * .9); ctx.fillStyle = 'rgba(70,35,110,' + (.26 * k) + ')'; ctx.fill(p.path); ctx.restore();
-  body(p, .74, -up, now);
+  ctx.save();   // yumuşak gölge
+  ctx.translate(0, cell * (.07 + .1 * p.lift) * k); ctx.shadowColor = 'rgba(60,25,100,' + (.5 * k) + ')'; ctx.shadowBlur = cell * (.14 + .3 * p.lift) * dpr; ctx.shadowOffsetY = cell * .03 * dpr;
+  ctx.fillStyle = 'rgba(60,25,100,' + (.2 * k) + ')'; ctx.fill(p.path); ctx.restore();
+  ctx.save(); ctx.translate(0, -up); ctx.fillStyle = koyu(C[p.color], .7); ctx.fill(p.path); ctx.restore();   // yan yüz
   ctx.translate(0, -up - depth);
-  body(p, 1, 0, now); dokula(p.path, p.seed * 37, p.seed * 53, .85);
-  ctx.save(); ctx.clip(p.path);
+  body(p, now);
   if (p.flash) {
     const t = (now - p.flash.t0) / 480;
     if (t >= 1) p.flash = null;
     else {
-      ctx.strokeStyle = 'rgba(255,255,255,' + (.9 * (1 - t)) + ')'; ctx.lineWidth = cell * .14 * (1 - t) + 1; ctx.lineCap = 'round'; ctx.beginPath();
+      ctx.save(); ctx.clip(p.path);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (.75 * (1 - t)) + ')'; ctx.lineWidth = cell * .14 * (1 - t) + 1; ctx.lineCap = 'round'; ctx.beginPath();
       for (const [x, y, dx, dy] of p.flash.segs) {
         const mx = (x + .5 + dx / 2) * cell, my = (y + .5 + dy / 2) * cell;
         ctx.moveTo(mx - dy * cell * .36, my - dx * cell * .36); ctx.lineTo(mx + dy * cell * .36, my + dx * cell * .36);
       }
-      ctx.stroke();
+      ctx.stroke(); ctx.restore();
     }
   }
-  ctx.lineWidth = cell * .12;
-  ctx.translate(cell * .035, cell * .045); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.stroke(p.path);
-  ctx.translate(-cell * .07, -cell * .09); ctx.strokeStyle = 'rgba(70,30,90,.14)'; ctx.stroke(p.path);
-  ctx.restore();
   if (glow) { ctx.lineWidth = cell * .075; ctx.strokeStyle = rgba(C[glow], .6 + .3 * Math.sin(now / 90)); ctx.stroke(p.path); }
   if (k > .25) face(p, now);
   ctx.restore();
