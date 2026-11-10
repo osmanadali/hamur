@@ -111,12 +111,12 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     const o = await ac({ save: { level: 1 } });
     await o.basla(0, 1); await o.gotur(3, 1, 250); await o.birak(); await o.page.waitForTimeout(150);
     const yapisti = await o.d();
-    await o.basla(3, 1); await o.gotur(1, 1, 200); await o.gotur(1, 3, 200); await o.birak(); await o.page.waitForTimeout(1500);
-    const s = await o.d(), kayit = await getSave(o.page);
+    await o.basla(3, 1); await o.gotur(1, 1, 200); await o.gotur(1, 3, 200); await o.birak(); await o.page.waitForTimeout(1100);
+    const s = await o.d(), kayit = await getSave(o.page), tost = await o.page.evaluate(() => document.getElementById('tost').hidden ? '' : document.getElementById('tost').textContent);
     await shot(o.page, 'kazan');
-    check('oyun.bolum1', '1. bölüm parmakla çözülür: yapıştır, kalıba oturt, bölüm tamam', yapisti.n === 1 && s.n === 0 && s.durum === 'won' && !!s.ov && kayit.done?.includes(1) && kayit.wins === 1 && !o.errors.length, o.errors[0] || `${s.durum} · "${s.ov}"`);
-    await o.page.click('#ovB'); await o.page.waitForTimeout(200);
-    const b2 = await o.page.evaluate(() => [window.__hamur.oyun.bolum, window.__hamur.oyun.durum, document.getElementById('ov').hidden]);
+    check('oyun.bolum1', '1. bölüm parmakla çözülür: yapıştır, kalıba oturt, bölüm tamam', yapisti.n === 1 && s.n === 0 && s.durum === 'won' && !s.ov && /tamam/.test(tost) && kayit.done?.includes(1) && kayit.wins === 1 && !o.errors.length, o.errors[0] || `${s.durum} · "${tost}"`);
+    await o.page.waitForTimeout(1500);   // düğmeye basmadan: tahta kayar, sıradaki bölüm gelir
+    const b2 = await o.page.evaluate(() => [window.__hamur.oyun.bolum, window.__hamur.oyun.durum, document.getElementById('ov').hidden && document.getElementById('tost').hidden]);
     check('oyun.sonraki', 'Bölüm bitince menü açılmadan sıradaki bölüm gelir', b2[0] === 2 && b2[1] === 'play' && b2[2] === true, b2.join(' · '));
     await o.ctx.close();
   }
@@ -168,6 +168,13 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     const sonra = await z.d();
     check('oyun.sure.geri', 'Süre bitince geri al kapanır, hak harcanmaz, tahta geri sarılmaz', once.geriVar && dugme === true && sonra.durum === 'lost' && sonra.boy === '2' && sonra.geri === 1, `düğme kapalı ${dugme} · parçalar ${sonra.boy} · hak ${sonra.geri}`);
     await z.ctx.close();
+    // aynı bölümde üç kayıp → sıradaki denemede 10 sn fazla; kazanınca sayaç silinir
+    const u = await ac({ save: { level: 1, fails: { 1: 2 } } });
+    await u.basla(0, 1); await u.gotur(1, 1, 100); await u.birak(); await u.page.evaluate(() => { window.__hamur.oyun.sure = .1; }); await u.page.waitForTimeout(500);
+    const metin = await u.page.evaluate(() => document.getElementById('ovP').textContent); await u.page.click('#ovB'); await u.page.waitForTimeout(150);
+    const yeni = await u.page.evaluate(() => window.__hamur.oyun.sure), ks = await getSave(u.page);
+    check('oyun.eksure', 'Aynı bölümde üç kez kaybedince sıradaki denemede 10 saniye eklenir; kayıpta ne kadar yaklaşıldığı yazılır', yeni === 40 && ks.fails?.[1] === 3 && /10 saniye/.test(metin) && /saniye daha gerekiyordu/.test(metin), `${yeni} sn · "${metin}"`);
+    await u.ctx.close();
     const bekle = await ac({ save: { level: 1 } }); await bekle.page.waitForTimeout(600);
     const t = await bekle.page.evaluate(() => window.__hamur.oyun.sure);
     check('oyun.sure.bekle', 'Dokunmadan önce süre işlemez', t === 30, t + ' sn');

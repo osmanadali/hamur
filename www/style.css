@@ -23,6 +23,17 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .btn{padding:0 12px;color:var(--ink);font-size:14px;white-space:nowrap}
 .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(120,80,170,.22)}
 .btn.ikon{width:38px;padding:0;font-size:19px}
+/* resimli düğmeler (docs/gorseller/arayuz-*.png): hamurdan yapılmış simgeler */
+.btn.resim{width:44px;height:44px;padding:0;background:center/contain no-repeat;box-shadow:none;border-radius:50%;filter:drop-shadow(0 3px 3px rgba(100,60,150,.3))}
+.btn.resim:active{transform:translateY(2px) scale(.96);box-shadow:none}
+.btn.resim:disabled{opacity:.38;filter:grayscale(.7)}
+#undo{background-image:url(img/geri.webp)} #retry{background-image:url(img/bastan.webp)} #sound{background-image:url(img/ses.webp)} #sound.off{background-image:url(img/sessiz.webp)}
+.saat{width:30px;height:30px;flex:none;background:url(img/saat.webp) center/contain no-repeat;filter:drop-shadow(0 2px 2px rgba(100,60,150,.3))}
+.timer.low .saat{animation:beat .5s ease-in-out infinite}
+.tost{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;background:#fffaf4;color:var(--ink);font:700 22px var(--display);padding:14px 22px;border-radius:20px;box-shadow:0 4px 0 rgba(120,80,170,.25),0 14px 30px rgba(90,50,140,.3);text-align:center;white-space:nowrap;pointer-events:none;animation:tost .9s ease both}
+.tost[hidden]{display:none}
+.tost small{display:block;font:600 14px var(--body);color:var(--dim);margin-top:2px}
+@keyframes tost{0%{opacity:0;transform:translate(-50%,-30%) scale(.9)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}30%{transform:translate(-50%,-50%) scale(1)}100%{opacity:1}}
 .btn.off{color:var(--dim);text-decoration:line-through}
 .btn:disabled{color:var(--dim);opacity:.5;cursor:default}
 .btn:focus-visible,.go:focus-visible{outline:3px solid var(--p);outline-offset:2px}
@@ -49,4 +60,4 @@ body{background:var(--desk) url(img/gok.webp) center/cover no-repeat fixed;color
 .rx span{display:inline-flex;align-items:center;gap:5px}
 .rx i{width:16px;height:16px;border-radius:6px;display:inline-block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.15)}
 #hint{margin:0;color:var(--ink);font-size:14.5px;line-height:1.4;text-align:center;text-wrap:balance;max-width:42ch;text-shadow:0 1px 0 rgba(255,255,255,.6)}
-@media (prefers-reduced-motion:reduce){.timer.low #secs{animation:none}}
+@media (prefers-reduced-motion:reduce){.timer.low #secs,.timer.low .saat,.tost{animation:none}}

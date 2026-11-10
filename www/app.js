@@ -3,7 +3,8 @@
 'use strict';
 const KEY = 'hamur';
 // level: sıradaki bölüm (1'den başlar) · done: bitirilen bölüm numaraları · wins: kazanılan bölüm sayısı (reklam aralığı)
-const def = { level: 1, done: [], wins: 0, sound: true, music: true, vib: true, lang: '', noads: false, bst: { geri: 0, sure: 0, makas: 0 }, iapTx: [] };
+// fails: bölüm numarası → art arda kayıp sayısı (üç kayıptan sonra o bölümde 10 sn eklenir; kazanınca silinir)
+const def = { level: 1, done: [], wins: 0, fails: {}, sound: true, music: true, vib: true, lang: '', noads: false, bst: { geri: 0, sure: 0, makas: 0 }, iapTx: [] };
 let save;
 try { save = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { save = { ...def }; }
 save.bst = { ...def.bst, ...save.bst };

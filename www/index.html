@@ -18,17 +18,19 @@
         <span id="lvlNo" aria-live="polite">1</span>
         <button class="btn ikon" id="next" type="button" aria-label="Sonraki bölüm" data-en-label="Next level">›</button>
       </div>
-      <button class="btn ikon" id="undo" type="button" aria-label="Geri al" data-en-label="Undo" disabled>↶</button>
-      <button class="btn" id="sound" type="button" data-en="Sound">Ses</button>
-      <button class="btn" id="retry" type="button" data-en="Restart">Baştan</button>
+      <button class="btn resim" id="undo" type="button" aria-label="Geri al" data-en-label="Undo" disabled></button>
+      <button class="btn resim" id="sound" type="button" aria-label="Ses" data-en-label="Sound"></button>
+      <button class="btn resim" id="retry" type="button" aria-label="Baştan" data-en-label="Restart"></button>
     </div>
     <div class="timer" id="timer">
+      <i class="saat" aria-hidden="true"></i>
       <div class="bar"><i id="fill"></i></div>
       <span id="secs">30</span>
     </div>
   </header>
   <main class="stage" id="stage">
     <canvas id="cv" aria-label="Oyun tahtası" data-en-label="Game board"></canvas>
+    <div class="tost" id="tost" role="status" hidden></div>
     <div class="ov" id="ov" hidden>
       <div class="card" role="dialog" aria-labelledby="ovT">
         <h2 id="ovT"></h2>
