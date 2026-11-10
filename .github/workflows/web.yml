@@ -1,0 +1,17 @@
+# www/ → GitHub Pages. Telefondan link ile test. (Settings → Pages → Source: GitHub Actions)
+# Yalnız elle: Pages açılana dek her push'ta düşüp e-posta atıyordu. Pages açılınca push tetiği geri eklenir (yayın hazırlığı).
+name: Web (Pages)
+on:
+  workflow_dispatch:
+permissions: { contents: read, pages: write, id-token: write }
+concurrency: { group: pages, cancel-in-progress: true }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: '${{ steps.d.outputs.page_url }}' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: www }
+      - id: d
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,20 @@
+# Her push'ta test robotu: oynanış, performans, çevrimdışı, reklam akışı, ekran sığması.
+# Sonuç: Actions → çalıştırma → Summary (özet tablo) + "hakem" artifact (ekran görüntüleri).
+name: Hakem (test robotu)
+on:
+  push: { branches: [main], paths: ['www/**', 'tools/hakem.cjs', 'tools/hakem/**', 'tools/cozucu/**', '.github/workflows/hakem.yml'] }
+  workflow_dispatch:
+jobs:
+  hakem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: npm i --no-save --no-audit --no-fund playwright@1.63.0 && npx playwright install --with-deps chromium
+      - run: node tools/hakem.cjs --strict
+      - if: always()
+        run: cat hakem-out/ozet.md >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v5
+        with: { name: hakem, path: hakem-out }

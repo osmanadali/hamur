@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#f4ead9">
+<title>Hamur</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <!-- İskelet: oyun ekranı prototipten (hamur.html) taşınınca buraya gelir. Menüler HTML ve CSS, tahta Canvas 2D. -->
+  <section id="home" class="screen active">
+    <h1>Hamur</h1>
+    <p id="durum" data-en="Project skeleton: the game is being moved in from the prototype.">Proje iskeleti: oyun prototipten taşınıyor.</p>
+  </section>
+  <canvas id="cv" hidden></canvas>
+</div>
+<script src="i18n.js"></script>
+<script src="ses.js"></script>
+<script src="olcum.js"></script>
+<script src="ads.js"></script>
+<script src="shop.js"></script>
+<!-- kural çekirdeği: rules/*.js (prototipteki //#core bölümünden ayrılacak), sonra app.js -->
+<script src="app.js"></script>
+</body>
+</html>

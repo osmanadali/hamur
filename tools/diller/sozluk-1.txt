@@ -1,0 +1,4 @@
+# Hamur — çeviri sözlüğü
+# Biçim: "@ İngilizce anahtar" + de/es/pt/fr satırları. {0} {1}: yer tutucu (sıra serbest).
+# Derleme: node tools/diller.cjs → www/lang/<dil>.js · satır sonundaki boşluk ␣ ile yazılır (düzenleyiciler sondaki boşluğu siler)
+# Anahtar iskeleti: node tools/diller.cjs --skeleton

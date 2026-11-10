@@ -1,0 +1,75 @@
+# Test APK (AdMob test reklamları). Sabit indirme linkleri:
+# https://github.com/osmanadali/hamur/releases/download/test/hamur-test.apk  (ayrı uygulama "Hamur Dev": com.osmanadali.hamur.dev)
+# https://github.com/osmanadali/hamur/releases/download/test-acik/hamur-test-acik.apk  (her şey açık, ayrı uygulama "Hamur Test")
+name: Android APK (test)
+# Yalnızca elle: Actions → "Android APK (test)" → Run workflow (ya da: gh workflow run apk.yml [-f unlocked=true] [-f yayin=false])
+# yayin=false: yalnız artifact yüklenir, sabit test sürümüne dokunulmaz (dal denemeleri için)
+on:
+  workflow_dispatch:
+    inputs:
+      unlocked:
+        description: 'Her şey açık test sürümü (ayrı uygulama: Hamur Test)'
+        type: boolean
+        default: false
+      yayin:
+        description: 'Sabit test sürümünü (Releases) güncelle'
+        type: boolean
+        default: true
+permissions: { contents: write }
+concurrency: { group: 'apk-${{ github.ref }}-${{ inputs.unlocked }}', cancel-in-progress: true }
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.unlocked && 'test-acik' || 'test' }}
+      APK: ${{ inputs.unlocked && 'hamur-test-acik.apk' || 'hamur-test.apk' }}
+    steps:
+      - uses: actions/checkout@v5
+      # Test APK'ları Play sürümünden (com.osmanadali.hamur, yükleme anahtarıyla imzalı) ayrı pakettir: aynı paket farklı imzayla
+      # kurulamaz, kapalı testteki Play sürümü engellenirdi. Normal → "Hamur Dev", her şey açık → "Hamur Test"; üçü yan yana kurulur.
+      - name: Normal test sürümü (ayrı paket adı → Play sürümünün yanına kurulur)
+        if: ${{ !inputs.unlocked }}
+        run: |
+          sed -i 's/"appId": "com.osmanadali.hamur"/"appId": "com.osmanadali.hamur.dev"/; s/"appName": "Hamur"/"appName": "Hamur Dev"/' capacitor.config.json
+          grep -c 'hamur.dev' capacitor.config.json
+      - name: Her şey açık (ayrı paket adı → normal test sürümünün yanına kurulur, kayıtlar karışmaz)
+        if: inputs.unlocked
+        run: |
+          sed -i 's/"appId": "com.osmanadali.hamur"/"appId": "com.osmanadali.hamur.test"/; s/"appName": "Hamur"/"appName": "Hamur Test"/' capacitor.config.json
+          sed -i 's#<script src="ads.js"></script>#<script>window.__hamurTest = 1</script><script src="ads.js"></script>#' www/index.html
+          grep -c '__hamurTest' www/index.html && grep -c 'hamur.test' capacitor.config.json
+      # Capacitor 8: Node 22+, JDK 21 (capacitor-android Java 21 ile derlenir)
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm ci --no-audit --no-fund
+      - run: npx cap add android
+      - name: İkon ve açılış ekranı (assets/)
+        if: ${{ hashFiles('assets/icon-only.png') != '' }}   # ikon 3. aşamada (görsel kimlik) çizilir; o zamana dek Capacitor'ın varsayılan ikonu
+        run: npx @capacitor/assets generate --android --iconBackgroundColor '#f4ead9' --iconBackgroundColorDark '#f4ead9' --splashBackgroundColor '#f4ead9' --splashBackgroundColorDark '#f4ead9'
+      - name: Yerel projeyi hazırla (AdMob test App ID, dikey, bildirim simgesi, kenardan kenara, SDK denetimi)
+        env: { FIREBASE_ANDROID_JSON: '${{ secrets.FIREBASE_ANDROID_JSON }}' }   # isteğe bağlı: yoksa ölçüm kapalı derlenir (docs/YAYIN.md §5)
+        run: node tools/android/hazirla.cjs
+      - run: npx cap sync android
+      # Sabit test imzası: her koşuda yeni debug anahtarı üretilirse telefondaki Hamur Dev güncellenemez ("paket çakışıyor").
+      # Anahtar gizli değildir (yalnız test paketleri: .dev / .test); Play sürümü ayrı yükleme anahtarıyla imzalanır.
+      - name: Sabit test imzası
+        run: mkdir -p ~/.android && cp tools/android/test.keystore ~/.android/debug.keystore
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon -q
+      - name: APK'daki SDK düzeyleri (Play hedef API ≥ 35 ister)
+        run: |
+          AA=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/aapt2
+          "$AA" dump badging android/app/build/outputs/apk/debug/app-debug.apk | grep -E "^package:|sdkVersion|targetSdkVersion"
+          T=$("$AA" dump badging android/app/build/outputs/apk/debug/app-debug.apk | sed -n "s/^targetSdkVersion:'\([0-9]*\)'.*/\1/p")
+          [ "$T" -ge 35 ] || { echo "::error::targetSdk $T < 35"; exit 1; }
+          echo "::notice::targetSdk $T"
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk "$APK"
+      - uses: actions/upload-artifact@v5
+        with: { name: '${{ env.TAG }}-apk', path: '${{ env.APK }}' }
+      - name: Sabit test sürümünü güncelle
+        if: inputs.yayin
+        env: { GH_TOKEN: '${{ github.token }}', TITLE: "${{ inputs.unlocked && 'Test sürümü · her şey açık' || 'Test sürümü' }}" }
+        run: |
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" "$APK" --prerelease --target "$GITHUB_SHA" --title "$TITLE" --notes "Otomatik test APK'sı (${GITHUB_SHA::7}). Reklamlar Google test reklamıdır."
