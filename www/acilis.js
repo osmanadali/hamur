@@ -10,7 +10,11 @@ if (!O || atla || window.__hamurEkran || window.__hamurAcilis === 0 || O.deneme)
 kap.dataset.canli = '1';
 requestAnimationFrame(() => requestAnimationFrame(splashKapat));
 kap.classList.add('logolu');   // logo düşer, altı hamur bir araya gelip kendi huyuna göre selam verir
-const yazi = kap.querySelector('p'); if (yazi) { yazi.textContent = L('Hoş geldin!', 'Welcome!'); yazi.hidden = false; }
+const yazi = kap.querySelector('p'); if (yazi) {   // "Yükleniyor" ve sırayla beliren üç nokta (. .. ...)
+  const m = L('Yükleniyor', 'Loading'); let n = 0; yazi.hidden = false;
+  const ciz = () => { yazi.innerHTML = m + '<span>' + '.'.repeat(n) + '</span><span style="visibility:hidden">' + '.'.repeat(3 - n) + '</span>'; n = (n + 1) % 4; };
+  ciz(); const z = setInterval(() => { if (!kap.isConnected) return clearInterval(z); ciz(); }, 380);
+}
 let bitti = false;
 const bitir = () => { if (bitti) return; bitti = true; kap.classList.add('ac'); setTimeout(() => kap.remove(), 300); };
 setTimeout(bitir, 2300); kap.addEventListener('pointerdown', bitir);
