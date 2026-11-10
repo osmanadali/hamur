@@ -286,3 +286,13 @@ body.oyun-acik .gok b{opacity:.55;scale:.8}
 .hap.gunluk i{width:30px;height:30px;background:url(img/gunluk.webp) center/contain no-repeat;flex:none}
 body.gunluk-acik{background:#f3c6dc url(img/gok2.webp) center/cover no-repeat fixed}
 body.gunluk-acik .gok{opacity:0}
+
+/* tepsi ödülü: figür tamamlanınca tam ekran kutlama */
+.kutla{position:fixed;inset:0;z-index:42;display:grid;place-content:center;justify-items:center;gap:6px;background:rgba(70,40,110,.62);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:karar .3s ease both;overflow:hidden}
+.kutla[hidden]{display:none}
+.kutla .isin{position:absolute;left:50%;top:50%;width:160vmax;height:160vmax;margin:-80vmax 0 0 -80vmax;background:repeating-conic-gradient(rgba(255,226,140,.34) 0 12deg,transparent 12deg 24deg);animation:don 14s linear infinite;-webkit-mask:radial-gradient(circle,#000 0 30%,transparent 62%);mask:radial-gradient(circle,#000 0 30%,transparent 62%)}
+.kutla img{position:relative;width:min(62vw,280px);height:auto;filter:drop-shadow(0 14px 14px rgba(40,10,80,.45));animation:odul 1s cubic-bezier(.3,1.5,.5,1) both}
+.kutla h2{position:relative;margin:8px 0 0;font:400 34px/1.1 var(--baslik);color:#ffd24d;-webkit-text-stroke:1.4px #6a3aa6;paint-order:stroke fill;filter:drop-shadow(0 2px 0 #6a3aa6) drop-shadow(0 2px 0 #55298c);animation:baslik-gir .5s cubic-bezier(.3,1.6,.5,1) .35s both;text-align:center}
+.kutla p{position:relative;margin:0;font:400 17px var(--display);color:#fff7ea;animation:satir .3s ease-out .7s both}
+@keyframes odul{0%{transform:scale(.2) rotate(-25deg);opacity:0}55%{transform:scale(1.15) rotate(6deg);opacity:1}75%{transform:scale(.95) rotate(-3deg)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.kutla .isin,.kutla img,.kutla h2{animation:none}}

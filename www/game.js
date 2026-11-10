@@ -38,6 +38,7 @@ for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', '
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
 let cell = 60, dpr = 1, state = 'play', timeLeft = 0, running = false, drag = null, sinks = [], parts = [], rings = [], after = null, wonAt = 0, shownS = -1, wallPath = null, last = performance.now();
+let sonGirdi = performance.now();   // son dokunuş: uzun süre dokunulmazsa parçalar esner
 let egil = new Map();   // yapışabilecek kadar yaklaşan parçalar birbirine doğru eğilir: p → karşısındaki parça
 let threads = new Map();   // tutulan parçanın komşularıyla arasındaki hamur iplikleri: q → { v: 0…1 doluluk, seam, color }
 let kesim = null;   // dolan makas ölçüsü { dx, dy, v }
@@ -114,7 +115,7 @@ function setup(i, g) {
   if (i < ASIL && !gunluk) { save.level = i + 1; App.persist(); }
   st.pieces.forEach(giydir);
   ekSure = i < ASIL && !gunluk && (save.fails?.[i + 1] || 0) >= 3 ? 10 : 0;   // aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir
-  state = 'play'; timeLeft = Lv.t + ekSure; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1;
+  state = 'play'; timeLeft = Lv.t + ekSure; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1; sonGirdi = performance.now();
   threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null; durak = false; makasKoy = false; cv.style.visibility = '';
   $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); tarif(false); $('gTarif').hidden = i < 20; $('rx').classList.toggle('damgali', !!save.damga);   // renk tarifi düğmesi karışımın öğretildiği 21. bölümden itibaren
   $('lvlNo').textContent = gunluk ? L('Günlük kalıp', 'Daily mold') : i < ASIL ? L('Bölüm ', 'Level ') + (i + 1) : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
@@ -424,10 +425,11 @@ function win() {
   const lastOne = li === ASIL - 1;
   if (!lastOne) {   // bölüm bitince menü açılmaz: kısa bir kutlama, sonra tahta kayar ve sıradaki bölüm gelir
     const t = $('tost'), fig = App.oyun.figurAdi?.(li + 1); t.innerHTML = '';
-    if (fig) { const im = document.createElement('img'); im.src = fig.resim; im.alt = ''; t.append(im, fig.ad + L(' tamamlandı!', ' completed!')); } else t.append(L('Bölüm tamam!', 'Level complete!'));
+    if (fig) App.ekran.kutla(fig);   // figür tamamlandı: tam ekran kutlama
+    t.append(fig ? fig.ad + L(' tamamlandı!', ' completed!') : L('Bölüm tamam!', 'Level complete!'));
     const y = document.createElement('span'); y.className = 'yildiz'; y.textContent = yildizYazi(sonYildiz); t.append(y);
     const k = document.createElement('small'); k.textContent = kalan; t.append(k); t.hidden = false;
-    const hedef = li + 1; clearTimeout(gecisT); gecisT = setTimeout(() => { if (state === 'won' && li === hedef - 1) sonraki(hedef); }, fig ? 2200 : RM ? 1100 : 950);
+    const hedef = li + 1; clearTimeout(gecisT); gecisT = setTimeout(() => { if (state === 'won' && li === hedef - 1) sonraki(hedef); }, fig ? 3400 : RM ? 1100 : 950);
     return;
   }
   showOv(lastOne ? L('Hepsi tamam', 'All done') : L('Bölüm tamam', 'Level complete'),
@@ -447,7 +449,7 @@ cv.addEventListener('pointerdown', e => {
   try { cv.setPointerCapture(e.pointerId); } catch {}
   drag = { p, id: e.pointerId, gi: p.cells.findIndex(c => c[0] === gx && c[1] === gy), offx: x / cell - gx - .5, offy: y / cell - gy - .5, px: x, py: y,
     hist: [{ t: performance.now(), x, y }], snap: CFG.geriHak ? K.clone(st) : null };
-  running = true; p.pv += .9; Ses.pat(.05, 1600, 600, .1); tone(520, .07, 'sine', 700, .05); buzz(6);
+  running = true; p.pv += 1.3; p.gulT = sonGirdi = performance.now(); Ses.pat(.05, 1600, 600, .1); tone(880, .05, 'sine', 1100, .04); tone(1100, .06, 'sine', 1320, .04, .07); buzz(6);
 });
 cv.addEventListener('pointermove', e => {
   if (!drag || e.pointerId !== drag.id) return;
@@ -641,6 +643,7 @@ function ifade(p, now) {
   if (drag) {
     let dx, dy;
     const yon = (dx, dy) => Math.abs(dy) > Math.abs(dx) ? (dy < 0 ? 'yukari' : 'asagi') : dx < 0 ? 'sol' : 'sag';
+    if (drag.p === p && now - (p.gulT || 0) < 380) return 'mutlu';   // dokununca kıkırdar
     if (drag.p === p) {   // tutulan parça gittiği yöne bakar (dört yön); durunca son baktığı yerde kalır
       const h = drag.hist, a = h[Math.max(0, h.length - 6)], oyn = Math.hypot(drag.px - a.x, drag.py - a.y) > 2, y = yaslan();
       dx = oyn ? drag.px - a.x : y[0] * cell; dy = oyn ? drag.py - a.y : y[1] * cell;
@@ -651,7 +654,22 @@ function ifade(p, now) {
     return Math.hypot(dx, dy) < cell * .4 ? 'sakin' : yon(dx, dy);
   }
   p.bak = null;
-  return ((now + p.seed * 900) % 4200) < 140 ? 'kirp' : 'sakin';
+  // uzun süre dokunulmayınca sırayla esnerler
+  if (state === 'play' && now - sonGirdi > 8000 && ((now + p.seed * 1300) % 6000) < 900) return 'saskin';
+  // yan yana duran (yapışmayan) parçalar ara sıra birbirine bakar
+  const z = (now + p.seed * 700) % 5200;
+  if (z > 3600 && z < 4700) { const [cx, cy] = center(p); for (const q of st.pieces) if (q !== p && gap(p, q) === 1) { const [qx, qy] = center(q), dx = qx - cx, dy = qy - cy; return Math.abs(dy) > Math.abs(dx) ? (dy < 0 ? 'yukari' : 'asagi') : dx < 0 ? 'sol' : 'sag'; } }
+  // kişilik: her rengin boştayken kendi huyu var
+  const t = (now + p.seed * 900) % 7000, kirp = ((now + p.seed * 900) % 4200) < 140;
+  switch (p.color) {
+    case 'b': return t < 1500 || kirp ? 'kirp' : 'sakin';                                  // mavi uykulu: gözleri uzun uzun kapanır
+    case 'r': return t < 450 ? 'sol' : t < 900 ? 'sag' : t > 3400 && t < 3800 ? 'sol' : kirp ? 'kirp' : 'sakin';   // kırmızı telaşlı: sağa sola bakınır
+    case 'y': return t < 900 ? 'mutlu' : kirp ? 'kirp' : 'sakin';                          // sarı neşeli: ara sıra güler
+    case 'g': return t < 800 ? 'yukari' : t > 3000 && t < 3600 ? 'sag' : kirp ? 'kirp' : 'sakin';   // yeşil meraklı: etrafa bakar
+    case 'p': return t < 2200 ? 'yukari' : kirp ? 'kirp' : 'sakin';                        // mor hayalperest: göğe dalar
+    case 'o': return t < 500 ? 'saskin' : kirp ? 'kirp' : 'sakin';                         // turuncu şaşkın
+  }
+  return kirp ? 'kirp' : 'sakin';
 }
 function face(p, now) {
   const [x0, y0] = p.cells[0], f = p.cells[p.face], fx = (f[0] - x0 + .5) * cell, fy = (f[1] - y0 + .5) * cell, ne = ifade(p, now);

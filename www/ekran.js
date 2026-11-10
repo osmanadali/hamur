@@ -42,6 +42,7 @@ function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik')
 /* ---------- ana ekran ---------- */
 function ana() {
   const n = siradaki(), hepsi = (save.done || []).length >= N;
+  if ((save.done || []).length >= 3 && !save.bildirimSoruldu) { save.bildirimSoruldu = true; App.persist(); hatirlat(true); } else hatirlat(false);
   $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '');
   $('oynaNo').textContent = hepsi ? L('Hepsi tamam', 'All done') : L('Bölüm ', 'Level ') + n;
 }
@@ -95,6 +96,7 @@ function tepsi() {
 /* ---------- ayarlar ---------- */
 const SECENEK = [
   ['music', 'Müzik', 'Music'], ['sound', 'Efekt sesleri', 'Sound effects'], ['vib', 'Titreşim', 'Vibration'],
+  ['bildirim', 'Günlük hatırlatma', 'Daily reminder'],
   ['damga', 'Renk damgaları (renk körlüğü)', 'Color stamps (color blindness)'],
   ['hepsiAcik', 'Bütün bölümler açık (test)', 'All levels open (test)'],
 ];
@@ -102,9 +104,10 @@ function ayar() {
   const el = $('secenekler'); el.innerHTML = '';
   for (const [k, tr, en] of SECENEK) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'secenek'; b.setAttribute('role', 'switch'); b.id = 'sec-' + k;
-    const ciz = () => { b.setAttribute('aria-checked', String(!!save[k])); };
+    const acik2 = () => k === 'bildirim' || k === 'music' ? save[k] !== false : !!save[k];   // müzik ve hatırlatma varsayılan açık
+    const ciz = () => { b.setAttribute('aria-checked', String(acik2())); };
     b.append(Object.assign(document.createElement('span'), { textContent: L(tr, en) }), Object.assign(document.createElement('i'), { className: 'anahtar' }));
-    b.onclick = () => { save[k] = !save[k]; App.persist(); ciz(); O.ayarDegisti?.(); muzik(); if (acik === 'yol') yol(); Ses.buzz(8); };
+    b.onclick = () => { save[k] = !acik2(); App.persist(); ciz(); O.ayarDegisti?.(); muzik(); if (k === 'bildirim') hatirlat(true); if (acik === 'yol') yol(); Ses.buzz(8); };
     ciz(); el.appendChild(b);
   }
   // dil: değişince sayfa yenilenir (metinler yüklemede seçilir)
@@ -150,6 +153,27 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   addEventListener('deviceorientation', e => { if (e.gamma != null) yaz(e.gamma / 25, (e.beta - 45) / 25); }, { passive: true });
 }
 
+// Tepsi ödülü: figür tamamlanınca tam ekran kutlama (ışınlar, büyüyerek gelen figür). Dokununca ya da 3 sn sonra kapanır.
+let kutlaT = 0;
+function kutla(fig) {
+  const k = $('kutla'); k.querySelector('img').src = fig.resim; k.querySelector('h2').textContent = fig.ad + L(' tamamlandı!', ' completed!');
+  k.hidden = false; clearTimeout(kutlaT); kutlaT = setTimeout(() => { k.hidden = true; }, 3000); k.onclick = () => { clearTimeout(kutlaT); k.hidden = true; };
+  Ses.buzz([20, 60, 20, 60, 40]); [523, 659, 784, 1047, 1319].forEach((f, i) => Ses.fx(f, .3, 'triangle', 0, .07, .1 + i * .11));
+}
+// Günlük hatırlatma: her gün 10.00'da "bugünün kalıbı hazır" yerel bildirimi (yalnız telefonda). İzin, oyuncu üç bölüm bitirince bir kez sorulur;
+// ayarlardaki anahtarla açılıp kapanır.
+async function hatirlat(sor) {
+  const B = window.Capacitor?.Plugins?.LocalNotifications; if (!B) return;
+  try {
+    await B.cancel({ notifications: [{ id: 1 }] });
+    if (save.bildirim === false) return;
+    let izin = (await B.checkPermissions()).display;
+    if (izin !== 'granted' && sor) izin = (await B.requestPermissions()).display;
+    if (izin !== 'granted') return;
+    await B.schedule({ notifications: [{ id: 1, title: L('Bugünün kalıbı hazır', "Today's mold is ready"), body: L('Günlük kalıp seni bekliyor. Hamurlar yerinde duramıyor!', 'The daily mold is waiting. The dough can hardly sit still!'), schedule: { on: { hour: 10, minute: 0 }, allowWhileIdle: false } }] });
+  } catch {}
+}
+
 // Müzik: tek döngü (ses/muzik.mp3). Tarayıcı izin verdiği ilk dokunuşta başlar; ayarlardan kapatılır; uygulama arka plandayken durur.
 const calgi = new Audio('ses/muzik.mp3'); calgi.loop = true; calgi.volume = .32; calgi.preload = 'none';
 function muzik() { try { if (save.music !== false && !document.hidden) calgi.play().catch(() => {}); else calgi.pause(); } catch {} }
@@ -157,5 +181,5 @@ addEventListener('pointerdown', muzik, { once: true }); document.addEventListene
 
 // Açılış: ana ekran. Editörden gelen deneme bölümü (#bolum=) ve test robotu (window.__hamurEkran) doğrudan oyunu açar.
 goster(window.__hamurEkran || (O.deneme ? 'oyun' : 'ana'));
-App.ekran = { goster, oyna, siradaki, acikMi, get acik() { return acik; }, ayar };
+App.ekran = { kutla, goster, oyna, siradaki, acikMi, get acik() { return acik; }, ayar };
 })();
