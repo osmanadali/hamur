@@ -462,3 +462,17 @@ body.ana-acik .gok{opacity:1}
 .can b{font:400 22px var(--display);color:#fffaf0}
 .can small{font:700 14px var(--body);color:#fff3e0;font-variant-numeric:tabular-nums}
 .can small:empty{display:none}
+
+/* ================= kalite turu: yüksek çözünürlüklü görseller ================= */
+.hap,.go{border-image-slice:92 192 fill}
+.can i{background-image:url(img/kalp.webp);width:42px;height:42px;border-radius:0}
+.card img[src*="kalp"]{width:62%;max-height:none;align-self:center;border:0;border-radius:0}
+/* el-ayaklı hamurlar: bölüm yolunun kenarında ve oyun ekranının alt köşelerinde */
+.sus.kar{width:24%;z-index:1}
+.foot{position:relative}
+#sOyun .foot::before,#sOyun .foot::after{content:'';position:fixed;bottom:max(96px,13vh);width:92px;height:92px;background:center bottom/contain no-repeat;pointer-events:none;z-index:0;filter:drop-shadow(0 5px 4px rgba(70,30,120,.3))}
+#sOyun .foot::before{left:-4px;background-image:url(img/kar-4.webp)}
+#sOyun .foot::after{right:-22px;background-image:url(img/kar-3.webp)}
+#sOyun .foot>*{position:relative;z-index:1}
+#sOyun .gucler{z-index:2}
+@media (max-height:640px){#sOyun .foot::before,#sOyun .foot::after{display:none}}

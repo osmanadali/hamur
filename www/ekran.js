@@ -74,6 +74,7 @@ function yol() {
     });
     // süsler: yolun karşı tarafında, karoya göre değişen adacıklar (ayrı katman: yol ekran görüntüsü gibi durmasın)
     [.14, .47, .8].forEach((fy, j) => { const d = DURAK.reduce((p, c) => Math.abs(c[1] - fy) < Math.abs(p[1] - fy) ? c : p), su = document.createElement('i'); su.className = 'sus'; su.style.backgroundImage = `url(img/sus-${(k * 3 + j) % 10 + 1}.webp)`; su.style.top = fy * 100 + '%'; su.style.left = (d[0] < .5 ? 78 : 22) + '%'; karo.appendChild(su); });
+    { const d = DURAK[3 + (k % 2) * 4], kr = document.createElement('i'); kr.className = 'sus kar'; kr.style.backgroundImage = `url(img/kar-${k % 6 + 1}.webp)`; kr.style.top = (d[1] * 100 - 1) + '%'; kr.style.left = (d[0] < .5 ? d[0] * 100 + 27 : d[0] * 100 - 27) + '%'; karo.appendChild(kr); }   // yolun kenarında oturan hamur karakter
     el.appendChild(karo);
   }
   // sıradaki bölüm ekranın ortasına gelsin

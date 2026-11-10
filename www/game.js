@@ -296,11 +296,11 @@ function showOv(t, p, b, fn, b2, fn2) {
   $('ovT').textContent = t; $('ovP').textContent = p; $('ovB').textContent = b; $('ovB').onclick = fn;
   $('ovB2').hidden = !b2; if (b2) { $('ovB2').textContent = b2; $('ovB2').onclick = fn2; }
   $('ovB2').classList.remove('cikis'); $('ovEk').hidden = true; $('ovX').hidden = true;   // duraklatma bunları kendisi açar
-  const r = state === 'won' ? 'kazanc' : state === 'lost' ? (kayipTur === 'time' ? 'kayip-sure' : 'kayip-yapisma') : '';   // sonuç görseli; yazı ve düğmeler altında
+  const r = ovResim || (state === 'won' ? 'kazanc' : state === 'lost' ? (kayipTur === 'time' ? 'kayip-sure' : 'kayip-yapisma') : ''); ovResim = '';   // sonuç görseli; yazı ve düğmeler altında
   $('ovR').hidden = !r; if (r) $('ovR').src = 'img/' + r + '.webp';
   $('ov').hidden = false;
 }
-let kayipTur = '';
+let kayipTur = '', ovResim = '';   // ovResim: sıradaki pencere için özel görsel (ör. eriyen kalp)
 function lose(kind, piece) {
   state = 'lost'; kayipTur = kind; makasKoy = false; paintUndo(); canHarca(); running = false; drag = null; threads = new Map();
   if ((li < ASIL && !gunluk)) { save.fails = { ...save.fails, [li + 1]: (save.fails?.[li + 1] || 0) + 1 }; App.persist(); }
@@ -355,9 +355,10 @@ function canVer(k) { const c = canDurum(); c.n = Math.min(CAN_MAX, c.n + k); if 
 const canKalanMs = () => { const c = canDurum(); return c.n >= CAN_MAX ? 0 : Math.max(0, CAN_MS - (Date.now() - c.t)); };
 const sureYazi = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 function canYok() {   // can bitti: beklenir ya da reklamla 1 can alınır
+  ovResim = 'kalp-eriyor';
   const ana = () => App.ekran.goster('ana'), metin = L('Sonraki can: ', 'Next life in ') + sureYazi(canKalanMs());
   if (Ads.online()) showOv(L('Can bitti', 'Out of lives'), metin, L('Reklam izle: +1 can', 'Watch an ad: +1 life'), async () => { let r = ''; try { r = await (App.bekle ? App.bekle.sar(Ads.rewarded(), 'top') : Ads.rewarded()); } catch {} if (r === 'earned') { canVer(1); setup(li); } }, L('Ana ekran', 'Home'), ana);
-  else showOv(L('Can bitti', 'Out of lives'), metin, L('Ana ekran', 'Home'), ana);
+  else { ovResim = 'kalp-eriyor'; showOv(L('Can bitti', 'Out of lives'), metin, L('Ana ekran', 'Home'), ana); }
 }
 const tekrar = () => canVar() ? setup(li) : canYok();
 
@@ -438,6 +439,7 @@ function duraklat() {
 function cikisSor() {
   if (state !== 'play' || !running || durak) return App.ekran.goster('ana');
   durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
+  if (!save.hepsiAcik) ovResim = 'kalp';
   showOv(L('Çıkılsın mı?', 'Quit level?'), save.hepsiAcik ? L('Bu bölümdeki ilerlemen kaybolur.', 'Your progress in this level will be lost.') : L('1 can kaybedeceksin.', 'You will lose 1 life.'), L('Devam et', 'Keep playing'), devam, L('Çık', 'Quit'), () => { canHarca(); App.ekran.goster('ana'); });
   $('ovB2').classList.add('cikis');
 }
@@ -605,7 +607,7 @@ function blob(x, y, R, now, s) {
 }
 // Boyalı yastık: parca-blok görseli × renk. Çarpma bloğun ortalama grisine göre normallenir (piksel = renk × gri / ortalama gri):
 // bloğun ortalama tonu rengin kendisini verir, renkler kararmaz; doku ve kenar gölgesi kalır. Renk başına bir kez hesaplanır.
-const BLOK = 128, boyali = new Map(); let blokGri = null, blokOrt = 1;
+const BLOK = 256, boyali = new Map(); let blokGri = null, blokOrt = 1;
 function blokHazirla(im) {
   const c = document.createElement('canvas'); c.width = c.height = BLOK;
   const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, BLOK, BLOK);
