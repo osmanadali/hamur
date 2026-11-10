@@ -351,3 +351,31 @@ body.gunluk-acik .hud{background:rgba(255,250,244,.86);border-radius:22px;paddin
 .ekran.giris{animation-duration:.36s}
 /* bilgi baloncuğu (+15 sn) */
 .tost.kisa{animation:tost .9s ease both}
+
+/* ================= yeni hamur varlıkları ================= */
+body{background:#c9a8ee url(img/gok.webp) center/cover no-repeat fixed}
+body.ana-acik{background:#c9a8ee url(img/gok.webp) center/cover no-repeat fixed}
+body.ana-acik .gok{opacity:1}
+/* ana ekran: karakterli ada altta ayrı katman */
+#sAna{position:relative}
+#sAna .ada{position:absolute;left:50%;bottom:-2vh;width:min(112%,560px);max-height:46vh;object-fit:contain;object-position:center bottom;transform:translateX(-50%);z-index:0;filter:drop-shadow(0 14px 16px rgba(70,30,120,.3));animation:salin 6s ease-in-out infinite;pointer-events:none}
+#sAna>*:not(.ada){position:relative;z-index:1}
+@keyframes salin{50%{transform:translateX(-50%) translateY(-7px)}}
+/* düğmeler: altı renk hamur hap */
+.hap.mavi{border-image-source:url(img/hap-mavi.webp);color:#0d2f66}
+.hap.turuncu{border-image-source:url(img/hap-turuncu.webp);color:#5c2a05}
+#bOyna{border-image-source:url(img/hap-yesil.webp);color:#173d0c}
+#bYol{border-image-source:url(img/hap-mavi.webp);color:#0d2f66}
+#bTepsi{border-image-source:url(img/hap-mor.webp);color:#3b1d5c}
+#ovB{border-image-source:url(img/hap-yesil.webp);color:#173d0c}
+#ovB2{border-image-source:url(img/hap-turuncu.webp);color:#5c2a05}
+#duraklat{background-image:url(img/duraklat.webp)}
+#duraklat i{display:none}
+/* bölüm yolu: gökyüzü sabit, yol şeridi ve süsler kayar */
+#sYol{background:url(img/gok.webp) center/cover no-repeat}
+.karo{aspect-ratio:560/1120;background:url(img/yol.webp) center/100% 100% no-repeat}
+.sus{position:absolute;width:30%;aspect-ratio:1;background:center/contain no-repeat;transform:translate(-50%,-50%);filter:drop-shadow(0 6px 5px rgba(70,30,120,.25));pointer-events:none}
+.durak{width:17%}
+.durak em i.bos{background-image:url(img/yildiz-bos.webp);filter:none}
+.tost .yildiz{letter-spacing:0}
+@media (prefers-reduced-motion:reduce){#sAna .ada{animation:none}}

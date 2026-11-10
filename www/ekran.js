@@ -49,7 +49,7 @@ function ana() {
 
 /* ---------- bölüm yolu ---------- */
 // Bir karoda 11 kurabiye var (alttan üste yol sırası). Konumlar karonun eni ve boyuna göre oran (bolum-yolu-tekrar görselinden ölçüldü).
-const DURAK = [[.4874, .8856], [.5009, .7703], [.335, .691], [.569, .643], [.5759, .5328], [.3443, .4906], [.4033, .3848], [.6404, .358], [.5544, .267], [.3539, .1776], [.4983, .0873]];
+const DURAK = [[0.4982,0.955],[0.4179,0.8641],[0.2571,0.7732],[0.3063,0.6823],[0.5723,0.5914],[0.725,0.5005],[0.5634,0.4096],[0.2732,0.3187],[0.2643,0.2278],[0.4464,0.1369],[0.5045,0.046]];
 function yol() {
   const el = $('yol'), sira = siradaki(); el.innerHTML = '';
   const karoSay = Math.ceil(N / DURAK.length);
@@ -69,6 +69,8 @@ function yol() {
       if (n === sira) hedef = b;
       karo.appendChild(b);
     });
+    // süsler: yolun karşı tarafında, karoya göre değişen adacıklar (ayrı katman: yol ekran görüntüsü gibi durmasın)
+    [.14, .47, .8].forEach((fy, j) => { const d = DURAK.reduce((p, c) => Math.abs(c[1] - fy) < Math.abs(p[1] - fy) ? c : p), su = document.createElement('i'); su.className = 'sus'; su.style.backgroundImage = `url(img/sus-${(k * 3 + j) % 10 + 1}.webp)`; su.style.top = fy * 100 + '%'; su.style.left = (d[0] < .5 ? 78 : 22) + '%'; karo.appendChild(su); });
     el.appendChild(karo);
   }
   // sıradaki bölüm ekranın ortasına gelsin
