@@ -12,12 +12,14 @@
 </head>
 <body>
 <!-- Açılış: ilk kare sistem açılış ekranıyla aynı (düz zemin, ortada ikon); animasyon acilis.js'te -->
-<div class="acilis" id="acilis"><img src="img/acilis.webp" alt="" width="192" height="192"><canvas aria-hidden="true"></canvas><p hidden></p></div>
+<div class="acilis" id="acilis"><img src="img/acilis.webp" alt="" width="192" height="192"><canvas aria-hidden="true"></canvas><img class="alogo" src="img/logo.webp" alt=""><i class="ab sol"></i><i class="ab sag"></i><p hidden></p></div>
 <script>setTimeout(function () { var a = document.getElementById('acilis'); if (a && !a.dataset.canli) a.remove(); }, 4000);</script><!-- emniyet: acilis.js çalışmazsa katman kalkar -->
 <!-- Ekranlar: ana ekran, bölüm yolu, tepsi koleksiyonu, oyun. Görsellerde yazı yoktur; bütün metin ve sayılar koddan gelir. -->
+<!-- Gökyüzü: geçiş kodla, bulutlar ayrı katmanda yavaşça kayar (hareket azaltmada sabit) -->
+<div class="gok" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i><i class="b6"></i></div>
 <section class="ekran" id="sAna" hidden>
   <header class="ust"><span></span><button class="top" id="bAyar" type="button" aria-label="Ayarlar" data-en-label="Settings"><i style="background-image:url(img/ayarlar.webp)"></i></button></header>
-  <div class="baslik-yeri" aria-hidden="true"><!-- logo: isim belli olunca --></div>
+  <div class="baslik-yeri"><img class="logo" src="img/logo.webp" alt="Dough!" width="640" height="266"></div>
   <div class="ana-dugmeler">
     <button class="hap sari buyuk" id="bOyna" type="button"><b data-en="Play">Oyna</b><small id="oynaNo"></small></button>
     <div class="yan-yana">
@@ -47,7 +49,7 @@
       <button class="btn resim" id="retry" type="button" aria-label="Baştan" data-en-label="Restart"></button>
     </div>
     <div class="timer" id="timer">
-      <i class="saat" aria-hidden="true"></i>
+      <div class="saat" id="saat" aria-hidden="true"><i class="akrep"></i></div>
       <div class="bar"><i id="fill"></i></div>
       <span id="secs">30</span>
     </div>

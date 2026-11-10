@@ -31,7 +31,7 @@ function birles(now) {
   // tek kısa ses: yapışma, ardından küçük bir çınlama. Tarayıcı dokunuştan önce ses çalmaz (sonraya biriktirir): o durumda ses atlanır.
   const sesli = !!window.Capacitor?.isNativePlatform?.() || !!navigator.userActivation?.hasBeenActive;
   Ses.buzz([16, 40, 16]); if (sesli) Ses.fx(300, .16, 'sine', 150, .16); if (sesli) { Ses.fx(640, .09, 'triangle', 880, .05, .03); Ses.fx(1319, .22, 'triangle', 0, .06, .2); Ses.fx(1760, .3, 'triangle', 0, .05, .32); }
-  yazi.hidden = true;
+  yazi.hidden = true; kap.classList.add('logolu');   // logo yukarıdan düşer, bulutlar iki yana açılır
 }
 function bitir(hizli) {
   if (bitti) return; bitti = true;

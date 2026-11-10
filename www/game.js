@@ -33,7 +33,7 @@ const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).to
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
 const IMG = {};
-for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -175,6 +175,7 @@ function olaylar(p, ev) {
       if (e.mixed) p.mix = { t0: now, cols: e.cols, lead: lighten(C[e.color], .42), srcs: [a, b], seed: Math.random() * 6, ox: mx, oy: my };
       else if (p.mix) p.mix.cols = p.mix.cols.concat(e.cols.slice(p.mix.cols.length));
       if (p.mix) p.mix.maxR = Math.max(...p.cells.map(c => Math.hypot(c[0] + .5 - x0 - p.mix.ox, c[1] + .5 - y0 - p.mix.oy))) + .8;
+      p.mutluT = now + (e.mixed ? MIXMS : 0) + 900;
       p.flash = { t0: now, segs: e.seam.map(s => [s[0] - x0, s[1] - y0, s[2], s[3]]) };
       p.pv += 1.5;
       burst((x0 + mx) * cell, (y0 + my) * cell, [a, b], 7, cell * 2.6); un((x0 + mx) * cell, (y0 + my) * cell, 4);
@@ -448,12 +449,14 @@ function board() {
     const X = [[0, c, x0, d], [c, s - 2 * c, x0 + d, w - 2 * d], [s - c, c, x0 + w - d, d]], Y = [[0, c, y0, d], [c, sh - 2 * c, y0 + d, h - 2 * d], [sh - c, c, y0 + h - d, d]];
     for (const [sx, sw, dx, dw] of X) for (const [sy, sh2, dy, dh] of Y) ctx.drawImage(im, sx, sy, sw, sh2, dx, dy, dw + .5, dh + .5);
   } else { rr(-PAD + 1, -PAD + 1, W + 2 * PAD - 2, H + 2 * PAD - 2, 18); ctx.fillStyle = C.mat; ctx.fill(); rr(0, 0, W, H, 8); ctx.fillStyle = C.field; ctx.fill(); }
-  // ızgara çizgileri tepsinin kendisi: hamura bastırılmış ince izler
-  ctx.lineWidth = 1.5; ctx.beginPath();
-  for (let i = 1; i < st.W; i++) { ctx.moveTo(i * cell, 3); ctx.lineTo(i * cell, H - 3); }
-  for (let i = 1; i < st.H; i++) { ctx.moveTo(3, i * cell); ctx.lineTo(W - 3, i * cell); }
-  ctx.strokeStyle = C.grid; ctx.stroke();
-  ctx.save(); ctx.translate(1, 1.5); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+  // ızgara çizgisi yok: her kareye tepsi-hucre karosu döşenir; tekdüzelik kırılsın diye kareye göre 90 derecelik dönüşle
+  if (IMG.hucre) {
+    ctx.save(); rr(0, 0, W, H, 10); ctx.clip();
+    for (let y = 0; y < st.H; y++) for (let x = 0; x < st.W; x++) {
+      ctx.save(); ctx.translate((x + .5) * cell, (y + .5) * cell); ctx.rotate(((x * 7 + y * 13 + li * 3) % 4) * Math.PI / 2); ctx.drawImage(IMG.hucre, -cell / 2 - .5, -cell / 2 - .5, cell + 1, cell + 1); ctx.restore();
+    }
+    ctx.restore();
+  }
   // duvar: kesme şeker
   if (IMG.duvar) {
     for (const [x, y] of st.wallCells) {
@@ -563,20 +566,33 @@ function govde(p, renkOf, cukur = .2) {
 }
 // Renk karışımı: kareler önce eski renkleriyle durur, yeni renk temas noktasından dalgalı kenarla yayılır.
 // Yayılan renk de aynı yastıklarla çizildiği için doku görünür kalır.
+// Yeni renk daire olarak değil girdap maskesiyle yayılır: piksel, (maske × 0,45 + temas noktasına uzaklık × 0,55) eşiğin altındaysa
+// yeni rengi alır; eşik süre boyunca 0'dan 1'e çıkar. Sınırda iki rengin karışımı (açık ton) ince bir şerit olarak görünür.
+// Parça küçük olduğu için ayrı, düşük çözünürlüklü tuvalde hesaplanır (kare başına KR piksel). Maske kodla üretilir (girdap + dalga).
+const KR = 36;
+function girdap(x, y, ox, oy, s) { const dx = x - ox, dy = y - oy, r = Math.hypot(dx, dy) / KR, a = Math.atan2(dy, dx); return clamp(.5 + .32 * Math.sin(a * 3 + r * 4.2 + s) + .18 * Math.sin(x / KR * 5.1 + s * 2) * Math.sin(y / KR * 4.3 - s), 0, 1); }
+function karisimHazirla(p, m) {
+  const xs = p.cells.map(c => c[0]), ys = p.cells.map(c => c[1]), [x0, y0] = p.cells[0], mnx = Math.min(...xs), mny = Math.min(...ys), w = (Math.max(...xs) - mnx + 1) * KR, h = (Math.max(...ys) - mny + 1) * KR;
+  const tuval = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const boya = hex => { const c = tuval(), x = c.getContext('2d'), e = [ctx, cell]; ctx = x; cell = KR; x.translate((x0 - mnx) * KR, (y0 - mny) * KR); try { govde(p, () => hex); } finally { [ctx, cell] = e; } return c; };
+  m.yeni = boya(C[p.color]); m.serit = boya(m.lead); m.mask = tuval(); m.tmp = tuval(); m.mx = m.mask.getContext('2d'); m.tx = m.tmp.getContext('2d'); m.id = m.mx.createImageData(w, h);
+  const ox = (x0 - mnx + m.ox) * KR, oy = (y0 - mny + m.oy) * KR, R = m.maxR * KR, T = m.T = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) T[y * w + x] = girdap(x, y, ox, oy, m.seed) * .45 + Math.min(1, Math.hypot(x - ox, y - oy) / R) * .55;
+  m.w = w; m.h = h; m.dx = mnx - x0; m.dy = mny - y0; m.n = p.cells.length;
+}
 function body(p, now) {
   const m = p.mix;
   if (!m) return govde(p, () => C[p.color]);
-  const t = Math.min(1, (now - m.t0) / MIXMS), R = m.maxR * cell * 1.3 * (1 - Math.pow(1 - t, 2.2)), ox = m.ox * cell, oy = m.oy * cell;
+  if (!m.T || m.n !== p.cells.length) karisimHazirla(p, m);
+  const t = Math.min(1, (now - m.t0) / MIXMS), esik = t * 1.08, T = m.T, d = m.id.data;
   govde(p, i => C[m.cols[i]]);
-  ctx.save(); blob(ox, oy, R, now, m.seed); ctx.clip(); govde(p, () => m.lead); ctx.restore();                                   // öncü: açık ton
-  ctx.save(); blob(ox, oy, Math.max(0, R - cell * .28) * .95, now, m.seed + 2); ctx.clip(); govde(p, () => C[p.color]); ctx.restore();   // arkasından yeni renk
-  ctx.save(); ctx.clip(p.path); ctx.lineWidth = cell * .07; ctx.lineCap = 'round';
-  for (let i = 0; i < 4; i++) {
-    const r2 = R * (.2 + .17 * i); if (r2 < 4) continue;
-    const a = m.seed + i * 1.7 + t * (5 + i);
-    ctx.strokeStyle = rgba(m.srcs[i % 2], .45 * (1 - t)); ctx.beginPath(); ctx.arc(ox, oy, r2, a, a + 1.8); ctx.stroke();
-  }
-  ctx.restore();
+  const kat = (src, e) => {
+    for (let i = 0; i < T.length; i++) d[i * 4 + 3] = clamp((e - T[i]) * 30, 0, 1) * 255;
+    m.mx.putImageData(m.id, 0, 0); m.tx.globalCompositeOperation = 'copy'; m.tx.drawImage(src, 0, 0); m.tx.globalCompositeOperation = 'destination-in'; m.tx.drawImage(m.mask, 0, 0);
+    ctx.drawImage(m.tmp, m.dx * cell, m.dy * cell, m.w / KR * cell, m.h / KR * cell);
+  };
+  kat(m.serit, esik + .07);   // sınır şeridi: iki rengin karışımı
+  kat(m.yeni, esik);
 }
 // Renk damgası (renk körlüğü; ayarlardan açılır): her rengin kendi şekli, parçanın yüzsüz karelerine ve kalıbın içine hafif kabartma
 // olarak basılır. Gri damga, alttaki rengin üstüne çarpılarak çizilir (rengin koyu tonu: kabartma).
@@ -593,6 +609,7 @@ const DIKEY = { yukari: 0, asagi: 1 };
 const YUZ = { sakin: 0, mutlu: 1, kirp: 2, sol: 3, sag: 4, telas: 5, saskin: 6, uzgun: 7 };
 function ifade(p, now) {
   if (p.ifade) return p.ifade;   // açılış sahnesi ifadeyi kendisi verir
+  if (p.mutluT && now < p.mutluT && state === 'play' && !(p.shakeT && now - p.shakeT < 1600)) return 'mutlu';   // yapıştıktan sonra kısa süre mutlu
   if (state === 'lost' || (p.shakeT && now - p.shakeT < 1600)) return 'uzgun';
   if (state === 'won' || sinks.some(s => s.p === p)) return 'mutlu';
   if (state === 'play' && running && timeLeft < 10) return 'telas';
@@ -753,7 +770,7 @@ function update(dt, now) {
     p.ox += (tx - p.ox) * k; p.oy += (ty - p.oy) * k;
     p.lift += ((held ? 1 : 0) - p.lift) * (1 - Math.exp(-dt * 18));
     p.pv += (-300 * p.pulse - 16 * p.pv) * dt; p.pulse += p.pv * dt;
-    if (p.mix && now - p.mix.t0 >= MIXMS) p.mix = null;
+    if (p.mix && now - p.mix.t0 >= MIXMS) { p.mix = null; p.pv += 1.3; }   // karışım bitince bir kez nabız atar
   }
   for (const s of sinks) {
     if (now - s.t0 >= 340) {
@@ -776,6 +793,7 @@ function update(dt, now) {
     if (running && state === 'play' && s <= 5 && s > 0) { tone(900, .05, 'square', 0, .03); buzz(10); }
   }
   $('fill').style.transform = 'scaleX(' + Math.min(1, timeLeft / (Lv.t + ekSure)) + ')';
+  $('saat').style.setProperty('--k', clamp(timeLeft / (Lv.t + ekSure), 0, 1).toFixed(4));   // akrep bölüm süresi boyunca tam bir tur; çevredeki halka kalan süre
   $('timer').classList.toggle('low', timeLeft < 10 && state !== 'won');
 }
 function frame(now) {
@@ -812,7 +830,7 @@ App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= 
       try {
         for (const p of parcalar) {
           p.pv += (-300 * p.pulse - 16 * p.pv) * dt; p.pulse += p.pv * dt;
-          if (p.mix && now - p.mix.t0 >= MIXMS) p.mix = null;
+          if (p.mix && now - p.mix.t0 >= MIXMS) { p.mix = null; p.pv += 1.3; }   // karışım bitince bir kez nabız atar
           p.path = relPath(p); drawPiece(p, now, 1);
         }
       } finally { [ctx, cell, dpr] = e; }
