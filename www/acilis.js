@@ -9,8 +9,9 @@ let atla = false; try { atla = !!sessionStorage.getItem('hamurAcilisAtla'); sess
 if (!O || atla || window.__hamurEkran || window.__hamurAcilis === 0 || O.deneme) { kap.remove(); return splashKapat(); }
 kap.dataset.canli = '1';
 requestAnimationFrame(() => requestAnimationFrame(splashKapat));
-kap.classList.add('logolu');
+kap.classList.add('logolu');   // logo düşer, altı hamur bir araya gelip kendi huyuna göre selam verir
+const yazi = kap.querySelector('p'); if (yazi) { yazi.textContent = L('Hoş geldin!', 'Welcome!'); yazi.hidden = false; }
 let bitti = false;
 const bitir = () => { if (bitti) return; bitti = true; kap.classList.add('ac'); setTimeout(() => kap.remove(), 300); };
-setTimeout(bitir, 1200); kap.addEventListener('pointerdown', bitir);
+setTimeout(bitir, 2300); kap.addEventListener('pointerdown', bitir);
 })();
