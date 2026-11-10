@@ -61,10 +61,12 @@
     <canvas id="cv" aria-label="Oyun tahtası" data-en-label="Game board"></canvas>
     <div class="tost" id="tost" role="status" hidden></div>
     <div class="ov" id="ov" hidden>
-      <div class="card" role="dialog" aria-labelledby="ovT">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="ovT">
+        <button class="top kucuk kapat" id="ovX" type="button" aria-label="Kapat" data-en-label="Close" hidden><i style="background-image:url(img/kapat.webp)"></i></button>
         <img id="ovR" alt="" width="520" height="412" hidden>
         <h2 id="ovT"></h2>
         <p id="ovP"></p>
+        <div class="secenekler" id="ovEk" hidden></div>
         <button class="go" id="ovB" type="button"></button>
         <button class="go alt" id="ovB2" type="button" hidden></button>
       </div>

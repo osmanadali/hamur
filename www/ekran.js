@@ -183,5 +183,5 @@ addEventListener('pointerdown', muzik, { once: true }); document.addEventListene
 
 // Açılış: ana ekran. Editörden gelen deneme bölümü (#bolum=) ve test robotu (window.__hamurEkran) doğrudan oyunu açar.
 goster(window.__hamurEkran || (O.deneme ? 'oyun' : 'ana'));
-App.ekran = { kutla, goster, oyna, siradaki, acikMi, get acik() { return acik; }, ayar };
+App.ekran = { muzik, kutla, goster, oyna, siradaki, acikMi, get acik() { return acik; }, ayar };
 })();

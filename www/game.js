@@ -295,6 +295,7 @@ function birak() {
 function showOv(t, p, b, fn, b2, fn2) {
   $('ovT').textContent = t; $('ovP').textContent = p; $('ovB').textContent = b; $('ovB').onclick = fn;
   $('ovB2').hidden = !b2; if (b2) { $('ovB2').textContent = b2; $('ovB2').onclick = fn2; }
+  $('ovB2').classList.remove('cikis'); $('ovEk').hidden = true; $('ovX').hidden = true;   // duraklatma bunları kendisi açar
   const r = state === 'won' ? 'kazanc' : state === 'lost' ? (kayipTur === 'time' ? 'kayip-sure' : 'kayip-yapisma') : '';   // sonuç görseli; yazı ve düğmeler altında
   $('ovR').hidden = !r; if (r) $('ovR').src = 'img/' + r + '.webp';
   $('ov').hidden = false;
@@ -391,7 +392,15 @@ function tarif(ac) { $('rx').hidden = !ac; $('gTarif').setAttribute('aria-expand
 function duraklat() {
   if (state !== 'play' || durak) return;
   durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
-  showOv(L('Duraklatıldı', 'Paused'), L('Süre durdu. Hazır olunca devam et.', 'The timer is stopped. Continue when you are ready.'), L('Devam et', 'Continue'), devam, L('Bölümlere dön', 'Back to levels'), () => App.ekran.goster('yol'));
+  showOv(L('Duraklatıldı', 'Paused'), L('Süre durdu. Hazır olunca devam et.', 'The timer is stopped. Continue when you are ready.'), L('Sürdür', 'Resume'), devam, L('Çıkış', 'Quit'), () => App.ekran.goster('ana'));
+  // duraklatma penceresi: ses, müzik, titreşim anahtarları; Sürdür yeşil, Çıkış kırmızı; köşede kapat
+  $('ovB2').classList.add('cikis'); $('ovX').hidden = false; $('ovX').onclick = devam;
+  const ek = $('ovEk'); ek.innerHTML = ''; ek.hidden = false;
+  for (const [k, tr, en] of [['sound', 'Sesler', 'Sounds'], ['music', 'Müzik', 'Music'], ['vib', 'Titreşim', 'Vibration']]) {
+    const b = document.createElement('button'), acik = () => save[k] !== false; b.type = 'button'; b.className = 'secenek'; b.setAttribute('role', 'switch');
+    b.append(Object.assign(document.createElement('span'), { textContent: L(tr, en) }), Object.assign(document.createElement('i'), { className: 'anahtar' }));
+    const ciz = () => b.setAttribute('aria-checked', String(acik())); b.onclick = () => { save[k] = !acik(); App.persist(); ciz(); paintSound(); App.ekran.muzik?.(); buzz(8); }; ciz(); ek.appendChild(b);
+  }
 }
 function devam() { if (!durak) return; durak = false; cv.style.visibility = ''; $('ov').hidden = true; $('hint').textContent = L(...Lv.hint); paintUndo(); }
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play' && running) duraklat(); });   // uygulama arka plana geçince
