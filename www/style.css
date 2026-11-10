@@ -296,3 +296,58 @@ body.gunluk-acik .gok{opacity:0}
 .kutla p{position:relative;margin:0;font:400 17px var(--display);color:#fff7ea;animation:satir .3s ease-out .7s both}
 @keyframes odul{0%{transform:scale(.2) rotate(-25deg);opacity:0}55%{transform:scale(1.15) rotate(6deg);opacity:1}75%{transform:scale(.95) rotate(-3deg)}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){.kutla .isin,.kutla img,.kutla h2{animation:none}}
+
+/* ================= geri bildirim turu ================= */
+@font-face{font-family:'Baloo 2';src:url(font/baloo-latin.woff2) format('woff2');font-weight:400 800;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Baloo 2';src:url(font/baloo-latin-ext.woff2) format('woff2');font-weight:400 800;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+:root{--body:'Baloo 2','Segoe UI',system-ui,sans-serif}
+body{font-weight:600}
+/* başlıklar: parlak dolgu, yazının arkasında kalan kontur (gölgede kalmaz), altta kalınlık */
+.ust h2,.panel h2,.card h2{font:400 32px/1.15 var(--baslik);letter-spacing:.5px;color:#fff6d8;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-stroke:0;filter:none;padding:2px 4px 8px;
+  text-shadow:-2px -2px 0 #6a3aa6,2px -2px 0 #6a3aa6,-2px 2px 0 #6a3aa6,2px 2px 0 #6a3aa6,0 -2px 0 #6a3aa6,-2px 0 0 #6a3aa6,2px 0 0 #6a3aa6,0 3px 0 #6a3aa6,0 5px 0 #55298c,0 7px 6px rgba(60,25,100,.35)}
+.card h2{color:#ffd24d}
+.aciklama,#hint{font:600 16px/1.35 var(--body)}
+#hint{min-height:2.8em}   /* yazı değişince tahta yerinden oynamasın */
+.card p{font:600 16px/1.4 var(--body)}
+/* düğmeler: yazı düğmeye göre büyük; her düğme hamur hap */
+.hap{font:400 21px var(--display);min-height:62px}
+.hap.buyuk{font-size:34px;min-height:92px;min-width:240px}
+.hap small{font:700 16px var(--body);opacity:.85}
+.hap.kirmizi{border-image-source:url(img/hap-kirmizi.webp);color:#5c0f14}
+.hap.gunluk{flex-direction:row}
+.go{margin-top:8px;height:auto;min-height:58px;border-style:solid;border-color:transparent;border-width:18px 36px;border-image:url(img/hap-sari.webp) 46 96 fill / 18px 36px stretch;border-radius:0;background:none;box-shadow:none;padding:0;color:#5a3a08;font:400 20px var(--display);filter:drop-shadow(0 4px 3px rgba(100,60,150,.3))}
+.go:active{transform:translateY(3px) scale(.97);box-shadow:none;filter:brightness(.9)}
+.go.alt{border-image-source:url(img/hap-mor.webp);background:none;box-shadow:none;color:#3b1d5c}
+.dil-dugme{background:#cdb4f0;background-blend-mode:normal;font:400 16px var(--display)}
+.diller .dil-dugme[aria-current=true]{background:#ffd24d}
+.secenek{font:700 16px var(--body)}
+/* ana ekran: logo üstte, düğmeler ortada, karakterler altta; görsel gerçek boyutunda (yakınlaştırma yok) */
+body.ana-acik{background:url(img/ana.webp) center bottom/100% auto no-repeat,linear-gradient(#a699d9,#a699d9)}
+#sAna .baslik-yeri{flex:0 0 clamp(90px,19vh,170px)}
+.baslik-yeri .logo{max-width:min(84vw,360px);filter:saturate(1.25) contrast(1.05) drop-shadow(0 6px 5px rgba(70,30,120,.4))}
+.ana-dugmeler{gap:12px;margin-top:1vh}
+@media (min-aspect-ratio:3/5){body.ana-acik{background-size:cover}}
+/* bölüm yolu: üstte ve altta boşluk yok; başlık yolun üstünde yüzer */
+#sYol{padding:0;position:relative;max-width:none}
+#sYol .ust{position:absolute;left:0;right:0;top:0;z-index:2;padding:max(10px,env(safe-area-inset-top,0px)) 14px 26px;background:linear-gradient(rgba(150,120,210,.92),rgba(150,120,210,0))}
+.yol{border-radius:0;max-width:540px;width:100%;margin:0 auto}
+.durak em{display:flex;gap:1px;top:-20%;-webkit-text-stroke:0;text-shadow:none}
+.durak em i{width:.95em;height:.95em;background:url(img/yildiz.webp) center/contain no-repeat;filter:drop-shadow(0 1px 1px rgba(60,25,100,.4))}
+.durak em i.bos{filter:grayscale(1) brightness(1.5) opacity(.55)}
+/* süre: çubuk yok; sarı halka saatin çevresinde azalır, boğumlar yıldız eşikleri */
+.timer{justify-content:center;gap:12px}
+.saat{--halka:#ffc531;width:66px;height:66px;background:url(img/kadran.webp) center/74% no-repeat,conic-gradient(var(--halka) calc(var(--k)*360deg),rgba(255,255,255,.5) 0)}
+.saat .akrep{top:11px;width:9px;height:25px;margin-left:-4.5px}
+.saat .bogum{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:#fff7ea;border:2px solid #6a3aa6;box-sizing:border-box;transform:rotate(var(--a)) translateY(-30px)}
+.timer.low .saat::after{inset:8px}
+#secs{font:400 30px/1 var(--display);min-width:2.2ch;text-align:left}
+/* günlük kalıp: canlı arka planın üstünde başlık okunsun */
+body.gunluk-acik .hud{background:rgba(255,250,244,.86);border-radius:22px;padding:8px 10px;box-shadow:0 4px 0 rgba(120,80,170,.2)}
+/* renk tarifi şeridi: hamur panel */
+.rx{border-style:solid;border-color:transparent;border-width:14px 18px;border-image:url(img/panel.webp) 56 fill / 14px 18px stretch;background:none;box-shadow:none;padding:0 2px;font:400 16px var(--display);filter:drop-shadow(0 6px 6px rgba(80,40,130,.35))}
+.rx i{width:20px;height:20px;border-radius:7px}
+/* ekran geçişi biraz daha yavaş */
+.gecis.oyna i{animation-duration:.36s}
+.ekran.giris{animation-duration:.36s}
+/* bilgi baloncuğu (+15 sn) */
+.tost.kisa{animation:tost .9s ease both}

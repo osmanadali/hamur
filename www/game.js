@@ -181,7 +181,7 @@ function olaylar(p, ev) {
       if (e.mixed) p.mix = { t0: now, cols: e.cols, lead: lighten(C[e.color], .42), srcs: [a, b], seed: Math.random() * 6, ox: mx, oy: my };
       else if (p.mix) p.mix.cols = p.mix.cols.concat(e.cols.slice(p.mix.cols.length));
       if (p.mix) p.mix.maxR = Math.max(...p.cells.map(c => Math.hypot(c[0] + .5 - x0 - p.mix.ox, c[1] + .5 - y0 - p.mix.oy))) + .8;
-      p.mutluT = now + (e.mixed ? MIXMS : 0) + 900; p.ezT = now; Ses.pat(.14, 1100, 220, .28); if (e.mixed) Ses.pat(.5, 700, 300, .1, .1);   // ezilip uzar; şlap
+      p.mutluT = now + (e.mixed ? MIXMS : 0) + 900; p.ezT = now; p.sik = { t0: now, x: x0 + mx, y: y0 + my }; Ses.pat(.14, 1100, 220, .28); if (e.mixed) Ses.pat(.5, 700, 300, .1, .1);   // ezilip uzar; şlap
       p.flash = { t0: now, segs: e.seam.map(s => [s[0] - x0, s[1] - y0, s[2], s[3]]) };
       p.pv += 1.5;
       burst((x0 + mx) * cell, (y0 + my) * cell, [a, b], 7, cell * 2.6); un((x0 + mx) * cell, (y0 + my) * cell, 4);
@@ -354,7 +354,7 @@ function paintUndo() {
 // +15 sn: oyun sırasında süreye eklenir. Süre bitince çıkan kartta da "devam et" olarak sunulur (surDevam).
 function sureEkle() {
   if (state !== 'play' || durak || stok('sure') <= 0) return;
-  harca('sure'); timeLeft += 15; ekGuc += 15; shownS = -1; paintUndo(); buzz(12); tone(660, .1, 'triangle', 990, .06); tone(990, .16, 'triangle', 0, .05, .09);
+  harca('sure'); timeLeft += 15; ekGuc += 15; shownS = -1; bilgi('+15 ' + L('sn', 's')); paintUndo(); buzz(12); tone(660, .1, 'triangle', 990, .06); tone(990, .16, 'triangle', 0, .05, .09);
 }
 // Yıldız: kalan süreye göre (güçlendiriciyle eklenen süre sayılmaz). %45 ve üstü üç, %25 ve üstü iki, bitirmek bir yıldız.
 const yildizSay = () => { const r = (timeLeft - ekGuc) / (Lv.t + ekSure); return r >= .45 ? 3 : r >= .25 ? 2 : 1; };
@@ -365,6 +365,8 @@ async function reklamDevam() {   // kaybedince: ödüllü reklam izleyip 15 sn i
   let oldu = false; try { oldu = (await (App.bekle ? App.bekle.sar(Ads.rewarded(), 'top') : Ads.rewarded())) === 'earned'; } catch {}
   if (oldu && state === 'lost') canlan();
 }
+let bilgiT = 0;
+function bilgi(m) { const t = $('tost'); t.textContent = m; t.hidden = false; clearTimeout(bilgiT); bilgiT = setTimeout(() => { if (state === 'play') t.hidden = true; }, 1100); }   // kısa ekran bildirimi
 function surDevam() {
   if (state !== 'lost' || kayipTur !== 'time' || stok('sure') <= 0) return;
   harca('sure'); canlan();   // süre ilk dokunuşta yeniden işler
@@ -372,7 +374,7 @@ function surDevam() {
 // Makas: oyuncu boş bir zemin karesi seçer, oraya tek kullanımlık makas karesi konur. Sonrası oyundaki makas kuralıyla aynıdır.
 function makasSec() {
   if (state !== 'play' || durak || stok('makas') <= 0) return;
-  makasKoy = !makasKoy; paintUndo();
+  makasKoy = !makasKoy; paintUndo(); if (makasKoy) bilgi(L('Boş bir kareye dokun', 'Tap an empty square'));
   $('hint').textContent = makasKoy ? L('Makası koyacağın boş kareye dokun. Çok kareli parçayı ona doğru itince keser.', 'Tap an empty square to place the scissors. Push a multi-square piece into it to cut.') : L(...Lv.hint);
 }
 function makasKonur(gx, gy) {
@@ -573,20 +575,22 @@ const koyu = (h, s) => '#' + rgb(h).map(v => Math.round(v * s).toString(16).padS
 // Parçanın gövdesi: her kare ayrı yastık olarak kalır. Komşu iki karenin arası aynı renkle dolar, dikişte hafif bir çukur gölgesi olur.
 // renkOf(i): i. karenin rengi (#rrggbb). Çizim parçanın ilk karesinin köşesine göredir. cukur: dikiş gölgesinin koyuluğu.
 function govde(p, renkOf, cukur = .2) {
+  const sk = p.sik, st2 = sk ? (performance.now() - sk.t0) / 420 : 1, sa = st2 < 1 && !RM ? Math.sin(st2 * Math.PI) * (1 - st2 * .5) * .34 : 0;
+  const SX = c => sa ? (sk.x - (c[0] + .5)) * cell * sa : 0, SY = c => sa ? (sk.y - (c[1] + .5)) * cell * sa : 0;
   const [x0, y0] = p.cells[0], S = new Set(p.cells.map(c => c[0] + ',' + c[1])), ins = cell * .02, rad = cell * .2, dolu = (x, y) => S.has(x + ',' + y);
   const dik = (sp, hex, x, y, w, h) => { if (sp) ctx.drawImage(sp, BLOK * .32, BLOK * .32, BLOK * .36, BLOK * .36, x, y, w, h); else { ctx.fillStyle = hex; ctx.fillRect(x, y, w, h); } };
   p.cells.forEach((c, i) => {   // köprüler
-    const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell, sag = dolu(c[0] + 1, c[1]), alt = dolu(c[0], c[1] + 1);
+    const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell + SX(c), Y = (c[1] - y0) * cell + SY(c), sag = dolu(c[0] + 1, c[1]), alt = dolu(c[0], c[1] + 1);
     if (sag) dik(sp, hex, X + cell - rad, Y + rad * .85, rad * 2, cell - rad * 1.7);
     if (alt) dik(sp, hex, X + rad * .85, Y + cell - rad, cell - rad * 1.7, rad * 2);
     if (sag && alt && dolu(c[0] + 1, c[1] + 1)) dik(sp, hex, X + cell - rad, Y + cell - rad, rad * 2, rad * 2);
   });
   p.cells.forEach((c, i) => {   // yastıklar
-    const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell;
+    const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell + SX(c), Y = (c[1] - y0) * cell + SY(c);
     if (sp) ctx.drawImage(sp, X + ins, Y + ins, cell - 2 * ins, cell - 2 * ins); else { rr(X + ins, Y + ins, cell - 2 * ins, cell - 2 * ins, rad); ctx.fillStyle = hex; ctx.fill(); }
   });
   if (cukur > 0) for (const c of p.cells) {   // dikiş çukuru
-    const X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell, w = cell * .09;
+    const X = (c[0] - x0) * cell + SX(c), Y = (c[1] - y0) * cell + SY(c), w = cell * .09;
     if (dolu(c[0] + 1, c[1])) { const g = ctx.createLinearGradient(X + cell - w, 0, X + cell + w, 0); g.addColorStop(0, 'rgba(45,15,70,0)'); g.addColorStop(.5, 'rgba(45,15,70,' + cukur + ')'); g.addColorStop(1, 'rgba(45,15,70,0)'); ctx.fillStyle = g; ctx.fillRect(X + cell - w, Y + rad * .85, 2 * w, cell - rad * 1.7); }
     if (dolu(c[0], c[1] + 1)) { const g = ctx.createLinearGradient(0, Y + cell - w, 0, Y + cell + w); g.addColorStop(0, 'rgba(45,15,70,0)'); g.addColorStop(.5, 'rgba(45,15,70,' + cukur + ')'); g.addColorStop(1, 'rgba(45,15,70,0)'); ctx.fillStyle = g; ctx.fillRect(X + rad * .85, Y + cell - w, cell - rad * 1.7, 2 * w); }
   }
@@ -601,7 +605,7 @@ function girdap(x, y, ox, oy, s) { const dx = x - ox, dy = y - oy, r = Math.hypo
 function karisimHazirla(p, m) {
   const xs = p.cells.map(c => c[0]), ys = p.cells.map(c => c[1]), [x0, y0] = p.cells[0], mnx = Math.min(...xs), mny = Math.min(...ys), w = (Math.max(...xs) - mnx + 1) * KR, h = (Math.max(...ys) - mny + 1) * KR;
   const tuval = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
-  const boya = hex => { const c = tuval(), x = c.getContext('2d'), e = [ctx, cell]; ctx = x; cell = KR; x.translate((x0 - mnx) * KR, (y0 - mny) * KR); try { govde(p, () => hex); } finally { [ctx, cell] = e; } return c; };
+  const boya = hex => { const c = tuval(), x = c.getContext('2d'), e = [ctx, cell]; ctx = x; cell = KR; x.translate((x0 - mnx) * KR, (y0 - mny) * KR); const sk = p.sik; p.sik = null; try { govde(p, () => hex); } finally { [ctx, cell] = e; p.sik = sk; } return c; };
   m.yeni = boya(C[p.color]); m.serit = boya(m.lead); m.mask = tuval(); m.tmp = tuval(); m.mx = m.mask.getContext('2d'); m.tx = m.tmp.getContext('2d'); m.id = m.mx.createImageData(w, h);
   const ox = (x0 - mnx + m.ox) * KR, oy = (y0 - mny + m.oy) * KR, R = m.maxR * KR, T = m.T = new Float32Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) T[y * w + x] = (maske ? maske[(((y * 1.4 + m.seed * 20) | 0) & 127) * 512 + (((x * 1.4 + m.seed * 31) | 0) & 127) * 4] / 255 : girdap(x, y, ox, oy, m.seed)) * .45 + Math.min(1, Math.hypot(x - ox, y - oy) / R) * .55;
@@ -713,7 +717,7 @@ function drawPiece(p, now, k, glow) {
       ctx.stroke(); ctx.restore();
     }
   }
-  if (glow) { ctx.lineWidth = cell * .075; ctx.strokeStyle = rgba(C[glow], .6 + .3 * Math.sin(now / 90)); ctx.stroke(p.path); }
+  // (tutunca dışta yanıp sönen renk çizgisi kaldırıldı: yaklaşan parçalar eğilerek ve iplikle haber verir)
   if (save.damga && !p.mix) p.cells.forEach((c, i) => { if (i !== p.face || p.cells.length === 1) damga(p.color, (c[0] - x0 + .5) * cell, (c[1] - y0 + (p.cells.length === 1 ? .23 : .5)) * cell, p.cells.length === 1 ? .32 : .5, .75); });   // tek karede yüzün üstüne (alna) küçük damga
   if (k > .25) face(p, now);
   ctx.restore();

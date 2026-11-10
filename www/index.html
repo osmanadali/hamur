@@ -26,7 +26,7 @@
       <button class="hap mor" id="bYol" type="button" data-en="Levels">Bölümler</button>
       <button class="hap yesil" id="bTepsi" type="button" data-en="Tray">Tepsi</button>
     </div>
-    <button class="hap sari gunluk" id="bGunluk" type="button"><i></i><span id="gunlukYazi"></span></button>
+    <button class="hap kirmizi gunluk" id="bGunluk" type="button"><i></i><span id="gunlukYazi"></span></button>
   </div>
 </section>
 <section class="ekran" id="sYol" hidden>
@@ -49,10 +49,11 @@
       <button class="btn resim" id="sound" type="button" aria-label="Ses" data-en-label="Sound"></button>
       <button class="btn resim" id="retry" type="button" aria-label="Baştan" data-en-label="Restart"></button>
     </div>
+    <!-- Süre: saatin çevresindeki sarı halka azalır; iki boğum yıldız eşikleridir (%45 ve %25) -->
     <div class="timer" id="timer">
-      <div class="saat" id="saat" aria-hidden="true"><i class="akrep"></i></div>
-      <div class="bar"><i id="fill"></i></div>
+      <div class="saat" id="saat" aria-hidden="true"><i class="akrep"></i><b class="bogum" style="--a:162deg"></b><b class="bogum" style="--a:90deg"></b></div>
       <span id="secs">30</span>
+      <div class="bar" hidden><i id="fill"></i></div>
     </div>
   </header>
   <main class="stage" id="stage">

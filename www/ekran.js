@@ -64,7 +64,7 @@ function yol() {
       b.classList.add(durum); b.dataset.no = n;
       b.setAttribute('aria-label', L('Bölüm ', 'Level ') + n + (durum === 'tamam' ? L(', tamamlandı', ', completed') : durum === 'kilitli' ? L(', kilitli', ', locked') : ''));
       if (durum === 'kilitli') b.disabled = true; else { const s = document.createElement('span'); s.textContent = n; b.appendChild(s); b.onclick = () => oyna(n); }
-      if (durum === 'tamam') { const y = save.yildiz?.[n] || 1, e = document.createElement('em'); e.textContent = '★'.repeat(y) + '☆'.repeat(3 - y); b.appendChild(e); }
+      if (durum === 'tamam') { const y = save.yildiz?.[n] || 1, e = document.createElement('em'); for (let k = 0; k < 3; k++) { const yi = document.createElement('i'); if (k >= y) yi.className = 'bos'; e.appendChild(yi); } b.appendChild(e); }
       if (n % 10 === 0) b.classList.add('figurlu');   // her 10. bölüm bir figürü tamamlar
       if (n === sira) hedef = b;
       karo.appendChild(b);
@@ -136,12 +136,12 @@ function ayarKapat() {
 $('bOyna').onclick = () => oyna(siradaki()); $('bGunluk').onclick = gunlukAc;
 $('bYol').onclick = () => goster('yol'); $('bTepsi').onclick = () => goster('tepsi');
 $('yolGeri').onclick = $('tepsiGeri').onclick = () => goster('ana');
-$('bCik').onclick = () => goster('yol');
+$('bCik').onclick = () => goster('ana');   // oyundan çıkınca ana ekran
 $('bAyar').onclick = ayar; $('ayarKapat').onclick = ayarKapat;
 $('ayar').addEventListener('click', e => { if (e.target === $('ayar')) ayarKapat(); });
 addEventListener('keydown', e => { if (e.key === 'Escape') ayarKapat(); });
 // Android geri tuşu: oyun → bölüm yolu → ana ekran
-window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') goster('yol'); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
+window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') goster('ana'); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
 
 // Oyun bir figürü tamamlayan bölümü bildirir (kutlama yazısı için)
 O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10}.webp` } : null;
