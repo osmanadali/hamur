@@ -47,7 +47,7 @@ jobs:
       - run: npx cap add android
       - name: İkon ve açılış ekranı (assets/)
         if: ${{ hashFiles('assets/icon-only.png') != '' }}   # ikon 3. aşamada (görsel kimlik) çizilir; o zamana dek Capacitor'ın varsayılan ikonu
-        run: npx @capacitor/assets generate --android --iconBackgroundColor '#f4ead9' --iconBackgroundColorDark '#f4ead9' --splashBackgroundColor '#f4ead9' --splashBackgroundColorDark '#f4ead9'
+        run: npx @capacitor/assets generate --android --iconBackgroundColor '#ead8f6' --iconBackgroundColorDark '#ead8f6' --splashBackgroundColor '#ead8f6' --splashBackgroundColorDark '#ead8f6'
       - name: Yerel projeyi hazırla (AdMob test App ID, dikey, bildirim simgesi, kenardan kenara, SDK denetimi)
         env: { FIREBASE_ANDROID_JSON: '${{ secrets.FIREBASE_ANDROID_JSON }}' }   # isteğe bağlı: yoksa ölçüm kapalı derlenir (docs/YAYIN.md §5)
         run: node tools/android/hazirla.cjs

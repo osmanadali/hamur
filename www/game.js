@@ -15,6 +15,7 @@ const CFG = {
   itEsik: .3,       // parmağın öteki parçaya doğru yaslanması (kare) → "itiyor"
   cekEsik: .2,      // ters yöne yaslanma (kare) → "kaçınıyor"
   gecHiz: .8,       // yanından geçme hızı (kare/sn) → "sadece geçiyor"
+  kesSn: .25,       // çok kareli parça makasa doğru bu kadar itilince kesilir (kararsız parmak kesmez)
 };
 
 const $ = id => document.getElementById(id);
@@ -30,11 +31,15 @@ const tint = (h, s) => 'rgb(' + rgb(h).map(v => Math.round(v * s)).join(',') + '
 const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
 const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
 const tone = Ses.fx, buzz = Ses.buzz;
+// Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
+const IMG = {}; let dokuDesen = null;
+for (const ad of ['tepsi', 'doku', 'duvar']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'doku') dokuDesen = ctx.createPattern(im, 'repeat'); }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
 let cell = 60, dpr = 1, state = 'play', timeLeft = 0, running = false, drag = null, sinks = [], parts = [], rings = [], after = null, wonAt = 0, shownS = -1, wallPath = null, last = performance.now();
 let threads = new Map();   // tutulan parçanın komşularıyla arasındaki hamur iplikleri: q → { v: 0…1 doluluk, seam, color }
+let kesim = null;   // dolan makas ölçüsü { dx, dy, v }
 let geri = null, geriKalan = 0;   // geri: son yapışmanın olduğu sürüklemenin başındaki durum
 
 /* ---------- şekiller ---------- */
@@ -102,17 +107,11 @@ function setup(i) {
   if (i < ASIL) { save.level = i + 1; App.persist(); }
   st.pieces.forEach(giydir);
   state = 'play'; timeLeft = Lv.t; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1;
-  threads = new Map(); geri = null; geriKalan = CFG.geriHak;
+  threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null;
   $('ov').hidden = true; $('hint').textContent = L(...Lv.hint); $('rx').hidden = i < 2;
-  $('pills').innerHTML = '';
-  LEVELS.forEach((_, j) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'pill' + (done.has(j + 1) ? ' done' : ''); b.textContent = j + 1; b.id = 'lvl' + j;
-    b.setAttribute('aria-label', L('Bölüm ', 'Level ') + (j + 1));
-    if (j === i) b.setAttribute('aria-current', 'true');
-    b.onclick = () => setup(j);
-    $('pills').appendChild(b);
-  });
+  // Bölüm seçici (test sürümü: bütün bölümler açık). Bölüm yolu ekranı görsel kimlikle birlikte gelir.
+  $('lvlNo').textContent = i < ASIL ? (i + 1) + ' / ' + ASIL : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
+  $('prev').disabled = i <= 0 || i >= ASIL; $('next').disabled = i >= ASIL - 1;
   paintUndo(); layout();
   window.Olcum?.event('level_start', { level: i + 1 });
 }
@@ -164,9 +163,39 @@ function olaylar(p, ev) {
       threads = new Map();
     }
   }
-  if (!ev.length) return;
+  if (ev.length) denetle(p);
+}
+// Kazanma / çıkmaz denetimi (her yapışma, kalıba oturma ve kesimden sonra)
+function denetle(p) {
+  if (state !== 'play') return;
   if (st.pieces.length === 0) { state = 'won'; running = false; wonAt = 0; }
   else if (Coz.cikmaz(st, cz)) lose('doom', K.doomed(st) || (st.pieces.includes(p) ? p : st.pieces[0]));
+}
+// Makas: çok kareli parça açık makasa doğru itilince dolan ölçü. Dolunca parça o kareye girer, makasın üstündeki kare kopar,
+// sürükleme biter ve bütün parçalar oldukları yerde kalır (cekirdek M3-M4). Kararsız parmak kesmez: karar görünür (makas kapanır).
+function kesNiyet(dt) {
+  const p = drag.p, [fx, fy] = yaslan();
+  let yon = null;
+  if (p.cells.length > 1) {
+    const sx = Math.abs(fx) > .58 ? Math.sign(fx) : 0, sy = Math.abs(fy) > .58 ? Math.sign(fy) : 0;
+    const aday = Math.abs(fx) >= Math.abs(fy) ? [[sx, 0], [0, sy]] : [[0, sy], [sx, 0]];
+    yon = aday.find(([dx, dy]) => (dx || dy) && K.canCut(st, p, dx, dy)) || null;
+  }
+  if (!yon) { kesim = null; return; }
+  if (!kesim || kesim.dx !== yon[0] || kesim.dy !== yon[1]) kesim = { dx: yon[0], dy: yon[1], v: 0 };
+  kesim.v += dt / CFG.kesSn;
+  if (kesim.v >= 1) kes(p, yon[0], yon[1]);
+}
+function kes(p, dx, dy) {
+  const d = drag;
+  if (d && d.snap) { geri = d.snap; paintUndo(); }   // kesim de geri alınabilir
+  const e = K.cut(st, p, dx, dy); kesim = null; drag = null; threads = new Map();
+  if (!e) return;
+  for (const q of e.parts) { giydir(q); q.ox = p.ox - dx * cell; q.oy = p.oy - dy * cell; q.pv = 1.2; q.path = relPath(q); }
+  for (const [x, y] of e.at) { burst((x + .5) * cell, (y + .5) * cell, [C[p.color], '#ffffff'], 10, cell * 2.4); }
+  buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
+  for (const s of e.sonra) olaylar(s.p, s.ev);
+  denetle(e.parts.find(q => st.pieces.includes(q)) || st.pieces[0]);
 }
 function tryStep(p, dx, dy) {
   const ev = CFG.niyet ? K.move(st, p, dx, dy) : K.step(st, p, dx, dy);
@@ -214,8 +243,10 @@ function niyet(dt, now) {
 }
 // Parmak kalktı: parça olduğu yerde kaldı → yapışabileceği her şeye yapışır.
 function birak() {
-  const p = drag.p, d = drag;
-  if (CFG.niyet && state === 'play' && st.pieces.includes(p) && K.touching(st, p).length) olaylar(p, K.settle(st, p));
+  const p = drag.p, d = drag; kesim = null;
+  // iki farklı renge aynı anda değiyorsa ipliği en dolu olanla yapışır (oyuncunun ekranda gördüğü)
+  const dolu = t => t.slice().sort((a, b) => (threads.get(b.q)?.v || 0) - (threads.get(a.q)?.v || 0))[0];
+  if (CFG.niyet && state === 'play' && st.pieces.includes(p) && K.touching(st, p).length) olaylar(p, K.settle(st, p, dolu));
   if (drag === d) drag = null;
   threads = new Map();
 }
@@ -245,7 +276,7 @@ function geriAl() {
   if (!geri || geriKalan <= 0 || state === 'won') return;
   geriKalan--; st = geri; geri = null; cz = Coz.hazirla(st);
   st.pieces.forEach(giydir); for (const h of st.holes) h.shown = h.filled;
-  state = 'play'; running = true; drag = null; sinks = []; rings = []; after = null; threads = new Map();
+  state = 'play'; running = true; drag = null; sinks = []; rings = []; after = null; threads = new Map(); kesim = null;
   $('ov').hidden = true; paintUndo(); layout();
   buzz(10); tone(520, .12, 'sine', 300, .06);
   window.Olcum?.event('undo', { level: li + 1 });
@@ -258,7 +289,7 @@ async function sonraki(i) {
 }
 function win() {
   if (li < ASIL) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; App.persist(); }
-  const b = $('lvl' + li); if (b) b.classList.add('done');
+  $('lvlNo').classList.add('done');
   [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09));
   window.Olcum?.event('level_end', { level: li + 1, time_left: Math.ceil(timeLeft) });
   Ads.warm();
@@ -288,6 +319,7 @@ cv.addEventListener('pointermove', e => {
 const drop = e => { if (drag && e.pointerId === drag.id) birak(); };
 cv.addEventListener('pointerup', drop); cv.addEventListener('pointercancel', drop);
 $('retry').onclick = () => setup(li);
+$('prev').onclick = () => setup(li - 1); $('next').onclick = () => setup(li + 1);
 $('undo').onclick = geriAl;
 const paintSound = () => { $('sound').classList.toggle('off', !save.sound); $('sound').setAttribute('aria-pressed', String(save.sound)); };
 $('sound').onclick = () => { save.sound = !save.sound; App.persist(); paintSound(); };
@@ -297,45 +329,73 @@ paintSound();
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 function board() {
   const W = st.W * cell, H = st.H * cell;
-  rr(-PAD + 1, -PAD + 1, W + 2 * PAD - 2, H + 2 * PAD - 2, 18); ctx.fillStyle = C.mat; ctx.fill();
-  rr(0, 0, W, H, 8); ctx.fillStyle = C.field; ctx.fill();
-  ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath();
-  for (let i = 1; i < st.W; i++) { ctx.moveTo(i * cell + .5, 0); ctx.lineTo(i * cell + .5, H); }
-  for (let i = 1; i < st.H; i++) { ctx.moveTo(0, i * cell + .5); ctx.lineTo(W, i * cell + .5); }
-  ctx.stroke();
-  // kesim altlığı cetveli
-  ctx.fillStyle = C.rule; ctx.font = '600 9px system-ui,sans-serif'; ctx.textBaseline = 'alphabetic';
-  for (let i = 0; i <= st.W; i++) {
-    ctx.fillRect(i * cell - .5, -7, 1, 5);
-    if (i < st.W) ctx.fillRect(i * cell + cell / 2 - .5, -5, 1, 3);
-    if (i && i < st.W) ctx.fillText(i, i * cell + 3, -8);
-  }
-  for (let i = 0; i <= st.H; i++) {
-    ctx.fillRect(-7, i * cell - .5, 5, 1);
-    if (i < st.H) ctx.fillRect(-5, i * cell + cell / 2 - .5, 3, 1);
-    if (i && i < st.H) ctx.fillText(i, -16, i * cell - 3);
-  }
-  if (wallPath) {
-    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.save(); ctx.translate(0, cell * .05); ctx.fill(wallPath); ctx.restore();
-    ctx.fillStyle = tint(C.wall, .62); ctx.fill(wallPath);
-    ctx.save(); ctx.translate(0, -cell * .08); ctx.fillStyle = C.wall; ctx.fill(wallPath);
-    ctx.clip(wallPath); ctx.lineWidth = cell * .08; ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.translate(cell * .03, cell * .04); ctx.stroke(wallPath);
-    ctx.restore();
+  // şekerli tepsi: görsel dokuz dilim halinde tahta boyuna gerilir (köşeler bozulmaz)
+  const im = IMG.tepsi;
+  if (im) {
+    const s = im.width, sh = im.height, c = s * .17, x0 = -PAD, y0 = -PAD, w = W + 2 * PAD, h = H + 2 * PAD, d = Math.min(PAD + 12, w / 2, h / 2);
+    const X = [[0, c, x0, d], [c, s - 2 * c, x0 + d, w - 2 * d], [s - c, c, x0 + w - d, d]], Y = [[0, c, y0, d], [c, sh - 2 * c, y0 + d, h - 2 * d], [sh - c, c, y0 + h - d, d]];
+    for (const [sx, sw, dx, dw] of X) for (const [sy, sh2, dy, dh] of Y) ctx.drawImage(im, sx, sy, sw, sh2, dx, dy, dw + .5, dh + .5);
+  } else { rr(-PAD + 1, -PAD + 1, W + 2 * PAD - 2, H + 2 * PAD - 2, 18); ctx.fillStyle = C.mat; ctx.fill(); rr(0, 0, W, H, 8); ctx.fillStyle = C.field; ctx.fill(); }
+  // ızgara çizgileri tepsinin kendisi: hamura bastırılmış ince izler
+  ctx.lineWidth = 1.5; ctx.beginPath();
+  for (let i = 1; i < st.W; i++) { ctx.moveTo(i * cell, 3); ctx.lineTo(i * cell, H - 3); }
+  for (let i = 1; i < st.H; i++) { ctx.moveTo(3, i * cell); ctx.lineTo(W - 3, i * cell); }
+  ctx.strokeStyle = C.grid; ctx.stroke();
+  ctx.save(); ctx.translate(1, 1.5); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+  // duvar: kesme şeker
+  if (IMG.duvar) {
+    for (const [x, y] of st.wallCells) {
+      ctx.fillStyle = 'rgba(90,60,130,.22)'; ctx.beginPath(); ctx.ellipse((x + .5) * cell, (y + .93) * cell, cell * .42, cell * .1, 0, 0, 6.2832); ctx.fill();
+      ctx.drawImage(IMG.duvar, x * cell + cell * .02, y * cell - cell * .06, cell * .96, cell * .96);
+    }
+  } else if (wallPath) {
+    ctx.fillStyle = 'rgba(90,60,130,.25)'; ctx.save(); ctx.translate(0, cell * .05); ctx.fill(wallPath); ctx.restore();
+    ctx.fillStyle = tint(C.wall, .82); ctx.fill(wallPath);
+    ctx.save(); ctx.translate(0, -cell * .08); ctx.fillStyle = C.wall; ctx.fill(wallPath); ctx.restore();
   }
 }
+// Makas karesi: açıkken parlak ve kıpırdar; itilirken ağzı kapanır (kesim ölçüsü); kesince soluk kalır.
+function drawMakas(m, now) {
+  const cx = (m.x + .5) * cell, cy = (m.y + .5) * cell, r = cell * .3;
+  let v = 0;
+  if (kesim && drag && m.open && drag.p.cells.some(c => c[0] + kesim.dx === m.x && c[1] + kesim.dy === m.y)) v = Math.min(1, kesim.v);
+  const acik = m.open ? (1 - v) * (.42 + (RM ? 0 : .06 * Math.sin(now / 420 + m.x))) : .04;   // bıçakların açısı (radyan)
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.globalAlpha = m.open ? 1 : .28;
+  rr(-cell * .42, -cell * .42, cell * .84, cell * .84, cell * .16); ctx.fillStyle = 'rgba(255,255,255,' + (m.open ? .45 + .3 * v : .2) + ')'; ctx.fill();
+  if (m.open) { ctx.setLineDash([cell * .07, cell * .07]); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,80,170,.55)'; ctx.stroke(); ctx.setLineDash([]); }
+  ctx.lineCap = 'round'; ctx.rotate(-Math.PI / 4);
+  for (const s of [-1, 1]) {
+    ctx.save(); ctx.rotate(s * acik);
+    ctx.strokeStyle = '#8f86a3'; ctx.lineWidth = Math.max(2.5, cell * .085); ctx.beginPath(); ctx.moveTo(-r * .15, 0); ctx.lineTo(r * 1.05, 0); ctx.stroke();   // bıçak
+    ctx.strokeStyle = C.p; ctx.lineWidth = Math.max(2, cell * .06); ctx.beginPath(); ctx.arc(-r * .55, s * r * .3, r * .3, 0, 6.2832); ctx.stroke();   // sap halkası
+    ctx.restore();
+  }
+  ctx.restore();
+}
 function drawHole(h, now) {
-  const c = C[h.color];
+  // kurabiye kalıbı: tepsiye gömülü çukur, parçanın renginde kalın kenar. Dolunca hamurla dolar.
+  const c = C[h.color], kenar = Math.max(3, cell * .085);
   ctx.save();
   if (h.shown) {
-    ctx.fillStyle = tint(c, .8); ctx.fill(h.path);
-    ctx.clip(h.path); ctx.lineWidth = cell * .1; ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.translate(0, cell * .05); ctx.stroke(h.path);
+    ctx.fillStyle = c; ctx.fill(h.path); dokula(h.path, 0, 0, .8);
+    ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .12; ctx.strokeStyle = 'rgba(60,30,90,.28)'; ctx.translate(0, cell * .05); ctx.stroke(h.path); ctx.restore();
+    ctx.lineWidth = kenar; ctx.strokeStyle = lighten(c, .45); ctx.stroke(h.path);
   } else {
     ctx.fillStyle = C.pit; ctx.fill(h.path);
-    ctx.fillStyle = rgba(c, .2); ctx.fill(h.path);
-    ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .16; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.translate(0, cell * .07); ctx.stroke(h.path); ctx.restore();
-    ctx.setLineDash([cell * .15, cell * .11]); ctx.lineDashOffset = RM ? 0 : -now / 55;
-    ctx.lineWidth = Math.max(2, cell * .055); ctx.strokeStyle = c; ctx.stroke(h.path);
+    ctx.fillStyle = rgba(c, .46 + (RM ? 0 : .07 * Math.sin(now / 520))); ctx.fill(h.path);
+    ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .2; ctx.strokeStyle = 'rgba(60,30,90,.3)'; ctx.translate(0, cell * .08); ctx.stroke(h.path); ctx.restore();
+    ctx.lineWidth = kenar; ctx.strokeStyle = c; ctx.stroke(h.path);
+    ctx.lineWidth = Math.max(1, kenar * .3); ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.save(); ctx.translate(-kenar * .18, -kenar * .22); ctx.stroke(h.path); ctx.restore();
   }
+  ctx.restore();
+}
+// Hamur dokusu: tek gri doku, rengin üstüne bindirilir (altı renk ve bütün şekiller aynı küçük dosyadan çıkar)
+function dokula(path, ox, oy, a) {
+  if (!dokuDesen) return;
+  ctx.save(); ctx.clip(path);
+  dokuDesen.setTransform(new DOMMatrix().translate(ox, oy).scale(cell * 2.4 / 384));
+  ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = a; ctx.fillStyle = dokuDesen; ctx.fillRect(-12 * cell, -12 * cell, 24 * cell, 24 * cell);
   ctx.restore();
 }
 function blob(x, y, R, now, s) {
@@ -384,9 +444,11 @@ function face(p, now) {
   const jx = panic && !RM ? Math.sin(now / 38 + p.seed) * cell * .012 : 0;
   for (const s of [-1, 1]) {
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(fx + s * g + jx, ey, es, es * 1.15 * blink, 0, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = '#1b2030'; ctx.beginPath(); ctx.ellipse(fx + s * g + jx + lx * es * .4, ey + ly * es * .4 * blink, es * .55, es * .62 * blink, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#3a2440'; ctx.beginPath(); ctx.ellipse(fx + s * g + jx + lx * es * .4, ey + ly * es * .4 * blink, es * .55, es * .62 * blink, 0, 0, 6.2832); ctx.fill();
   }
-  ctx.strokeStyle = 'rgba(27,32,48,.75)'; ctx.lineWidth = Math.max(1.5, cell * .032); ctx.lineCap = 'round'; ctx.beginPath();
+  ctx.fillStyle = 'rgba(255,110,150,.38)';   // yanaklar
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(fx + s * g * 1.75 + jx, fy + cell * .07, cell * .06, cell * .04, 0, 0, 6.2832); ctx.fill(); }
+  ctx.strokeStyle = 'rgba(60,35,60,.8)'; ctx.lineWidth = Math.max(1.5, cell * .032); ctx.lineCap = 'round'; ctx.beginPath();
   if (panic) ctx.ellipse(fx + jx, fy + cell * .16, cell * .035, cell * .05, 0, 0, 6.2832);
   else ctx.arc(fx, fy + cell * .07, cell * .075, .2 * Math.PI, .8 * Math.PI);
   ctx.stroke();
@@ -398,10 +460,10 @@ function drawPiece(p, now, k, glow) {
   if (p.shakeT && now - p.shakeT < 800) { const t = (now - p.shakeT) / 800; sh = Math.sin((now - p.shakeT) / 26) * cell * .07 * (1 - t); }
   ctx.save();
   ctx.translate(cx + p.ox + sh, cy + p.oy); ctx.scale(s, s); ctx.translate(-cx + x0 * cell, -cy + y0 * cell);
-  ctx.save(); ctx.translate(0, cell * .07 + up * .9); ctx.fillStyle = 'rgba(0,0,0,' + (.3 * k) + ')'; ctx.fill(p.path); ctx.restore();
-  body(p, .64, -up, now);
+  ctx.save(); ctx.translate(0, cell * .08 + up * .9); ctx.fillStyle = 'rgba(70,35,110,' + (.26 * k) + ')'; ctx.fill(p.path); ctx.restore();
+  body(p, .74, -up, now);
   ctx.translate(0, -up - depth);
-  body(p, 1, 0, now);
+  body(p, 1, 0, now); dokula(p.path, p.seed * 37, p.seed * 53, .85);
   ctx.save(); ctx.clip(p.path);
   if (p.flash) {
     const t = (now - p.flash.t0) / 480;
@@ -416,8 +478,8 @@ function drawPiece(p, now, k, glow) {
     }
   }
   ctx.lineWidth = cell * .12;
-  ctx.translate(cell * .035, cell * .045); ctx.strokeStyle = 'rgba(255,255,255,.34)'; ctx.stroke(p.path);
-  ctx.translate(-cell * .07, -cell * .09); ctx.strokeStyle = 'rgba(0,0,0,.17)'; ctx.stroke(p.path);
+  ctx.translate(cell * .035, cell * .045); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.stroke(p.path);
+  ctx.translate(-cell * .07, -cell * .09); ctx.strokeStyle = 'rgba(70,30,90,.14)'; ctx.stroke(p.path);
   ctx.restore();
   if (glow) { ctx.lineWidth = cell * .075; ctx.strokeStyle = rgba(C[glow], .6 + .3 * Math.sin(now / 90)); ctx.stroke(p.path); }
   if (k > .25) face(p, now);
@@ -450,6 +512,7 @@ function drawThreads(now) {
 function draw(now) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.translate(PAD, PAD);
   board();
+  for (const m of st.makas) drawMakas(m, now);
   for (const h of st.holes) drawHole(h, now);
   for (const r of rings) {
     const t = (now - r.t0) / 520;
@@ -482,6 +545,7 @@ function update(dt, now) {
     if (timeLeft <= 0) { timeLeft = 0; lose('time'); }
   }
   if (CFG.niyet && drag && state === 'play') niyet(dt, now);
+  if (drag && state === 'play') kesNiyet(dt); else kesim = null;
   for (const p of vis()) {
     let tx = 0, ty = 0;
     const held = drag && drag.p === p;
@@ -540,7 +604,7 @@ requestAnimationFrame(frame);
 
 window.__hamurCalm = () => !drag;   // sürükleme sırasında reklam yüklenmez (ads.js)
 // test robotu ve bölüm editörü için
-App.oyun = { CFG, PAD, setup, geriAl, LEVELS, get st() { return st; }, get durum() { return state; }, get cell() { return cell; }, get bolum() { return li + 1; },
+App.oyun = { CFG, PAD, setup, geriAl, LEVELS, get kesim() { return kesim && kesim.v; }, get st() { return st; }, get durum() { return state; }, get cell() { return cell; }, get bolum() { return li + 1; },
   get sure() { return timeLeft; }, set sure(v) { timeLeft = v; }, get drag() { return drag; }, get iplik() { return [...threads.values()].map(t => ({ v: t.v, ne: t.ne, renk: t.color })); },
   get geriKalan() { return geriKalan; }, get geriVar() { return !!geri; } };
 })();

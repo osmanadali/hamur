@@ -1,19 +1,244 @@
-// Hamur — bölümler. Biçim: www/rules/cekirdek.js başındaki açıklama. Şimdilik prototipin beş bölümü; bölüm fabrikası (2. aşama) burayı doldurur.
-// hint: [Türkçe, English]. t: süre (sn); prototipte elle verildi, çözücünün önerdiği süreyle kapalı testte ayarlanır.
+// Hamur — bölümler. ÜRETİLDİ: node tools/uretici.cjs --yaz (elle düzenlenmez; sabit bölümler tools/uretici/elle.cjs içinde).
+// Biçim: www/rules/cekirdek.js başındaki açıklama. hint: [Türkçe, English]. t: süre (sn).
 (function (root, B) { if (typeof module === 'object' && module.exports) module.exports = B; else root.HAMUR_BOLUMLER = B; })(typeof self !== 'undefined' ? self : this, [
-  { t: 30, hint: ['Aynı renkler yan yana kalınca yapışır. Şekli kur, kalıba oturt.', 'Same colors stick when they stay side by side. Build the shape, drop it in the mold.'],
-    map: ['.....', 'r...r', '.....', '.....'],
-    molds: ['.....', '.....', '.....', '.RR..'] },
-  { t: 45, hint: ['Yapışma geri alınmaz. Şekil kalıba uymazsa bölüm biter.', 'Sticking cannot be undone. If the shape does not fit the mold, the level ends.'],
-    map: ['y....', '.....', '....y', '.pp..', 'y....'],
-    molds: ['...PP', '.....', '.Y...', '.YY..', '.....'] },
-  { t: 40, hint: ['Mavi sarının yanında kalırsa yeşil olur. Yeşil parça da ona yapışır.', 'Blue turns green when it stays next to yellow. The green piece sticks to it too.'],
-    map: ['b...y', '.....', '..#..', '.....', '..g..'],
-    molds: ['.....', '.GGG.', '.....', '.....', '.....'] },
-  { t: 60, hint: ['Kırmızı sarının yanında kalmasın, turuncunun kalıbı yok. Yan yana yapışan parça dar aralıktan geçmez.', 'Do not leave red next to yellow: there is no orange mold. A piece stuck side by side cannot pass the narrow gap.'],
-    map: ['r.r...', '......', 'r.r...', '###.##', '...y..', '......', '......'],
-    molds: ['......', '......', '......', '......', '......', '.RR...', '.RR..Y'] },
-  { t: 70, hint: ['Önce aynı renkleri birleştir, sonra karıştır. Yanlış renkle yapışan parça gider.', 'Join the same colors first, then mix. A piece stuck to the wrong color is lost.'],
-    map: ['y..r.b', '......', '##..##', '......', 'b....y', '......', '......'],
-    molds: ['......', '......', '......', '......', '......', 'GG..P.', 'G...P.'] },
+  // 1
+  { t: 30, hint: ["Aynı renkler yan yana kalınca yapışır. Şekli kur, kalıba oturt.","Same colors stick when they stay side by side. Build the shape, drop it in the mold."],
+    map: [".....","r...r",".....","....."],
+    molds: [".....",".....",".....",".RR.."] },
+  // 2
+  { t: 30, hint: ["Yapışma geri alınmaz. Şekil kalıba uymazsa bölüm biter.","Sticking cannot be undone. If the shape does not fit the mold, the level ends."],
+    map: ["r..r","....","....","r..."],
+    molds: ["....",".RR.",".R..","...."] },
+  // 3
+  { t: 31, hint: ["",""],
+    map: [".....","g...r","...g.","..r.."],
+    molds: [".R.GG",".R...",".....","....."] },
+  // 4
+  { t: 25, hint: ["",""],
+    map: [".....",".....",".....",".o.o.","o...."],
+    molds: [".....",".OO..",".O...",".....","....."] },
+  // 5
+  { t: 45, hint: ["Her renk kendi kalıbına. Hazır parça da kalıbına gider.","Each color goes to its own mold. A ready piece goes to its mold too."],
+    map: ["y....",".....","....y",".pp..","y...."],
+    molds: ["...PP",".....",".Y...",".YY..","....."] },
+  // 6
+  { t: 20, hint: ["",""],
+    map: [".....",".....",".....",".o...","...o."],
+    molds: [".....",".....","..OO.",".....","....."] },
+  // 7
+  { t: 24, hint: ["",""],
+    map: [".....",".....",".....",".....","r..r."],
+    molds: [".....",".R...",".R...",".....","....."] },
+  // 8
+  { t: 24, hint: ["",""],
+    map: ["b....",".....","....b","b...."],
+    molds: [".....",".....",".....","..BBB"] },
+  // 9
+  { t: 23, hint: ["",""],
+    map: ["rr...","...rr",".....","....."],
+    molds: [".....",".....",".RR..",".RR.."] },
+  // 10
+  { t: 27, hint: ["",""],
+    map: [".g...","...g.","..r..",".....","r..g."],
+    molds: [".....",".....","....R","..G.R",".GG.."] },
+  // 11
+  { t: 40, hint: ["Dar aralıktan tek tek geçir, sonra birleştir.","Pass them through the gap one by one, then join them."],
+    map: ["r...r",".....","##.##",".....","....."],
+    molds: [".....",".....",".....",".....",".RR.."] },
+  // 12
+  { t: 33, hint: ["",""],
+    map: [".....",".....","#y###","y....",".y..."],
+    molds: ["..YY.","...Y.",".....",".....","....."] },
+  // 13
+  { t: 31, hint: ["",""],
+    map: [".....",".....","##b##","b....","b..b."],
+    molds: ["..B..",".BBB.",".....",".....","....."] },
+  // 14
+  { t: 29, hint: ["",""],
+    map: [".p.p.",".....","#.###",".p...","....."],
+    molds: [".....",".....",".....","...PP","...P."] },
+  // 15
+  { t: 60, hint: ["Yan yana yapışan parça dar aralıktan geçmez.","A piece stuck side by side cannot pass the narrow gap."],
+    map: ["r.r...","......","r.r...","###.##","......","......","......"],
+    molds: ["......","......","......","......","......",".RR...",".RR..."] },
+  // 16
+  { t: 23, hint: ["",""],
+    map: [".p...",".....","###p#","....p","....p"],
+    molds: [".....",".....",".....","..PP.","..PP."] },
+  // 17
+  { t: 27, hint: ["",""],
+    map: ["....b","....b","##.##","...b.","....b"],
+    molds: ["BB...","BB...",".....",".....","....."] },
+  // 18
+  { t: 49, hint: ["",""],
+    map: ["..b...","......","##.###",".b..b.",".....o",".o...."],
+    molds: ["BB....",".B..OO","......","......","......","......"] },
+  // 19
+  { t: 27, hint: ["",""],
+    map: [".....",".....","##.##","y..y.",".y..."],
+    molds: ["..Y..","..YY.",".....",".....","....."] },
+  // 20
+  { t: 42, hint: ["",""],
+    map: ["......","......","####.#",".g....","g...r.",".g.r.."],
+    molds: ["..GG..","..G.RR","......","......","......","......"] },
+  // 21
+  { t: 40, hint: ["Mavi sarının yanında kalırsa yeşil olur. Yeşil parça da ona yapışır.","Blue turns green when it stays next to yellow. The green piece sticks to it too."],
+    map: ["b...y",".....","..#..",".....","..g.."],
+    molds: [".....",".GGG.",".....",".....","....."] },
+  // 22
+  { t: 24, hint: ["",""],
+    map: ["......","......","b.b...","......","......",".....y"],
+    molds: ["......","......","...G..","...G..","...G..","......"] },
+  // 23
+  { t: 25, hint: ["",""],
+    map: ["....y","....y","b....",".....","....y"],
+    molds: ["..G..","..GG.","..G..",".....","....."] },
+  // 24
+  { t: 36, hint: ["",""],
+    map: ["b....",".....","##.##","..y.y","y...."],
+    molds: [".G...",".G.YY",".....",".....","....."] },
+  // 25
+  { t: 25, hint: ["",""],
+    map: ["yy...",".....",".....",".b.y.","b....","..y.."],
+    molds: ["..GG.","..G..",".....","....G","....G","....G"] },
+  // 26
+  { t: 29, hint: ["",""],
+    map: [".....","y...b","..y..","...y.","..y.."],
+    molds: ["..G..","..G..",".....","....Y","...YY"] },
+  // 27
+  { t: 24, hint: ["",""],
+    map: ["....b",".....","...b.","...b.","..y.."],
+    molds: [".....",".....",".G...",".G...","GG..."] },
+  // 28
+  { t: 35, hint: ["",""],
+    map: [".b...y","..b..y","...#.y","...#..","...b..","..b..."],
+    molds: ["....G.","....G.","....G.",".B..G.","BB....","......"] },
+  // 29
+  { t: 35, hint: ["",""],
+    map: ["....b.","y....b","......","#.####","......","......"],
+    molds: ["......","......","......","......","..GG..","...G.."] },
+  // 30
+  { t: 27, hint: ["",""],
+    map: ["..b.y","..b..",".b..b",".....","..bb."],
+    molds: ["G....","GG.B.","..BB.","...B.","....."] },
+  // 31
+  { t: 23, hint: ["",""],
+    map: ["....y",".....","bb...","...y.",".....","....."],
+    molds: [".....","...GG","...GG",".....",".....","....."] },
+  // 32
+  { t: 28, hint: ["",""],
+    map: [".y...",".....","...bb",".###.","...y."],
+    molds: [".....","GG...","GG...",".....","....."] },
+  // 33
+  { t: 33, hint: ["",""],
+    map: ["..y..",".y#..","..#..","y.##.",".....","....b"],
+    molds: ["G....","G....",".....",".....",".....","YY..."] },
+  // 34
+  { t: 29, hint: ["",""],
+    map: ["....y",".....","y.bb.",".....",".....","....y"],
+    molds: [".....","GGG..",".....",".....",".YY..","....."] },
+  // 35
+  { t: 27, hint: ["",""],
+    map: ["...y..",".y....","......","b..yy.","......","......"],
+    molds: ["......","...GG.","..Y.G.","..Y...","......","......"] },
+  // 36
+  { t: 40, hint: ["Kırmızı ile mavi mor olur.","Red and blue make purple."],
+    map: ["r....",".....","....b","....."],
+    molds: [".....",".....",".....",".PP.."] },
+  // 37
+  { t: 40, hint: ["Kırmızı ile sarı turuncu olur.","Red and yellow make orange."],
+    map: ["....y",".....","r....","....."],
+    molds: [".O...",".O...",".....","....."] },
+  // 38
+  { t: 55, hint: ["Kırmızı sarının yanında kalmasın: turuncunun kalıbı yok.","Do not leave red next to yellow: there is no orange mold."],
+    map: ["r.....","......","..y...","......",".....b","......"],
+    molds: ["......","......","......","......",".PP...",".....Y"] },
+  // 39
+  { t: 37, hint: ["",""],
+    map: ["......","b...#.",".y....","..y#..","y...r.","......"],
+    molds: ["......",".....P",".....P","......",".YY...","..Y..."] },
+  // 40
+  { t: 70, hint: ["Önce aynı renkleri birleştir, sonra karıştır.","Join the same colors first, then mix."],
+    map: ["y..r.b","......","##..##","......","b....y","......","......"],
+    molds: ["......","......","......","......","......","GG..P.","G...P."] },
+  // 41
+  { t: 36, hint: ["",""],
+    map: ["......","......","......","###r##","..b...","y..r.."],
+    molds: ["O.....","O.....","..PP..","......","......","......"] },
+  // 42
+  { t: 41, hint: ["",""],
+    map: ["......","......",".b....","####.#","y.r...","...b.."],
+    molds: ["GG....","......","...PP.","......","......","......"] },
+  // 43
+  { t: 32, hint: ["",""],
+    map: ["...b..","......",".....y","...r..","...##.","..b..b"],
+    molds: ["......","......","BBB...",".....O",".....O","......"] },
+  // 44
+  { t: 29, hint: ["",""],
+    map: ["..r.r","...b.","....b",".....",".....",".b..."],
+    molds: [".P...",".P...",".P...","..B..","..B..","....."] },
+  // 45
+  { t: 30, hint: ["",""],
+    map: [".....","...b.","y....","..rr.","...r.","b.y.."],
+    molds: ["PP...",".PP.G","...GG",".....",".....","....."] },
+  // 46
+  { t: 53, hint: ["",""],
+    map: ["....y.",".....b","...b..",".r....","#####.","......","......"],
+    molds: ["......","......","......","......","......","OO.B..","...B.."] },
+  // 47
+  { t: 42, hint: ["",""],
+    map: ["......","....b.","..b..r","#y####","......","......"],
+    molds: ["......","......","......","......","....G.","PP..G."] },
+  // 48
+  { t: 32, hint: ["",""],
+    map: ["..r..","..#b.",".##b.",".....","..b.y","....y"],
+    molds: ["PP...",".....","G....","GG...",".G...","....."] },
+  // 49
+  { t: 29, hint: ["",""],
+    map: ["......","..y.b.","###.##","......","...r..","..b..."],
+    molds: ["......","......","......",".....P",".....P","...GG."] },
+  // 50
+  { t: 41, hint: ["",""],
+    map: ["r....y","r....y","####y#","......","......","..y...","bb...."],
+    molds: ["......","......","......",".YY...",".YY...","...P..","...PPP"] },
+  // 51
+  { t: 40, hint: ["Parçayı makasa doğru it: üstüne giren kare kopar.","Push the piece into the scissors: the square that enters is cut off."],
+    map: [".....","rr...",".....","....."],
+    molds: [".....","...x.",".....","R...R"] },
+  // 52
+  { t: 45, hint: ["Yanlış şekli kes, doğru yerden yeniden yapıştır. Makas bir kez keser.","Cut the wrong shape, then stick it back the right way. Scissors cut once."],
+    map: ["y....","yy...",".....","....."],
+    molds: ["..x..",".....",".....",".YYY."] },
+  // 53
+  { t: 50, hint: ["Renk geri ayrılmaz: yeşil kesilince iki yeşil olur.","Colors do not unmix: cut green and you get two greens."],
+    map: ["b...y",".....",".....","....."],
+    molds: [".....",".....","..x..","G...G"] },
+  // 54
+  { t: 33, hint: ["",""],
+    map: [".....","....r","....r",".....","b...."],
+    molds: [".....",".x.P.","...P.","....P","....."] },
+  // 55
+  { t: 28, hint: ["",""],
+    map: ["....r","rr##.",".r.#.",".....","....."],
+    molds: ["R....",".....","..x..","....R","...RR"] },
+  // 56
+  { t: 28, hint: ["",""],
+    map: ["....y",".....",".....",".....","...b.","...b."],
+    molds: [".....",".G...",".G...",".....",".G...","..x.."] },
+  // 57
+  { t: 28, hint: ["",""],
+    map: [".#....",".#.#..","..#.bb","......","......",".....y"],
+    molds: ["...GG.","......","......","....x.","......","...G.."] },
+  // 58
+  { t: 33, hint: ["",""],
+    map: ["....b",".....",".....","yy...",".y..."],
+    molds: [".....","G....",".GG..","..G..","...x."] },
+  // 59
+  { t: 31, hint: ["",""],
+    map: ["....r","....r",".....",".....","..rr."],
+    molds: ["R....","RR.x.",".....",".....","....R"] },
+  // 60
+  { t: 36, hint: ["",""],
+    map: ["....y",".....",".y...","###y.","y.#y.","....."],
+    molds: [".....",".....","x.YYY",".....",".....","YY..."] },
 ]);

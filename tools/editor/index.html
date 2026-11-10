@@ -35,6 +35,7 @@ label{color:var(--dim);display:inline-flex;gap:6px;align-items:center}
 .cell.duvar{background:var(--wall)}
 .cell .parca{position:absolute;inset:8%;border-radius:22%}
 .cell .kalip{position:absolute;inset:3%;border:3px dashed;border-radius:14%}
+.cell .mk{position:absolute;font-size:20px;color:#e8edf7;opacity:.85}
 .cell .no{position:relative;font-weight:700;font-size:13px;color:#10141c}
 .rapor{background:var(--panel);border-radius:14px;padding:14px 16px}
 .rapor dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
@@ -92,10 +93,10 @@ small{color:var(--dim)}
 (() => {
 'use strict';
 const K = window.HamurKural, C = window.HamurCozucu, B = window.HAMUR_BOLUMLER, $ = id => document.getElementById(id);
-const AD = { r: 'kırmızı', y: 'sarı', b: 'mavi', g: 'yeşil', o: 'turuncu', p: 'mor' }, TIP = { otur: 'kalıba oturur', yapis: 'yapışır', yer: 'yer değiştirir' };
+const AD = { r: 'kırmızı', y: 'sarı', b: 'mavi', g: 'yeşil', o: 'turuncu', p: 'mor' }, TIP = { otur: 'kalıba oturur', yapis: 'yapışır', yer: 'yer değiştirir', kes: 'makasa itilir, kesilir' };
 // Araçlar: silgi, duvar, altı parça rengi, altı kalıp rengi
 const TOOLS = [{ k: '.', ad: 'Silgi: kareyi boşaltır (parça, duvar ve kalıp)' }, { k: '#', ad: 'Duvar' },
-  ...'rybgop'.split('').map(c => ({ k: c, ad: `Parça: ${AD[c]}` })), ...'RYBGOP'.split('').map(c => ({ k: c, ad: `Kalıp: ${AD[c.toLowerCase()]}` }))];
+  ...'rybgop'.split('').map(c => ({ k: c, ad: `Parça: ${AD[c]}` })), ...'RYBGOP'.split('').map(c => ({ k: c, ad: `Kalıp: ${AD[c.toLowerCase()]}` })), { k: 'x', ad: 'Makas karesi: tek kullanımlık, itilen çok kareli parçadan bir kare koparır' }];
 let W = 5, H = 5, map = [], molds = [], tool = 'r', rap = null, adim = 0, boya = false;
 
 const bos = () => { map = Array.from({ length: H }, () => Array(W).fill('.')); molds = Array.from({ length: H }, () => Array(W).fill('.')); };
@@ -114,6 +115,7 @@ function boyut(w, h) {
 function ciz_(x, y) {
   if (tool === '.') { map[y][x] = '.'; molds[y][x] = '.'; }
   else if (tool === '#') { map[y][x] = '#'; molds[y][x] = '.'; }
+  else if (tool === 'x') { molds[y][x] = 'x'; if (map[y][x] === '#') map[y][x] = '.'; }
   else if ('rybgop'.includes(tool)) map[y][x] = tool;
   else { molds[y][x] = tool; if (map[y][x] === '#') map[y][x] = '.'; }
   degisti();
@@ -126,8 +128,9 @@ function tahta(st) {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const d = document.createElement('div'), k = x + ',' + y, m = molds[y][x], ch = st ? (parca.get(k)?.[0] || '.') : map[y][x];
     d.className = 'cell' + (map[y][x] === '#' ? ' duvar' : ''); d.dataset.x = x; d.dataset.y = y; d.tabIndex = 0;
-    d.setAttribute('role', 'button'); d.setAttribute('aria-label', `${x + 1}. sütun ${y + 1}. satır: ${map[y][x] === '#' ? 'duvar' : AD[ch] ? AD[ch] + ' parça' : 'boş'}${m !== '.' ? ', ' + AD[m.toLowerCase()] + ' kalıp' : ''}`);
-    if (m !== '.') { const i = document.createElement('i'); i.className = 'kalip'; i.style.borderColor = `var(--${m.toLowerCase()})`; if (dolu.has(k)) i.style.background = `var(--${m.toLowerCase()})`; d.appendChild(i); }
+    d.setAttribute('role', 'button'); d.setAttribute('aria-label', `${x + 1}. sütun ${y + 1}. satır: ${map[y][x] === '#' ? 'duvar' : AD[ch] ? AD[ch] + ' parça' : 'boş'}${m === 'x' ? ', makas' : m !== '.' ? ', ' + AD[m.toLowerCase()] + ' kalıp' : ''}`);
+    if (m === 'x') { const i = document.createElement('span'); i.className = 'mk'; i.textContent = '✂'; if (st && !st.makas.find(q => q.x === x && q.y === y)?.open) i.style.opacity = .3; d.appendChild(i); }
+    else if (m !== '.') { const i = document.createElement('i'); i.className = 'kalip'; i.style.borderColor = `var(--${m.toLowerCase()})`; if (dolu.has(k)) i.style.background = `var(--${m.toLowerCase()})`; d.appendChild(i); }
     if (AD[ch]) { const i = document.createElement('i'); i.className = 'parca'; i.style.background = `var(--${ch})`; d.appendChild(i); if (st) { const n = document.createElement('span'); n.className = 'no'; n.textContent = parca.get(k)[1]; d.appendChild(n); } }
     el.appendChild(d);
   }
@@ -143,8 +146,8 @@ function coz() {
     const kip = { kalip: 'yalnız kalıp içi park', park: 'kenara çekilme gerekli', tam: 'bütün yer değiştirmeler' }[r.mod];
     R.innerHTML = `<dl>
       <dt>Çözüm</dt><dd class="iyi"><b>${r.hamle} hamle</b>, ${r.kare} kare adımı</dd>
-      <dt>Farklı en kısa çözüm</dt><dd>${r.yolSayisi}</dd>
-      <dt>Yanlış yapışma fırsatı</dt><dd>${r.yanlis} / ${r.yapisma} yapışma (darlık ${r.darlik})</dd>
+      <dt>Karışım · kesim</dt><dd>${r.karisim} · ${r.kes}</dd>
+      <dt>Yanlış yapışma kararı</dt><dd>${r.yanlis} / ${r.yapisma} karar (darlık ${r.darlik}) · renk ${r.etiket.renk}, şekil ${r.etiket.sekil}, yol ${r.etiket.yol}</dd>
       <dt>Zorluk puanı</dt><dd><b>${r.puan}</b> <small>taslak formül</small></dd>
       <dt>Önerilen süre</dt><dd><b>${r.sure} sn</b> (zor bölüm: ${r.sureZor} sn) · şimdiki ${L.t} sn</dd>
       <dt>Arama</dt><dd>${r.dugum} durum · ${r.ms.toFixed(0)} ms · ${kip}</dd>
@@ -167,6 +170,7 @@ TOOLS.forEach(t => {
   const i = document.createElement('i'), c = t.k.toLowerCase();
   if (t.k === '.') { i.style.cssText = 'background:var(--field);border:1px solid var(--grid)'; }
   else if (t.k === '#') i.style.background = 'var(--wall)';
+  else if (t.k === 'x') { i.style.cssText = 'display:grid;place-items:center;font-style:normal;font-size:18px'; i.textContent = '✂'; }
   else if (t.k === c) i.style.background = `var(--${c})`;
   else { i.className = 'kalip'; i.style.borderColor = `var(--${c})`; }
   b.appendChild(i); b.onclick = () => sec(t.k); $('tools').appendChild(b);

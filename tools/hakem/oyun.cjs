@@ -1,5 +1,6 @@
 // Oyun testleri (gerçek tarayıcı, parmak hareketi): niyet okuma, kalıba oturma, çıkmaz, geri alma, süre.
 'use strict';
+const PROTO = require('../ornek/prototip.cjs');
 // Geçiş testi tahtası: kırmızı (0,1) sağa giderken (2,2)'deki kırmızının üstünden geçer
 const GECIS = { t: 60, hint: ['', ''], map: ['.....', 'r....', '..r..'], molds: ['...RR', '.....', '.....'] };
 
@@ -62,6 +63,23 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await o.ctx.close();
   }
 
+  // ---------- makas ----------
+  {
+    const MAKAS = { t: 60, hint: ['', ''], map: ['.....', 'rr...', '.....', '.....'], molds: ['.....', '...x.', '.....', 'R...R'] };
+    const o = await ac(); await o.kur(MAKAS);
+    await o.basla(1, 1); await o.gotur(2, 1, 150); await o.page.waitForTimeout(500);   // makasın önünde durur, itmez
+    const bekle = await o.d(), kon = await o.page.evaluate(() => window.__hamur.oyun.st.pieces[0].cells.map(c => c[0]).sort().join(''));
+    await o.gotur(2, 1, 60, .75, 0); await o.page.waitForTimeout(120); const dolarken = await o.page.evaluate(() => window.__hamur.oyun.kesim);
+    await shot(o.page, 'makas'); await o.page.waitForTimeout(400);
+    const s = await o.d(), tut = await o.page.evaluate(() => !!window.__hamur.oyun.drag);
+    check('makas.oyun.dur', 'Makasın önünde duran parça kesilmez (kararsız parmak kesmez)', bekle.n === 1 && kon === '12', `${bekle.n} parça, sütunlar ${kon}`);
+    check('makas.oyun.it', 'Makasa doğru itince ölçü dolar, parça kesilir ve sürükleme biter', dolarken > 0 && dolarken < 1 && s.n === 2 && s.boy === '11' && !tut && s.durum === 'play' && s.geriVar, `ölçü ${dolarken && dolarken.toFixed(2)} · ${s.n} parça`);
+    await o.birak(); await o.page.click('#undo'); await o.page.waitForTimeout(150);
+    const g = await o.d();
+    check('makas.oyun.geri', 'Kesim geri alınabilir', g.n === 1 && g.boy === '2', `${g.n} parça`);
+    await o.ctx.close();
+  }
+
   // ---------- baştan sona bir bölüm ----------
   {
     const o = await ac({ save: { level: 1 } });
@@ -79,11 +97,11 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
 
   // ---------- çıkmaz + geri alma ----------
   {
-    const o = await ac({ save: { level: 4 } });
+    const o = await ac(); await o.kur(PROTO[3]);
     await o.basla(0, 0); await o.gotur(1, 0, 150); await o.birak(); await o.page.waitForTimeout(300);
     const hemen = await o.d(); await o.page.waitForTimeout(1500); const sonra = await o.d();
     await shot(o.page, 'cikmaz');
-    check('oyun.cikmaz', '4. bölümde yan yana yapışan kırmızılar anında çıkmaz sayılır ve neden gösterilir', hemen.durum === 'lost' && hemen.boy === '1112' && !!sonra.ov, `${hemen.durum} · "${sonra.ov}"`);
+    check('oyun.cikmaz', 'Dar aralığın önünde yan yana yapışan kırmızılar anında çıkmaz sayılır ve neden gösterilir', hemen.durum === 'lost' && hemen.boy === '1112' && !!sonra.ov, `${hemen.durum} · "${sonra.ov}"`);
     const iki = await o.page.evaluate(() => !document.getElementById('ovB2').hidden);
     await o.page.click('#ovB'); await o.page.waitForTimeout(200);
     const s = await o.d();

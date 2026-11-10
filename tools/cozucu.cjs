@@ -7,8 +7,9 @@ const fs = require('fs'), path = require('path');
 const C = require('../www/rules/cozucu.js');
 const args = process.argv.slice(2), v = args.includes('-v'), f = args.find(a => !a.startsWith('-'));
 const B = f ? [JSON.parse(fs.readFileSync(f, 'utf8'))] : require('../www/bolumler.js');
-const AD = { r: 'kırmızı', y: 'sarı', b: 'mavi', g: 'yeşil', o: 'turuncu', p: 'mor' }, TIP = { otur: 'kalıba oturur', yapis: 'yapışır', yer: 'yer değiştirir' };
+const AD = { r: 'kırmızı', y: 'sarı', b: 'mavi', g: 'yeşil', o: 'turuncu', p: 'mor' }, TIP = { otur: 'kalıba oturur', yapis: 'yapışır', yer: 'yer değiştirir', kes: 'makasa itilir, kesilir' };
 let kotu = 0;
+// yol: en kısa durum yolu sayısı (hamle kümesine bağlı; "farklı çözüm" değildir, puana girmez)
 console.log('bölüm  çözüm  hamle  kare  yol  yapışma  yanlış  darlık  puan  süre(öneri)  süre(şimdi)  düğüm  ms');
 B.forEach((L, n) => {
   const r = C.rapor(L), ad = String(f ? path.basename(f) : n + 1).padEnd(5);

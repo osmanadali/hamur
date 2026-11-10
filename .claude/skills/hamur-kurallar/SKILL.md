@@ -27,6 +27,22 @@ Plan `docs/Hamur-Yol-Haritasi.pdf` içinde. Bu beceri oradaki kuralların koddak
 - Oyun parmağı okur (niyet okuma) ve `fuse` ya da `settle` çağırır.
 - Çözücü için kural şudur: yanından geçmek serbesttir, hedef karede durmak yapışmadır (`settle`).
 
+## Makas karesi (51. bölümden itibaren)
+
+Öneridir; his testinde onaylanacak.
+
+- Makas tahtada bir zemin karesidir (`molds` katmanında `x`) ve tek kullanımlıktır: bir kez keser.
+- Tek karelik parça makasın üstünden geçer ve üstünde durabilir; makas harcanmaz.
+- Çok kareli parça açık makasa kendiliğinden giremez, duvar gibi durur. Oyuncu parçayı makasa doğru iterse (yaklaşık 0,25 sn dolan ölçü) parça o kareye girer ve makasın üstündeki kare kopar. Kararsız parmak kesmez.
+- Kopan kare aynı renkte tek karelik parça olur; geri kalan bağlı bileşenlerine ayrılır. Renk geri ayrışmaz: makas şekil hatasını telafi eder, renk hatasını değil.
+- Makasın kenarından dikiş geçmez: kesilen kare makasın üstündeyken komşusuyla yapışmaz. Kare ayrılınca makas kapanır, sıradan zemin olur.
+- Kesim sürüklemeyi bitirir: bütün parçalar oldukları yerde kalmış sayılır. Kesim geri alınabilir.
+- Çekirdekte `canCut`, `cut`; çözücüde `kes` hamlesi.
+
+## Aynı anda iki komşu
+
+Parça olduğu yerde kalınca (`settle`) önce aynı renkli komşularıyla yapışır, sonra karışır. Aynı anda iki farklı ana renge değiyorsa oyun ipliği en dolu olanı seçer; üretici, çözümünde böyle bir temas olan bölümü eler.
+
 ## Niyet okuma
 
 Yapışma tek bir an değil, dolan bir ölçüdür: iki parça arasında hamur ipliği kalınlaşır, dolunca yapışırlar. Ayarlar `www/game.js` başındaki `CFG` içindedir ve his testinde değiştirilir.
@@ -50,16 +66,17 @@ Yapışma tek bir an değil, dolan bir ölçüdür: iki parça arasında hamur i
 ```
 
 - `map`: `.` boş, `#` duvar, `r y b g o p` parça karesi. Bitişik aynı harfler tek parçadır.
-- `molds`: `.` boş, `R Y B G O P` kalıp karesi. Bitişik aynı harfler tek kalıptır.
+- `molds`: `.` boş, `R Y B G O P` kalıp karesi, `x` makas karesi. Bitişik aynı harfler tek kalıptır.
 - `t`: süre, saniye.
 - `K.validate(L)` hata listesi döner. Geçerli bölümde parça kareleri kalıp karelerine eşittir ve başlangıçta yapışabilecek iki parça kenar kenara durmaz.
-- Bölümler şimdilik `www/bolumler.js` içindedir.
+- Bölümler `www/bolumler.js` içindedir; dosya üretilir (bkz. `hamur-bolum` becerisi).
 
 ## Çözücü
 
 - `cikmaz(st)`: gevşetilmiş modelde arar (parçalar birbirini engellemez, yalnız duvarlar engeldir). `true` kesin çıkmazdır ve asla yanlış alarm vermez. Oyun her yapışmadan sonra bunu çağırır.
-- `coz(st)`: gerçek kurallarla, taşıma hamlesiyle arar. Hamle üç türdür: yapışma, kalıba oturma, yer değiştirme. Yer değiştirme hedefleri kip kip genişler: kalıp içi park, kenara çekilme, hepsi. "Çözülemedi" kesin değildir; kesinlik için `cikmaz`a bakılır.
-- `rapor(L)`: hamle, kare adımı, farklı en kısa çözüm sayısı, yanlış yapışma fırsatı, darlık, taslak zorluk puanı, önerilen süre.
+- `coz(st)`: gerçek kurallarla, taşıma hamlesiyle arar. Hamle dört türdür: yapışma, kalıba oturma, kesme, yer değiştirme. Yer değiştirme hedefleri kip kip genişler: kalıp içi park, kenara çekilme, hepsi. "Çözülemedi" kesin değildir; kesinlik için `cikmaz`a bakılır.
+- `rapor(L)`: hamle, kare adımı, yanlış yapışma kararı ve nedenleri, darlık, karışım ve kesim sayısı, taslak zorluk puanı, önerilen süre.
+- `dogrula(L, yol)`: çözümü aramanın kodunu kullanmadan, yalnız çekirdekle tek tek kare adımıyla oynatır.
 
 Her yeni bölüm oyuna girmeden önce çözücüden geçer:
 
@@ -88,4 +105,4 @@ node tools/cozucu.cjs -v
 node tools/hakem.cjs --strict
 ```
 
-Robot tam geçmeden iş bitmiş sayılmaz. Yeni kural için `tools/hakem/kurallar.cjs`, parmak davranışı için `tools/hakem/oyun.cjs` içine test eklenir.
+Robot tam geçmeden iş bitmiş sayılmaz. Yeni kural için `tools/hakem/kurallar.cjs`, parmak davranışı için `tools/hakem/oyun.cjs` içine test eklenir. Çekirdeğe ya da çözücüye dokunan her değişiklikte `tools/hakem/rastgele.cjs` çıkmaz kanıtını ve çözümleri bağımsız bir modelle karşılaştırır.

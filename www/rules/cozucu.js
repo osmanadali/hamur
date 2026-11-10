@@ -38,7 +38,9 @@
     const { W, H } = st, wall = new Uint8Array(W * H);
     for (const c of st.wallCells) wall[c[1] * W + c[0]] = 1;
     const holes = st.holes.map((h, i) => { const s = shapeOf(h.cells); return { i, color: h.color, shape: s, pos: s.y * W + s.x, cells: h.cells, n: h.cells.length, set: new Set(h.cells.map(c => c[1] * W + c[0])) }; });
-    return { W, H, wall, holes, shapes: new Map(), comps: new Map(), fits: new Map(), fuses: new Map(), dead: new Map(), solv: new Map(), nodes: 0 };
+    if (W > 10 || H > 10 || st.holes.length > 30 || (st.makas || []).length > 30 || st.pieces.length > 120) throw new Error('çözücü sınırı: tahta en çok 10×10, en çok 30 kalıp ve 30 makas');
+    const makas = (st.makas || []).map((m, i) => ({ i, x: m.x, y: m.y, pos: m.y * W + m.x }));
+    return { W, H, wall, holes, makas, shapes: new Map(), comps: new Map(), fits: new Map(), fuses: new Map(), dead: new Map(), solv: new Map(), nodes: 0 };
   }
   const intern = (ctx, s) => ctx.shapes.get(s.key) || (ctx.shapes.set(s.key, s), s);
   // Şeklin yalnız duvarlara göre gidebildiği yerler: comp[konum] = o konumun bağlı bileşeninin kimliği (en küçük konum), geçersizse -1.
@@ -71,11 +73,12 @@
     ctx.fits.set(k, r); return r;
   }
   // Parça (renk + şekil) açık kalıplardan birinin tamamı ya da parçası olabilir mi? (gerekli koşul)
-  function yeriVar(ctx, color, s, mask) {
+  // kesilir: açık makas var. O zaman karışıp kesilen ana renk kare, tek başına ara renk kalıbını da doldurabilir (b + y = yeşil, kes, iki yeşil).
+  function yeriVar(ctx, color, s, mask, kesilir) {
     for (const h of ctx.holes) {
       if (!(mask >> h.i & 1)) continue;
       const n = s.cells.length;
-      if (h.color === color ? n <= h.n : (n < h.n && PARTS[h.color] && PARTS[h.color].includes(color))) if (fitsHole(ctx, s, h)) return true;
+      if (h.color === color ? n <= h.n : ((kesilir ? n <= h.n : n < h.n) && PARTS[h.color] && PARTS[h.color].includes(color))) if (fitsHole(ctx, s, h)) return true;
     }
     return false;
   }
@@ -104,30 +107,52 @@
     }
     ctx.fuses.set(k, r); return r;
   }
-  const rKey = (ps, mask) => ps.map(p => p.color + p.s.key + '@' + p.comp).sort().join('|') + '#' + mask;
+  const rKey = (ps, mask, tm) => ps.map(p => p.color + p.s.key + '@' + p.comp).sort().join('|') + '#' + mask + '#' + tm;
+  // Gevşetilmiş modelde bir parçayı açık makaslarla kesme seçenekleri: [{ tm (kalan makaslar), parts:[{ s, comp }] }] (tekrarsız).
+  // Parça, duvar-bileşenindeki her yerleşimde, altına gelen bütün açık makaslarla kesilir (gerçekteki sonuçla aynı; yol için makas yok sayılır).
+  function cutOptions(ctx, p, tm) {
+    const { W } = ctx, A = compsOf(ctx, p.s), out = [], seen = new Set();
+    for (const pa of A.lists.get(p.comp)) {
+      const ax = pa % W, ay = (pa / W) | 0; let yeni = tm; const at = [], kalan = [];
+      for (const c of p.s.cells) { const pos = (ay + c[1]) * W + ax + c[0], m = ctx.makas.find(m => m.pos === pos && (tm >> m.i & 1)); if (m) { yeni &= ~(1 << m.i); at.push([ax + c[0], ay + c[1]]); } else kalan.push([ax + c[0], ay + c[1]]); }
+      if (!at.length) continue;
+      const parts = at.map(c => [c]).concat(K.bilesenler(kalan)).map(cells => { const sh = shapeOf(cells), s2 = intern(ctx, sh); return { s: s2, comp: compsOf(ctx, s2).comp[sh.y * W + sh.x] }; });
+      const k = yeni + ':' + parts.map(q => q.s.key + '@' + q.comp).sort().join('|');
+      if (seen.has(k)) continue; seen.add(k); out.push({ tm: yeni, parts });
+    }
+    return out;
+  }
   // Gevşetilmiş modelde kazanılabilir mi? Bütçe aşılırsa "bilinmiyor" sayılır (ctx.over) ve çıkmaz denmez.
-  function kazanilir(ctx, ps, mask) {
+  // tm: açık makasların maskesi. Makas varken çok kareli parça kesilip küçülebilir; "kalıba sığmalı" budaması o zaman yalnız tek karelere uygulanır.
+  function kazanilir(ctx, ps, mask, tm = 0) {
     if (!ps.length) return true;
-    const k = rKey(ps, mask), m = ctx.dead.get(k); if (m !== undefined) return m;
+    const k = rKey(ps, mask, tm), m = ctx.dead.get(k); if (m !== undefined) return m;
     if (++ctx.nodes > ctx.cap) { ctx.over = true; return true; }
+    const sigmali = p => !tm || p.s.cells.length === 1;
     let ok = true;
-    for (const p of ps) if (!yeriVar(ctx, p.color, p.s, mask)) { ok = false; break; }
+    for (const p of ps) if (sigmali(p) && !yeriVar(ctx, p.color, p.s, mask, !!tm)) { ok = false; break; }
     if (ok) {
       ok = false;
       // kalıba oturma
       for (let i = 0; i < ps.length && !ok; i++) for (const h of ctx.holes) {
         const p = ps[i];
         if (!(mask >> h.i & 1) || h.color !== p.color || h.shape.key !== p.s.key || compsOf(ctx, p.s).comp[h.pos] !== p.comp) continue;
-        if (kazanilir(ctx, ps.filter((_, j) => j !== i), mask & ~(1 << h.i))) { ok = true; break; }
+        if (kazanilir(ctx, ps.filter((_, j) => j !== i), mask & ~(1 << h.i), tm)) { ok = true; break; }
       }
       // yapışma
       for (let i = 0; i < ps.length && !ok; i++) for (let j = i + 1; j < ps.length && !ok; j++) {
         const color = fuseColor(ps[i].color, ps[j].color); if (!color) continue;
         const rest = ps.filter((_, t) => t !== i && t !== j);
         for (const o of fuseOptions(ctx, ps[i], ps[j])) {
-          if (!yeriVar(ctx, color, o.s, mask)) continue;
-          if (kazanilir(ctx, rest.concat({ color, s: o.s, comp: o.comp }), mask)) { ok = true; break; }
+          if (!tm && !yeriVar(ctx, color, o.s, mask)) continue;
+          if (kazanilir(ctx, rest.concat({ color, s: o.s, comp: o.comp }), mask, tm)) { ok = true; break; }
         }
+      }
+      // kesme
+      if (tm) for (let i = 0; i < ps.length && !ok; i++) {
+        if (ps[i].s.cells.length < 2) continue;
+        const rest = ps.filter((_, t) => t !== i);
+        for (const o of cutOptions(ctx, ps[i], tm)) if (kazanilir(ctx, rest.concat(o.parts.map(q => ({ color: ps[i].color, s: q.s, comp: q.comp }))), mask, o.tm)) { ok = true; break; }
       }
     }
     if (!ctx.over) ctx.dead.set(k, ok);
@@ -139,7 +164,7 @@
     ctx = ctx || hazirla(st);
     const ps = st.pieces.map(p => { const s = intern(ctx, shapeOf(p.cells)), sh = shapeOf(p.cells); return { color: p.color, s, comp: compsOf(ctx, s).comp[sh.y * ctx.W + sh.x] }; });
     ctx.nodes = 0; ctx.cap = cap; ctx.over = false;
-    const ok = kazanilir(ctx, ps, maskOf(st));
+    const ok = kazanilir(ctx, ps, maskOf(st), (st.makas || []).reduce((m, t, i) => t.open ? m | 1 << i : m, 0));
     return !ok && !ctx.over;
   }
 
@@ -147,7 +172,9 @@
   // i. parçanın şu anki durumda ulaşabildiği yerler: [{ dx, dy, d (kare adımı), tip: 'otur' | 'yapis' | 'yer', park }]
   // Kalıbının üstüne gelen parça oraya oturur ve daha ileri gidemez. park: 'kalip' = parça açık bir kalıbın tamamen içinde.
   function hedefler(ctx, st, i) {
-    const { W, H, wall } = ctx, p = st.pieces[i], occ = new Int8Array(W * H), hole = new Int8Array(W * H).fill(-1);
+    const { W, H, wall } = ctx, p = st.pieces[i], occ = new Int8Array(W * H), hole = new Int8Array(W * H).fill(-1), mk = new Uint8Array(W * H), ya = new Uint8Array(W * H), cok = p.cells.length > 1;
+    if (st.makas) for (const m of st.makas) { if (m.open) mk[m.y * W + m.x] = 1; if (m.open || m.hold) ya[m.y * W + m.x] = 1; }
+    for (const c of p.cells) if (!mk[c[1] * W + c[0]]) ya[c[1] * W + c[0]] = 0;   // parça ayrılınca altındaki "tutan" makas kapanır
     st.pieces.forEach((q, j) => { if (j !== i) for (const c of q.cells) occ[c[1] * W + c[0]] = j + 1; });
     ctx.holes.forEach(h => { if (!st.holes[h.i].filled) for (const c of h.cells) hole[c[1] * W + c[0]] = h.i; });
     const sh = shapeOf(p.cells), sinks = new Set();
@@ -157,10 +184,11 @@
       const [dx, dy, d] = q[t];
       for (const [ex, ey] of DIRS) {
         const nx = dx + ex, ny = dy + ey, k = ny * 64 + nx; if (seen.has(k)) continue;
-        let ok = true;
-        for (const c of p.cells) { const x = c[0] + nx, y = c[1] + ny; if (x < 0 || y < 0 || x >= W || y >= H || wall[y * W + x] || occ[y * W + x]) { ok = false; break; } }
+        let ok = true, kes = false;
+        for (const c of p.cells) { const x = c[0] + nx, y = c[1] + ny; if (x < 0 || y < 0 || x >= W || y >= H || wall[y * W + x] || occ[y * W + x]) { ok = false; break; } if (cok && mk[y * W + x]) kes = true; }
         if (!ok) continue;
         seen.add(k);
+        if (kes) { out.push({ dx: nx, dy: ny, d: d + 1, tip: 'kes' }); continue; }   // çok kareli parça makasa itilir: kesilir, hamle orada biter
         if (sinks.has(k)) { out.push({ dx: nx, dy: ny, d: d + 1, tip: 'otur' }); continue; }
         let yapis = false, komsu = false, h0 = -2, icinde = true;
         for (const c of p.cells) {
@@ -169,7 +197,7 @@
           for (const [fx, fy] of DIRS) {
             const ax = x + fx, ay = y + fy; if (ax < 0 || ay < 0 || ax >= W || ay >= H) continue;
             const j = occ[ay * W + ax]; if (!j) continue;
-            komsu = true; if (fuseColor(p.color, st.pieces[j - 1].color)) yapis = true;
+            komsu = true; if (!ya[y * W + x] && !ya[ay * W + ax] && fuseColor(p.color, st.pieces[j - 1].color)) yapis = true;   // açık makasın kenarından dikiş geçmez
           }
         }
         if (icinde) { const hc = ctx.holes[h0].color; icinde = hc === p.color || !!(PARTS[hc] && PARTS[hc].includes(p.color)); }
@@ -183,7 +211,8 @@
   // Hamleyi uygula: parçayı hedefe koy; kalıbının üstündeyse oturur, değilse orada kalır (yapışabileceği her şeye yapışır).
   function uygula(st, i, dx, dy) {
     const s = K.clone(st), p = s.pieces[i];
-    p.cells = p.cells.map(c => [c[0] + dx, c[1] + dy]);
+    if (K.gecis(s, p, dx, dy) === 'makas') { K.cut(s, p, dx, dy); return s; }   // kes: bütün parçalar yerinde kalır (cekirdek M4)
+    K.ayril(s, p); p.cells = p.cells.map(c => [c[0] + dx, c[1] + dy]);
     K.settle(s, p);   // yapışacak komşu yoksa yalnız kalıp denetimi yapar
     return s;
   }
@@ -206,7 +235,7 @@
   }
   // Genişlik öncelikli arama (hamle sayısına göre). { cozuldu, hamle, kare, yol, yolSayisi, dugum, kesildi }
   function ara(ctx, st0, { kip = 0, cap = 60000, yerSinir = Infinity } = {}) {
-    const k0 = K.stateKey(st0), root = { st: st0, key: k0, g: 0, yer: 0, ways: 1, par: null, mv: null };
+    const k0 = K.stateKey(st0), root = { st: st0, key: k0, g: 0, yer: 0, kare: 0, ways: 1, par: null, mv: null };
     const seen = new Map([[k0, root]]); let layer = [root], dugum = 0, kesildi = false;
     if (!st0.pieces.length) return { cozuldu: true, hamle: 0, kare: 0, yol: [], yolSayisi: 1, dugum: 0, kesildi: false };
     while (layer.length) {
@@ -215,9 +244,12 @@
         for (const mv of hamleler(ctx, n.st, kip)) {
           if (mv.tip === 'yer' && n.yer >= yerSinir) continue;
           const s = uygula(n.st, mv.i, mv.dx, mv.dy), k = K.stateKey(s), old = seen.get(k);
-          if (old) { if (old.g === n.g + 1) old.ways += n.ways; continue; }
+          if (old) {
+            if (old.g === n.g + 1) { old.ways += n.ways; if (n.kare + mv.d < old.kare) { old.kare = n.kare + mv.d; old.par = n; old.mv = mv; old.st = s; } }   // aynı hamle sayısıyla daha az kare adımı: o yolu tut (durum da o yoldan gelen sıralamayla; hamle indeksleri ona göre)
+            continue;
+          }
           if (++dugum > cap) { kesildi = true; break; }
-          const c = { st: s, key: k, g: n.g + 1, yer: n.yer + (mv.tip === 'yer' ? 1 : 0), ways: n.ways, par: n, mv };
+          const c = { st: s, key: k, g: n.g + 1, yer: n.yer + (mv.tip === 'yer' ? 1 : 0), kare: n.kare + mv.d, ways: n.ways, par: n, mv };
           seen.set(k, c);
           if (!s.pieces.length) { wins.push(c); continue; }
           if (cikmaz(s, ctx, 4000)) continue;
@@ -226,7 +258,8 @@
         if (kesildi) break;
       }
       if (wins.length) {
-        const w = wins[0], yol = []; let kare = 0;
+        // en az hamleli çözümler arasından kare adımı az olan tutulur (her düğümde en az kareli ebeveyn; süre formülü kare adımına bakar)
+        const w = wins.reduce((a, b) => b.kare < a.kare ? b : a), yol = []; let kare = 0;
         for (let n = w; n.par; n = n.par) { const p = n.par.st.pieces[n.mv.i]; yol.unshift({ renk: p.color, kareler: p.cells.map(c => [c[0], c[1]]), dx: n.mv.dx, dy: n.mv.dy, d: n.mv.d, tip: n.mv.tip, i: n.mv.i }); kare += n.mv.d; }
         return { cozuldu: true, hamle: w.g, kare, yol, yolSayisi: wins.reduce((a, x) => a + x.ways, 0), dugum, kesildi };
       }
@@ -247,45 +280,87 @@
       if (r.cozuldu) break;
     }
     r.dugum = dugum; r.kip = kip; r.mod = ['kalip', 'park', 'tam'][kip]; r.cikmaz = false; r.ms = now() - t0;
-    ctx.solv.set(k, r.cozuldu);
+    if (r.cozuldu || !r.kesildi) ctx.solv.set(k, r.cozuldu);   // bütçeye takılan arama "çözülemez" diye saklanmaz
     return r;
   }
-  const cozulur = (ctx, st) => { const k = K.stateKey(st), m = ctx.solv.get(k); if (m !== undefined) return m; const r = !cikmaz(st, ctx) && (ara(ctx, st, { cap: 3000 }).cozuldu || ara(ctx, st, { kip: 1, cap: 3000 }).cozuldu); ctx.solv.set(k, r); return r; };
+  const cozulur = (ctx, st) => { const k = K.stateKey(st), m = ctx.solv.get(k); if (m !== undefined) return m; const r = !cikmaz(st, ctx) && (ara(ctx, st, { cap: 3000 }).cozuldu || ara(ctx, st, { kip: 1, cap: 3000 }).cozuldu); ctx.solv.set(k, r); return r; };   // yalnız "belirsiz" sayımında kullanılır, puana girmez
 
   // Bölüm raporu: çözüm + zorluk bileşenleri + önerilen süre.
-  //   yanlis: en kısa çözüm boyunca yapılabilecek, bölümü çıkmaza sokan farklı yapışma sayısı (kanıtlı çıkmaz ya da aramada çözümsüz)
-  //   darlik: çözüm boyunca yapışmaların ne kadarı yanlış (0 = her yapışma doğru, 1 = hepsi yanlış)
-  //   sure:   15 sn okuma payı + en kısa çözümün her kare adımı için 1,3 sn (zor bölümde 1,0). Başlangıç formülü, testte ayarlanır.
+  // Yanlış yapışma KARAR olarak sayılır, yerleşim olarak değil: aynı hatalı sonuç (oluşan parçanın rengi + şekli) tahtanın neresinde ve
+  // çözümün hangi adımında yapılırsa yapılsın bir kez sayılır. Yalnız kanıtlı çıkmaza götüren yapışma yanlış sayılır (cikmaz);
+  // aramada çözümü bulunamayan ama kanıtlanamayan yapışmalar "belirsiz"dir ve puana girmez.
+  //   yapisma: çözüm boyunca yapılabilecek farklı yapışma kararı · yanlis: bunlardan kanıtlı çıkmaza götürenler · darlik: yanlis / yapisma
+  //   etiket:  yanlışların nedeni: renk (oluşan rengin açık kalıbı yok) · sekil (hiçbir kalıba sığmıyor) · yol (sığıyor ama kalıba ulaşamıyor)
+  //   karisim: çözümdeki renk karışımı sayısı · kes: çözümdeki kesim sayısı
+  //   puan:    2·hamle + 3·log2(1 + yanlis) + 4·darlik   (taslak; katsayılar kapalı testte ayarlanır)
+  //   sure:    15 sn okuma payı + en kısa çözümün her kare adımı için 1,3 sn (sureZor: 1,0 sn). Başlangıç formülü, testte ayarlanır.
   function rapor(L, opt = {}) {
     const hata = K.validate(L); if (hata.length) return { gecerli: false, hata };
     const t0 = now(), st = K.load(L), ctx = hazirla(st), r = coz(st, { ...opt, ctx });
     const out = { gecerli: true, hata: [], ...r, parca: st.pieces.length, kalip: st.holes.length };
     if (!r.cozuldu) return out;
-    let s = st, yanlis = 0, toplam = 0;
+    const pk = (s, p) => p.color + ':' + p.cells.map(c => c[1] * s.W + c[0]).sort((a, b) => a - b).join('.');
+    // hamlenin sonucu: oluşan (yeni) en büyük parça → karar sınıfı (renk + şekil) ve neden etiketi
+    const sonuc = (once, sonra) => {
+      const eski = new Set(once.pieces.map(p => pk(once, p))); let yeni = null;
+      for (const p of sonra.pieces) if (!eski.has(pk(sonra, p)) && (!yeni || p.cells.length > yeni.cells.length)) yeni = p;
+      if (!yeni) return null;
+      const sh = intern(ctx, shapeOf(yeni.cells)), acik = ctx.holes.filter(h => !sonra.holes[h.i].filled);
+      const renkli = acik.filter(h => h.color === yeni.color);
+      return { sinif: yeni.color + sh.key, renk: yeni.color, etiket: !renkli.length ? 'renk' : !renkli.some(h => fitsHole(ctx, sh, h)) ? 'sekil' : 'yol' };
+    };
+    let s = st; const sinif = new Map(), etiket = { renk: 0, sekil: 0, yol: 0 }; let karisim = 0, belirsiz = 0, belirsizTemas = 0;
     for (const mv of r.yol) {
       const gor = new Set();
       for (const h of hamleler(ctx, s, 0)) {
         if (h.tip !== 'yapis') continue;
-        const c = uygula(s, h.i, h.dx, h.dy), k = K.stateKey(c); if (gor.has(k)) continue;
-        gor.add(k); toplam++; if (c.pieces.length && !cozulur(ctx, c)) yanlis++;
+        const c = uygula(s, h.i, h.dx, h.dy), k = K.stateKey(c); if (gor.has(k)) continue; gor.add(k);
+        const x = sonuc(s, c); if (!x) continue;
+        const kotu = c.pieces.length ? cikmaz(c, ctx) : false;
+        if (!kotu && c.pieces.length && !cozulur(ctx, c)) { belirsiz++; continue; }
+        const o = sinif.get(x.sinif); if (!o) sinif.set(x.sinif, { kotu, etiket: x.etiket }); else if (!kotu) o.kotu = false;   // aynı karar bir yerde doğruysa yanlış sayılmaz
       }
-      s = uygula(s, mv.i, mv.dx, mv.dy);
+      if (mv.tip === 'yapis') { const s2 = K.clone(s), p2 = s2.pieces[mv.i]; K.ayril(s2, p2); p2.cells = p2.cells.map(c => [c[0] + mv.dx, c[1] + mv.dy]); if (K.belirsiz(s2, p2)) belirsizTemas++; }
+      const sonraki = uygula(s, mv.i, mv.dx, mv.dy);
+      if (mv.tip === 'yapis' && 'ryb'.includes(mv.renk)) { const x = sonuc(s, sonraki); if (x ? 'gop'.includes(x.renk) : sonraki.holes.some((h, i) => h.filled && !s.holes[i].filled && 'gop'.includes(h.color))) karisim++; }
+      s = sonraki;
     }
-    out.yanlis = yanlis; out.yapisma = toplam; out.darlik = toplam ? +(yanlis / toplam).toFixed(2) : 0;
+    let yanlis = 0; for (const o of sinif.values()) if (o.kotu) { yanlis++; etiket[o.etiket]++; }
+    out.yapisma = sinif.size; out.yanlis = yanlis; out.darlik = sinif.size ? +(yanlis / sinif.size).toFixed(2) : 0;
+    out.etiket = etiket; out.belirsiz = belirsiz; out.karisim = karisim;
+    out.belirsizTemas = belirsizTemas;   // çözümde, parçanın aynı anda iki farklı ana renge değdiği hamle sayısı (sonuç sıraya bağlı: üretici eler)
+    out.kes = r.yol.filter(m => m.tip === 'kes').length; out.yapisHamle = r.yol.filter(m => m.tip === 'yapis').length;
     out.sure = Math.round(15 + 1.3 * r.kare); out.sureZor = Math.round(15 + 1.0 * r.kare);
-    out.sureOrani = L.t ? +(L.t / out.sure).toFixed(2) : 0;
-    // Zorluk puanı (taslak, 2. aşamada test verisiyle ayarlanır): hamle + yanlış yapışma fırsatı + darlık + süre sıkılığı
-    out.puan = +(r.hamle + 0.5 * yanlis + 4 * out.darlik + (L.t ? 3 * Math.max(0, 1 - (L.t - out.sure) / out.sure) : 0)).toFixed(1);
+    out.puan = +(2 * r.hamle + 3 * Math.log2(1 + yanlis) + 4 * out.darlik).toFixed(1);
     out.ms = now() - t0;
     return out;
   }
-  // Çözümü baştan oynatıp doğrula (hamleler gerçekten yapılabiliyor ve tahta boşalıyor mu). Çözücüden bağımsız denetim.
+  // Çözümü baştan oynatıp doğrula. Aramanın kodunu kullanmaz: yalnız çekirdekle, oyunun yaptığı gibi tek tek kare adımıyla oynatır
+  // (K.gecis ile yol arar, kendi kalıbının üstünden geçmez, kesimde K.cut, hedefte K.settle). Tahta boşalıyorsa true.
   function dogrula(L, yol) {
-    let st = K.load(L); const ctx = hazirla(st);
+    const st = K.load(L);
     for (const mv of yol) {
-      const h = hedefler(ctx, st, mv.i).find(h => h.dx === mv.dx && h.dy === mv.dy);
-      if (!h) return false;
-      st = uygula(st, mv.i, mv.dx, mv.dy);
+      const p = st.pieces[mv.i]; if (!p) return false;
+      const bas = p.cells.map(c => [c[0], c[1]]), at = (dx, dy) => { p.cells = bas.map(c => [c[0] + dx, c[1] + dy]); };
+      // tek kare adımlarıyla (dx,dy)'ye ulaşılabiliyor mu
+      const gor = new Set(['0,0']), q = [[0, 0]]; let vardi = false, kes = null;
+      for (let t = 0; t < q.length && !vardi; t++) {
+        const [x, y] = q[t];
+        for (const [ex, ey] of DIRS) {
+          const nx = x + ex, ny = y + ey, k = nx + ',' + ny; if (gor.has(k)) continue;
+          at(x, y); const g = K.gecis(st, p, ex, ey);
+          if (g === 'makas' && nx === mv.dx && ny === mv.dy && mv.tip === 'kes') { kes = [x, y, ex, ey]; vardi = true; break; }
+          if (g !== 'yol') continue;
+          gor.add(k);
+          if (nx === mv.dx && ny === mv.dy) { vardi = true; break; }
+          at(nx, ny); if (K.moldUnder(st, p)) continue;   // kalıbının üstünden geçemez: oraya oturur
+          q.push([nx, ny]);
+        }
+      }
+      at(0, 0);
+      if (!vardi || (mv.tip === 'kes') !== !!kes) return false;
+      if (kes) { at(kes[0], kes[1]); if (!K.cut(st, p, kes[2], kes[3])) return false; }
+      else { K.ayril(st, p); at(mv.dx, mv.dy); K.settle(st, p); }
     }
     return st.pieces.length === 0;
   }
