@@ -106,5 +106,27 @@ window.Ses = (() => {
       navigator.vibrate?.(kind === 'win' ? [15, 50, 25] : kind === 'heavy' ? 16 : 7);
     } catch {}
   }
-  return { init: f => { A = f; }, tone, haptic, Music, ctx: () => ac };
+  // Oyun efektleri (prototipin sesi): tek osilatör, isteğe bağlı perde kayması. fx(frekans, süre, dalga, bitiş frekansı, ses düzeyi, gecikme)
+  function fx(f, d, type, f2, v, dl) {
+    if (!A().sound) return;
+    try {
+      ensureAC();
+      const t = ac.currentTime + (dl || 0), o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+      g.gain.setValueAtTime(v || .1, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + .03);
+    } catch {}
+  }
+  // Titreşim deseni (ms ya da [titreşim, ara, titreşim…]). Cihazda Capacitor Haptics, tarayıcıda navigator.vibrate.
+  // Ses kapalıyken oyundaki her bilgi bu titreşimle de verilir.
+  function buzz(p) {
+    if (!A().vib) return;
+    try {
+      const H = window.Capacitor?.Plugins?.Haptics, n = Array.isArray(p) ? p.filter((_, i) => i % 2 === 0).reduce((a, b) => a + b, 0) : p;
+      if (H) { n >= 60 ? H.notification({ type: n >= 100 ? 'ERROR' : 'SUCCESS' }) : H.impact({ style: n >= 30 ? 'HEAVY' : n >= 12 ? 'MEDIUM' : 'LIGHT' }); return; }
+      navigator.vibrate?.(p);
+    } catch {}
+  }
+  return { init: f => { A = f; }, tone, fx, buzz, haptic, Music, ctx: () => ac };
 })();

@@ -3,26 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#f4ead9">
+<meta name="theme-color" content="#12161f">
 <title>Hamur</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="app">
-  <!-- İskelet: oyun ekranı prototipten (hamur.html) taşınınca buraya gelir. Menüler HTML ve CSS, tahta Canvas 2D. -->
-  <section id="home" class="screen active">
-    <h1>Hamur</h1>
-    <p id="durum" data-en="Project skeleton: the game is being moved in from the prototype.">Proje iskeleti: oyun prototipten taşınıyor.</p>
-  </section>
-  <canvas id="cv" hidden></canvas>
+<!-- Prototip görünümü. Görsel kimlik (3. aşama) onaylanınca ekranlar ve tasarım sistemi buraya işlenir. -->
+<div class="app" id="app">
+  <header class="hud">
+    <div class="row">
+      <div class="pills" id="pills" role="group" aria-label="Bölümler" data-en-label="Levels"></div>
+      <button class="btn ikon" id="undo" type="button" aria-label="Geri al" data-en-label="Undo" disabled>↶</button>
+      <button class="btn" id="sound" type="button" data-en="Sound">Ses</button>
+      <button class="btn" id="retry" type="button" data-en="Restart">Baştan</button>
+    </div>
+    <div class="timer" id="timer">
+      <div class="bar"><i id="fill"></i></div>
+      <span id="secs">30</span>
+    </div>
+  </header>
+  <main class="stage" id="stage">
+    <canvas id="cv" aria-label="Oyun tahtası" data-en-label="Game board"></canvas>
+    <div class="ov" id="ov" hidden>
+      <div class="card" role="dialog" aria-labelledby="ovT">
+        <h2 id="ovT"></h2>
+        <p id="ovP"></p>
+        <button class="go" id="ovB" type="button"></button>
+        <button class="go alt" id="ovB2" type="button" hidden></button>
+      </div>
+    </div>
+  </main>
+  <footer class="foot">
+    <div class="rx" id="rx" hidden>
+      <span><i style="background:var(--b)"></i>+<i style="background:var(--y)"></i>=<i style="background:var(--g)"></i></span>
+      <span><i style="background:var(--r)"></i>+<i style="background:var(--b)"></i>=<i style="background:var(--p)"></i></span>
+      <span><i style="background:var(--r)"></i>+<i style="background:var(--y)"></i>=<i style="background:var(--o)"></i></span>
+    </div>
+    <p id="hint"></p>
+  </footer>
 </div>
 <script src="i18n.js"></script>
 <script src="ses.js"></script>
 <script src="olcum.js"></script>
 <script src="ads.js"></script>
 <script src="shop.js"></script>
-<!-- kural çekirdeği: rules/*.js (prototipteki //#core bölümünden ayrılacak), sonra app.js -->
 <script src="app.js"></script>
+<script src="rules/cekirdek.js"></script>
+<script src="rules/cozucu.js"></script>
+<script src="bolumler.js"></script>
+<script src="game.js"></script>
 </body>
 </html>

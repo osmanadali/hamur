@@ -101,7 +101,7 @@ async function inViewport(page, sel) {
   for (const [locale, vp, ad] of [['tr-TR', [390, 844], 'tr'], ['en-US', [320, 568], 'en']]) {
     const { ctx, page, errors } = await open(browser, URL, { locale, vp });
     const lang = await page.evaluate(() => [window.HAMUR_LANG, document.documentElement.lang, typeof L]);
-    const fit = await inViewport(page, '.screen.active h1');
+    const fit = await inViewport(page, '#cv');
     await shot(page, 'acilis-' + ad);
     check('acilis.' + ad, `Açılış hatasız (${locale}, ${vp[0]} px)`, !errors.length && lang[0] === ad && lang[1] === ad && lang[2] === 'function' && fit.ok, errors[0] || `dil ${lang[0]}`);
     await ctx.close();
@@ -191,10 +191,10 @@ async function inViewport(page, sel) {
     await page.waitForTimeout(800);
     await ctx.setOffline(true);
     let ok = false, err = '';
-    try { await page.reload({ timeout: 8000 }); await page.waitForTimeout(500); ok = await page.evaluate(() => !!window.__hamur && !!window.Ses && !!window.Shop); }
+    try { await page.reload({ timeout: 8000 }); await page.waitForTimeout(500); ok = await page.evaluate(() => !!window.__hamur.oyun.st.pieces.length && !!window.Ses && !!window.Shop); }
     catch (e) { err = e.message.split('\n')[0]; }
     await shot(page, 'offline').catch(() => {});
-    check('offline', 'İnternetsiz yeniden açılıyor', ready && ok, ready ? err : 'service worker hazır değil');
+    check('offline', 'İnternetsiz yeniden açılıyor ve bölüm kuruluyor', ready && ok, ready ? err : 'service worker hazır değil');
     await ctx.close();
   }
 
