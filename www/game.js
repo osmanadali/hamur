@@ -302,7 +302,7 @@ function showOv(t, p, b, fn, b2, fn2) {
 }
 let kayipTur = '';
 function lose(kind, piece) {
-  state = 'lost'; kayipTur = kind; makasKoy = false; paintUndo(); running = false; drag = null; threads = new Map();
+  state = 'lost'; kayipTur = kind; makasKoy = false; paintUndo(); canHarca(); running = false; drag = null; threads = new Map();
   if ((li < ASIL && !gunluk)) { save.fails = { ...save.fails, [li + 1]: (save.fails?.[li + 1] || 0) + 1 }; App.persist(); }
   const now = performance.now(), yine = L('Tekrar dene', 'Try again');
   // ne kadar yaklaşıldı: kaç kalıp doldu; süre bittiyse yaklaşık kaç saniye eksik kaldı (kalan en kısa çözümden)
@@ -314,21 +314,22 @@ function lose(kind, piece) {
     const open = st.holes.filter(h => !h.filled);
     const msg = PARTS[piece.color] && !open.some(h => h.color === piece.color) ? NAME[piece.color] + L(' renkte kalıp yok. Bu parça artık hiçbir yere giremez.', ' has no mold. This piece cannot go anywhere now.') : L('Bu parça artık hiçbir kalıba uymuyor.', 'This piece no longer fits any mold.');
     after = { at: now + 1400, fn: () => geriOlur()
-      ? showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin, L('Geri al', 'Undo'), geriAl, yine, () => setup(li))
-      : showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin + ek, yine, () => setup(li)) };
+      ? showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin, L('Geri al', 'Undo'), geriAl, yine, tekrar)
+      : showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin + ek, yine, tekrar) };
   } else {
     buzz([60, 40, 60]); tone(210, .45, 'sawtooth', 70, .08); geri = null; paintUndo();
     let eksik = '';
     try { const r = Coz.ara(cz, K.clone(st), { cap: 2500 }); if (r.cozuldu) { const sn = Math.max(1, Math.round(r.kare + 2 * r.hamle)); eksik = L(` Yaklaşık ${sn} saniye daha gerekiyordu.`, ` About ${sn} more seconds were needed.`); } } catch {}
     const metin = L('Parçalar kalıba yetişmedi.', 'The pieces did not reach the molds in time.') + yakin + eksik + ek;
-    stok('sure') > 0 ? showOv(L('Süre bitti', 'Time is up'), metin, L('+15 sn ile devam et', 'Continue with +15 s'), surDevam, yine, () => setup(li))
-      : Ads.online() ? showOv(L('Süre bitti', 'Time is up'), metin, L('Reklam izle: +15 sn', 'Watch an ad: +15 s'), reklamDevam, yine, () => setup(li)) : showOv(L('Süre bitti', 'Time is up'), metin, yine, () => setup(li));
+    stok('sure') > 0 ? showOv(L('Süre bitti', 'Time is up'), metin, L('+15 sn ile devam et', 'Continue with +15 s'), surDevam, yine, tekrar)
+      : Ads.online() ? showOv(L('Süre bitti', 'Time is up'), metin, L('Reklam izle: +15 sn', 'Watch an ad: +15 s'), reklamDevam, yine, tekrar) : showOv(L('Süre bitti', 'Time is up'), metin, yine, tekrar);
   }
 }
 // Geri alma: son yapışmanın olduğu sürüklemenin başına döner. Süre geri gelmez.
 function geriAl() {
   if (!geriOlur() || state === 'won' || timeLeft <= 0 || durak) return;   // süre bittiyse geri alma işe yaramaz: hak harcanmaz
   if (geriKalan > 0) geriKalan--; else harca('geri');   // önce bölümün ücretsiz hakkı, sonra stok
+  if (state === 'lost') canVer(1);   // kayıp geri alındı: can geri gelir
   st = geri; geri = null; cz = Coz.hazirla(st);
   st.pieces.forEach(giydir); for (const h of st.holes) h.shown = h.filled;
   state = 'play'; running = true; drag = null; sinks = []; rings = []; after = null; threads = new Map(); kesim = null;
@@ -336,6 +337,30 @@ function geriAl() {
   buzz(10); tone(520, .12, 'sine', 300, .06);
   window.Olcum?.event('undo', { level: li + 1 });
 }
+/* ---------- can ---------- */
+// 5 can; kaybedince ya da bölümü yarıda bırakınca 1 gider; 5 dakikada 1 dolar. Geri alma ve "+15 sn ile devam" kaybı geri verir.
+// Her figür (10 bölüm) tamamlanınca ödül: canlar dolar, +1 makas, +1 ek süre. Test seçeneği (bütün bölümler açık) açıkken can azalmaz.
+const CAN_MAX = 5, CAN_MS = 5 * 60e3;
+function canDurum() {
+  const c = save.can && typeof save.can.n === 'number' ? save.can : (save.can = { n: CAN_MAX, t: 0 });
+  if (c.n >= CAN_MAX) { c.t = 0; return c; }
+  const simdi = Date.now(); if (!c.t || c.t > simdi) c.t = simdi;
+  const k = Math.floor((simdi - c.t) / CAN_MS);
+  if (k > 0) { c.n = Math.min(CAN_MAX, c.n + k); c.t = c.n >= CAN_MAX ? 0 : c.t + k * CAN_MS; App.persist(); }
+  return c;
+}
+const canVar = () => !!save.hepsiAcik || canDurum().n > 0;
+function canHarca() { if (save.hepsiAcik || li >= ASIL) return; const c = canDurum(); if (c.n > 0) { if (c.n === CAN_MAX) c.t = Date.now(); c.n--; App.persist(); } }
+function canVer(k) { const c = canDurum(); c.n = Math.min(CAN_MAX, c.n + k); if (c.n >= CAN_MAX) c.t = 0; App.persist(); }
+const canKalanMs = () => { const c = canDurum(); return c.n >= CAN_MAX ? 0 : Math.max(0, CAN_MS - (Date.now() - c.t)); };
+const sureYazi = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function canYok() {   // can bitti: beklenir ya da reklamla 1 can alınır
+  const ana = () => App.ekran.goster('ana'), metin = L('Sonraki can: ', 'Next life in ') + sureYazi(canKalanMs());
+  if (Ads.online()) showOv(L('Can bitti', 'Out of lives'), metin, L('Reklam izle: +1 can', 'Watch an ad: +1 life'), async () => { let r = ''; try { r = await (App.bekle ? App.bekle.sar(Ads.rewarded(), 'top') : Ads.rewarded()); } catch {} if (r === 'earned') { canVer(1); setup(li); } }, L('Ana ekran', 'Home'), ana);
+  else showOv(L('Can bitti', 'Out of lives'), metin, L('Ana ekran', 'Home'), ana);
+}
+const tekrar = () => canVar() ? setup(li) : canYok();
+
 /* ---------- güçlendiriciler, duraklatma, renk tarifi ---------- */
 // Stok kayıtta durur (save.bst). Para kararı verilene dek her oyuncu üçer taneyle başlar; test seçeneği (bütün bölümler açık) açıkken stok azalmaz.
 // Hiçbir bölüm güçlendirici istemez (çözücü kanıtlar); bunlar yalnız kolaylıktır.
@@ -360,7 +385,7 @@ function sureEkle() {
 // Yıldız: kalan süreye göre (güçlendiriciyle eklenen süre sayılmaz). %45 ve üstü üç, %25 ve üstü iki, bitirmek bir yıldız.
 const yildizSay = () => { const r = (timeLeft - ekGuc) / (Lv.t + ekSure); return r >= .45 ? 3 : r >= .25 ? 2 : 1; };
 const yildizYazi = n => '★'.repeat(n) + '☆'.repeat(3 - n);
-function canlan() { state = 'play'; timeLeft = 15; ekGuc = 999; running = false; shownS = -1; after = null; $('ov').hidden = true; paintUndo(); }   // süre ilk dokunuşta yeniden işler; devam eden bölüm bir yıldız
+function canlan() { canVer(1); state = 'play'; timeLeft = 15; ekGuc = 999; running = false; shownS = -1; after = null; $('ov').hidden = true; paintUndo(); }   // süre ilk dokunuşta yeniden işler; devam eden bölüm bir yıldız
 async function reklamDevam() {   // kaybedince: ödüllü reklam izleyip 15 sn ile devam
   if (state !== 'lost' || kayipTur !== 'time') return;
   let oldu = false; try { oldu = (await (App.bekle ? App.bekle.sar(Ads.rewarded(), 'top') : Ads.rewarded())) === 'earned'; } catch {}
@@ -413,7 +438,7 @@ function duraklat() {
 function cikisSor() {
   if (state !== 'play' || !running || durak) return App.ekran.goster('ana');
   durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
-  showOv(L('Çıkılsın mı?', 'Quit level?'), L('Bu bölümdeki ilerlemen kaybolur.', 'Your progress in this level will be lost.'), L('Devam et', 'Keep playing'), devam, L('Çık', 'Quit'), () => App.ekran.goster('ana'));
+  showOv(L('Çıkılsın mı?', 'Quit level?'), save.hepsiAcik ? L('Bu bölümdeki ilerlemen kaybolur.', 'Your progress in this level will be lost.') : L('1 can kaybedeceksin.', 'You will lose 1 life.'), L('Devam et', 'Keep playing'), devam, L('Çık', 'Quit'), () => { canHarca(); App.ekran.goster('ana'); });
   $('ovB2').classList.add('cikis');
 }
 function devam() { if (!durak) return; durak = false; cv.style.visibility = ''; $('ov').hidden = true; $('hint').textContent = L(...Lv.hint); paintUndo(); }
@@ -434,6 +459,7 @@ function paylas() {
   try { const P = window.Capacitor?.Plugins?.Share; if (P) return P.share({ text: m }); if (navigator.share) return navigator.share({ text: m }); navigator.clipboard?.writeText(m); $('ovP').textContent = L('Sonuç panoya kopyalandı.', 'Result copied to clipboard.'); } catch {}
 }
 function kazanKaydet() {
+  if (li < ASIL && !gunluk && !done.has(li + 1) && (li + 1) % 10 === 0) { canVer(CAN_MAX); save.bst = { ...save.bst, makas: stok('makas') + 1, sure: stok('sure') + 1 }; }   // figür ödülü
   if ((li < ASIL && !gunluk)) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; if (save.fails?.[li + 1]) { save.fails = { ...save.fails }; delete save.fails[li + 1]; } App.persist(); $('lvlNo').classList.add('done'); }
   sonYildiz = yildizSay();
   if (li < ASIL && !gunluk) { save.yildiz = { ...save.yildiz, [li + 1]: Math.max(save.yildiz?.[li + 1] || 0, sonYildiz) }; App.persist(); }
@@ -482,7 +508,7 @@ cv.addEventListener('pointermove', e => {
 });
 const drop = e => { if (drag && e.pointerId === drag.id) birak(); };
 cv.addEventListener('pointerup', drop); cv.addEventListener('pointercancel', drop);
-$('retry').onclick = () => setup(li);
+$('retry').onclick = () => { if (state === 'play' && running) canHarca(); tekrar(); };   // süren bölümü baştan almak 1 can
 $('undo').onclick = geriAl; $('gSure').onclick = sureEkle; $('gMakas').onclick = makasSec; $('duraklat').onclick = duraklat;
 $('gTarif').onclick = e => { e.stopPropagation(); tarif($('rx').hidden); };
 document.addEventListener('pointerdown', e => { if (!$('rx').hidden && !e.target.closest('#rx,#gTarif')) tarif(false); });
@@ -909,9 +935,11 @@ App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= 
     },
     get hazir() { return !!blokGri; }, parcacik: () => IMG.parcacik, el: () => IMG.el,
   },
+  can: { get n() { return save.hepsiAcik ? CAN_MAX : canDurum().n; }, max: CAN_MAX, kalan: canKalanMs, yazi: sureYazi },
   cikisSor, gunlukNo, bugun, get gunluk() { return gunluk; }, duraklat, devam, sureEkle, makasSec, get durakta() { return durak; }, get stok() { return { geri: stok('geri'), sure: stok('sure'), makas: stok('makas') }; },
   // Bölüm başlangıç penceresi: ana ekrandan ya da yoldan girince (bölümden bölüme geçerken çıkmaz). Süre zaten ilk dokunuşta başlar.
   giris() {
+    if (!canVar()) return canYok();
     const y = save.yildiz?.[li + 1], kapat = () => { $('ov').hidden = true; basla(); };
     showOv(gunluk ? L('Günlük kalıp', 'Daily mold') : L('Bölüm ', 'Level ') + (li + 1),
       (y ? yildizYazi(y) + '\n' : '') + L(`Süre ${Math.round(timeLeft)} sn · Geri al ×${geriKalan + stok('geri')} · +15 sn ×${stok('sure')} · Makas ×${stok('makas')}`, `Time ${Math.round(timeLeft)} s · Undo ×${geriKalan + stok('geri')} · +15 s ×${stok('sure')} · Scissors ×${stok('makas')}`),

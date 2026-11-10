@@ -40,9 +40,12 @@ function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, fals
 function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik'); O.setup(O.gunlukNo(), true); setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }   // günlük kalıp: canlı arka plan
 
 /* ---------- ana ekran ---------- */
+function canCiz() { $('canN').textContent = O.can.n; const k = O.can.kalan(); $('canT').textContent = k ? O.can.yazi(k) : ''; }
+setInterval(() => { if (acik === 'ana') canCiz(); }, 1000);
 function ana() {
   const n = siradaki(), hepsi = (save.done || []).length >= N;
   if ((save.done || []).length >= 3 && !save.bildirimSoruldu) { save.bildirimSoruldu = true; App.persist(); hatirlat(true); } else hatirlat(false);
+  canCiz();
   $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '');
   $('oynaNo').textContent = hepsi ? L('Hepsi tamam', 'All done') : L('Bölüm ', 'Level ') + n;
 }

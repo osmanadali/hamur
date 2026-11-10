@@ -455,3 +455,10 @@ body.ana-acik .gok{opacity:1}
 #hint{color:#fffaf0;text-shadow:-1px -1px 0 #4a2d5e,1px -1px 0 #4a2d5e,-1px 1px 0 #4a2d5e,1px 1px 0 #4a2d5e,0 2px 0 #4a2d5e;font-size:17px}
 /* ana ekran: düğmeler ekranın ortasına yakın (tek elle erişim) */
 .ana-dugmeler{margin-top:7vh}
+
+/* can göstergesi (ana ekran sol üst) */
+#sAna .can{position:absolute;left:12px;top:max(12px,env(safe-area-inset-top,0px));z-index:3;display:flex;align-items:center;gap:6px;background:rgba(70,35,125,.55);border-radius:26px;padding:4px 14px 4px 4px;min-height:44px;box-sizing:border-box}
+.can i{width:38px;height:38px;border-radius:50%;background:url(img/top-kirmizi.webp) center/contain no-repeat;display:grid;place-items:center;font:400 20px/1 var(--display);font-style:normal;color:#fff6f0;text-shadow:0 1px 0 #7a1420}
+.can b{font:400 22px var(--display);color:#fffaf0}
+.can small{font:700 14px var(--body);color:#fff3e0;font-variant-numeric:tabular-nums}
+.can small:empty{display:none}
