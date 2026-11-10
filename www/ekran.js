@@ -94,7 +94,7 @@ function tepsi() {
 
 /* ---------- ayarlar ---------- */
 const SECENEK = [
-  ['sound', 'Efekt sesleri', 'Sound effects'], ['vib', 'Titreşim', 'Vibration'],
+  ['music', 'Müzik', 'Music'], ['sound', 'Efekt sesleri', 'Sound effects'], ['vib', 'Titreşim', 'Vibration'],
   ['damga', 'Renk damgaları (renk körlüğü)', 'Color stamps (color blindness)'],
   ['hepsiAcik', 'Bütün bölümler açık (test)', 'All levels open (test)'],
 ];
@@ -104,7 +104,7 @@ function ayar() {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'secenek'; b.setAttribute('role', 'switch'); b.id = 'sec-' + k;
     const ciz = () => { b.setAttribute('aria-checked', String(!!save[k])); };
     b.append(Object.assign(document.createElement('span'), { textContent: L(tr, en) }), Object.assign(document.createElement('i'), { className: 'anahtar' }));
-    b.onclick = () => { save[k] = !save[k]; App.persist(); ciz(); O.ayarDegisti?.(); if (acik === 'yol') yol(); Ses.buzz(8); };
+    b.onclick = () => { save[k] = !save[k]; App.persist(); ciz(); O.ayarDegisti?.(); muzik(); if (acik === 'yol') yol(); Ses.buzz(8); };
     ciz(); el.appendChild(b);
   }
   // dil: değişince sayfa yenilenir (metinler yüklemede seçilir)
@@ -149,6 +149,11 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   addEventListener('pointermove', e => yaz(e.clientX / innerWidth * 2 - 1, e.clientY / innerHeight * 2 - 1), { passive: true });
   addEventListener('deviceorientation', e => { if (e.gamma != null) yaz(e.gamma / 25, (e.beta - 45) / 25); }, { passive: true });
 }
+
+// Müzik: tek döngü (ses/muzik.mp3). Tarayıcı izin verdiği ilk dokunuşta başlar; ayarlardan kapatılır; uygulama arka plandayken durur.
+const calgi = new Audio('ses/muzik.mp3'); calgi.loop = true; calgi.volume = .32; calgi.preload = 'none';
+function muzik() { try { if (save.music !== false && !document.hidden) calgi.play().catch(() => {}); else calgi.pause(); } catch {} }
+addEventListener('pointerdown', muzik, { once: true }); document.addEventListener('visibilitychange', muzik);
 
 // Açılış: ana ekran. Editörden gelen deneme bölümü (#bolum=) ve test robotu (window.__hamurEkran) doğrudan oyunu açar.
 goster(window.__hamurEkran || (O.deneme ? 'oyun' : 'ana'));
