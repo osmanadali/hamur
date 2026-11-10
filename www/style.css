@@ -402,3 +402,41 @@ body.ana-acik .gok{opacity:1}
 .panel .secenek{background:rgba(70,35,125,.34);color:#fff9ee}
 .panel .surum,.panel small{color:#fff3e0}
 #ayar{background:rgba(55,28,95,.74)}
+
+/* ================= ikinci geri bildirim turu ================= */
+.acilis img{transition:none}
+.acilis .ab{display:none}
+/* ana ekran: logo en üstte, dört düğme alt alta ve küçük, yazılar beyaz */
+#sAna .ust{position:absolute;top:max(10px,env(safe-area-inset-top,0px));right:12px;left:auto;z-index:3}
+#sAna .baslik-yeri{flex:0 0 clamp(96px,17vh,150px);margin-top:1vh}
+.ana-dugmeler{gap:9px;margin-top:0}
+.yan-yana{flex-direction:column;gap:9px}
+.ana-dugmeler .hap{width:206px;min-width:0;min-height:52px;font-size:20px;border-width:15px 30px;border-image-width:15px 30px;padding:0}
+#bOyna{width:226px;min-height:68px;font-size:27px}
+#sAna .ada{max-height:38vh}
+.hap,.go,#bOyna,#bYol,#bTepsi,#ovB,#ovB2,#ovB2.cikis,.hap.kirmizi,.hap.mor,.hap.yesil,.hap.mavi,.hap.turuncu{color:#fffaf0;text-shadow:-1.5px -1.5px 0 #4a2d5e,1.5px -1.5px 0 #4a2d5e,-1.5px 1.5px 0 #4a2d5e,1.5px 1.5px 0 #4a2d5e,0 2.5px 0 #4a2d5e,0 4px 3px rgba(40,15,70,.35)}
+.hap small{color:#fffaf0;text-shadow:0 1px 0 #4a2d5e,0 0 3px #4a2d5e}
+.aciklama{color:#fffaf0;text-shadow:-1px -1px 0 #4a2d5e,1px -1px 0 #4a2d5e,-1px 1px 0 #4a2d5e,1px 1px 0 #4a2d5e,0 2px 0 #4a2d5e;font-size:17px}
+/* bölüm yolu başlığı bulutların üstünde */
+#sYol .ust{min-height:92px;align-items:flex-start;background:url(img/bulut-2.webp) center -52px/250px no-repeat,url(img/bulut-1.webp) -46px -40px/210px no-repeat,url(img/bulut-4.webp) right -44px top -38px/210px no-repeat,linear-gradient(rgba(160,130,215,.9),rgba(160,130,215,0) 85%)}
+/* oyun: bölüm adı büyük; süre boğumu halkayı kesen kısa çentik; son 10 saniyede ekran kenarı kızarır */
+#lvlNo{font:400 23px var(--display);color:#fff6d8;text-shadow:-1.5px -1.5px 0 #6a3aa6,1.5px -1.5px 0 #6a3aa6,-1.5px 1.5px 0 #6a3aa6,1.5px 1.5px 0 #6a3aa6,0 3px 0 #55298c}
+.saat .bogum{width:7px;height:17px;margin:-8.5px 0 0 -3.5px;border-radius:4px;background:#6a3aa6;border:0;transform:rotate(var(--a)) translateY(-28px)}
+#sOyun.az::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:5;box-shadow:inset 0 0 70px 14px rgba(238,79,90,.6);animation:kizar .5s ease-in-out infinite alternate}
+@keyframes kizar{from{opacity:.35}to{opacity:1}}
+/* bölüm tamam: hamur şerit, hamur yıldızlar */
+.tost{background:none;box-shadow:none;padding:0;white-space:normal;width:min(86vw,340px);display:flex;flex-direction:column;align-items:center;gap:6px;animation:tost .9s cubic-bezier(.3,1.5,.5,1) both}
+.tost[hidden]{display:none}
+.tost b{display:grid;place-items:center;width:100%;aspect-ratio:480/170;background:url(img/serit.webp) center/100% 100% no-repeat;font:400 24px var(--baslik);color:#7a2d55;padding:0 17% 5%;box-sizing:border-box;text-align:center;line-height:1.05;filter:drop-shadow(0 8px 8px rgba(60,25,100,.4))}
+.tost .yildiz{display:flex;gap:6px;font-size:0}
+.tost .yildiz i{width:46px;height:46px;background:url(img/yildiz.webp) center/contain no-repeat;filter:drop-shadow(0 4px 3px rgba(60,25,100,.4));animation:odul .5s cubic-bezier(.3,1.5,.5,1) both}
+.tost .yildiz i:nth-child(2){animation-delay:.12s}.tost .yildiz i:nth-child(3){animation-delay:.24s}
+.tost .yildiz i.bos{background-image:url(img/yildiz-bos.webp)}
+.tost small{font:700 16px var(--body);color:#fffaf0;text-shadow:0 1px 0 #4a2d5e,0 0 4px #4a2d5e;margin:0}
+@media (prefers-reduced-motion:reduce){#sOyun.az::after,.tost .yildiz i{animation:none}}
+
+.baslik-yeri .logo{height:100%;width:auto;max-height:none;max-width:78vw;object-fit:contain}
+.acilis .alogo{top:calc(50% - 250px);width:min(74vw,300px);margin-left:calc(min(74vw,300px) / -2);aspect-ratio:640/208}
+#lvlNo.done{color:#fff6d8}
+.hap.gunluk{white-space:nowrap;font-size:18px;gap:6px}
+.hap.gunluk i{width:26px;height:26px}
