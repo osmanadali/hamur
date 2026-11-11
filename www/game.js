@@ -531,6 +531,16 @@ paintSound();
 
 /* ---------- çizim ---------- */
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Duvar (kesme şeker) dünyanın rengine boyanır: gece lila, gün batımı karamel. Boyalı hâli bir kez hazırlanıp saklanır.
+const DUVAR_RENK = { 1: '#cbb3ee', 2: '#f6cf9a' }, duvarlar = new Map();
+function duvarBoyali(dunya) {
+  const renk = DUVAR_RENK[dunya], im = IMG.duvar; if (!renk) return im;
+  let c = duvarlar.get(dunya); if (c) return c;
+  c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d');
+  x.drawImage(im, 0, 0); x.globalCompositeOperation = 'multiply'; x.fillStyle = renk; x.fillRect(0, 0, c.width, c.height);
+  x.globalCompositeOperation = 'destination-in'; x.drawImage(im, 0, 0);
+  duvarlar.set(dunya, c); return c;
+}
 function board() {
   const W = st.W * cell, H = st.H * cell, dunya = +document.body.dataset.dunya || 0;
   // dünya teması: tepsi-<n> ve hucre-<n> görseli varsa o; yoksa eldeki tepsinin rengi kaydırılır
@@ -553,9 +563,10 @@ function board() {
   ctx.filter = 'none';
   // duvar: kesme şeker
   if (IMG.duvar) {
+    const dv = duvarBoyali(dunya);
     for (const [x, y] of st.wallCells) {
       ctx.fillStyle = 'rgba(90,60,130,.22)'; ctx.beginPath(); ctx.ellipse((x + .5) * cell, (y + .93) * cell, cell * .42, cell * .1, 0, 0, 6.2832); ctx.fill();
-      ctx.drawImage(IMG.duvar, x * cell + cell * .02, y * cell - cell * .06, cell * .96, cell * .96);
+      ctx.drawImage(dv, x * cell + cell * .02, y * cell - cell * .06, cell * .96, cell * .96);
     }
   } else if (wallPath) {
     ctx.fillStyle = 'rgba(90,60,130,.25)'; ctx.save(); ctx.translate(0, cell * .05); ctx.fill(wallPath); ctx.restore();
