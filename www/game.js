@@ -755,7 +755,7 @@ function drawPiece(p, now, k, glow) {
   ctx.save();   // yumuşak gölge
   ctx.translate(0, cell * (.07 + .1 * p.lift) * k); ctx.shadowColor = 'rgba(60,25,100,' + (.5 * k) + ')'; ctx.shadowBlur = cell * (.14 + .3 * p.lift) * dpr; ctx.shadowOffsetY = cell * .03 * dpr;
   ctx.fillStyle = 'rgba(60,25,100,' + (.2 * k) + ')'; ctx.fill(p.path); ctx.restore();
-  ctx.save(); ctx.translate(0, -up); ctx.fillStyle = koyu(C[p.color], .7); ctx.fill(p.path); ctx.restore();   // yan yüz
+  ctx.save(); ctx.translate(0, -up); ctx.fillStyle = koyu(C[p.color], .7); ctx.fill(p.path); govde(p, () => koyu(C[p.color], .72), 0); ctx.restore();   // yan yüz: düz boya değil, üst yüzle aynı hamur dokusu (koyu tonda)
   ctx.translate(0, -up - depth);
   body(p, now);
   if (p.flash) {
