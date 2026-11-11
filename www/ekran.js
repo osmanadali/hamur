@@ -78,7 +78,7 @@ function yol() {
       if (durum === 'kilitli') b.disabled = true; else { const s = document.createElement('span'); s.textContent = n; b.appendChild(s); b.onclick = () => oyna(n); }
       if (durum === 'tamam') { const y = save.yildiz?.[n] || 1, e = document.createElement('em'); for (let k = 0; k < 3; k++) { const yi = document.createElement('i'); if (k >= y) yi.className = 'bos'; e.appendChild(yi); } b.appendChild(e); }
       if (n % 10 === 0) b.classList.add('figurlu');
-      if ((n - 1) % 60 === 0) { const kp = document.createElement('div'); kp.className = 'kapi'; kp.textContent = L(DUNYA[dunyaNo(n)][0], DUNYA[dunyaNo(n)][1]); kp.style.top = (y * 100 - 5.4) + '%'; kp.style.left = (x < .5 ? x * 100 + 6 : x * 100 - 6) + '%'; karo.appendChild(kp); }   // dünyanın girişi   // her 10. bölüm bir figürü tamamlar
+      if ((n - 1) % 60 === 0) { const kp = document.createElement('div'); kp.className = 'kapi'; kp.textContent = L(DUNYA[dunyaNo(n)][0], DUNYA[dunyaNo(n)][1]); kp.style.top = (y * 100 - 1.2) + '%'; kp.style.left = (x < .5 ? x * 100 + 34 : x * 100 - 34) + '%'; karo.appendChild(kp); }   // dünyanın girişi   // her 10. bölüm bir figürü tamamlar
       if (n === sira) hedef = b;
       karo.appendChild(b);
     });
