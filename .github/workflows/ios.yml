@@ -36,7 +36,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx cap add ios
       - name: İkon ve açılış ekranı (assets/)
-        run: npx @capacitor/assets generate --ios --iconBackgroundColor '#c59af1' --iconBackgroundColorDark '#c59af1' --splashBackgroundColor '#c59af1' --splashBackgroundColorDark '#c59af1'
+        run: npx @capacitor/assets generate --ios --iconBackgroundColor '#c28bee' --iconBackgroundColorDark '#c28bee' --splashBackgroundColor '#c28bee' --splashBackgroundColorDark '#c28bee'
       - name: Yerel projeyi hazırla (Info.plist, yalnız iPhone + dikey, sürüm, simge)
         env: { FIREBASE_IOS_PLIST: '${{ secrets.FIREBASE_IOS_PLIST }}' }   # isteğe bağlı: yoksa ölçüm kapalı derlenir (tools/olcum-hazirla.cjs)
         run: bash tools/ios/hazirla.sh

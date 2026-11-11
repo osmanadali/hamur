@@ -562,3 +562,6 @@ button.bas{animation:bas .15s ease both}
 #sOyun .foot::after{background-image:url(img/kar-3-kare.webp);background-size:400% 100%;background-position:0 50%;animation:dort-kare 1.8s step-end infinite;width:104px;height:104px;right:-26px}
 @keyframes dort-kare{0%{background-position:0 50%}25%{background-position:33.333% 50%}50%{background-position:66.667% 50%}75%{background-position:100% 50%}}
 @media (prefers-reduced-motion:reduce){#sOyun .foot::before,#sOyun .foot::after{animation:none}}
+
+/* açılışın ilk karesi: yeni ikon, köşeleri yuvarlak */
+.acilis>img:first-child{border-radius:22%;box-shadow:0 10px 24px rgba(60,25,100,.3)}

@@ -2,14 +2,14 @@
   "appId": "com.osmanadali.hamur",
   "appName": "Hamur",
   "webDir": "www",
-  "backgroundColor": "#c59af1",
+  "backgroundColor": "#c28bee",
   "loggingBehavior": "none",
   "plugins": {
     "SplashScreen": {
       "launchAutoHide": true,
       "launchShowDuration": 3000,
       "launchFadeOutDuration": 0,
-      "backgroundColor": "#c59af1",
+      "backgroundColor": "#c28bee",
       "showSpinner": false
     },
     "SystemBars": {
