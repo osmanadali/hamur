@@ -60,7 +60,7 @@ const DUNYA = [['Hamur Diyarı', 'Dough Land', null], ['Gece Fırını', 'Night 
   ['Kurabiye Ormanı', 'Cookie Forest', [110, 185, 235]], ['Çikolata Vadisi', 'Chocolate Valley', [140, 92, 62]], ['Kış Masalı', 'Winter Tale', [175, 215, 240]], ['Limon Bahçesi', 'Lemon Grove', [245, 225, 105]], ['Gökkuşağı', 'Rainbow', [215, 180, 240]]];
 const dunyaNo = n => Math.min(DUNYA.length - 1, Math.floor((n - 1) / 60));
 const dunyaRenk = (n, a) => { const r = DUNYA[dunyaNo(Math.max(1, n))][2]; return r ? `rgba(${r.join(',')},${a})` : 'rgba(201,168,238,0)'; };
-const SUS_DUNYA = new Set([4, 5, 7, 8, 9]);   // kendi süs seti olan dünyalar (sus-dN-1…6)
+const SUS_DUNYA = new Set([2, 3, 4, 5, 6, 7, 8, 9]);   // kendi süs seti olan dünyalar (sus-dN-1…6)
 function yol() {
   const el = $('yol'), sira = siradaki(); el.innerHTML = '';
   const karoSay = Math.ceil(N / DURAK.length);

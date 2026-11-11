@@ -33,7 +33,7 @@ const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).to
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
 const TEMA_GORSEL = ['tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3', 'tepsi-4', 'hucre-4', 'tepsi-5', 'hucre-5', 'tepsi-6', 'hucre-6', 'tepsi-7', 'hucre-7', 'tepsi-8', 'hucre-8', 'tepsi-9', 'hucre-9'];
-const CUKUR = { 1: '#5a2a66', 2: '#a8642c', 3: '#5fb98a', 4: '#4f9fd0', 5: '#5a3018', 6: '#7fb0d8', 7: '#d9a520', 8: '#a880d8' };   // dünyaya göre kalıp çukurunun rengi   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
+const CUKUR = { 1: '#5a2a66', 2: '#a8642c', 3: '#5fb98a', 4: '#86b53c', 5: '#5a3018', 6: '#7fb0d8', 7: '#d9a520', 8: '#a880d8' };   // dünyaya göre kalıp çukurunun rengi   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
 const IMG = {};
 for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', 'buz', ...TEMA_GORSEL]) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
 
