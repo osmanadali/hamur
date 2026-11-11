@@ -717,3 +717,45 @@ html{background:#c9a8ee}
 .rx i[data-c=g]{background-image:url(img/blok-g.webp)!important}.rx i[data-c=o]{background-image:url(img/blok-o.webp)!important}.rx i[data-c=p]{background-image:url(img/blok-p.webp)!important}
 .acilis .hs{top:53.9%;height:13.7%}
 .hap.gunluk.serili::after{content:none}
+
+/* ================= iPhone ekran görüntülerinden ================= */
+/* yükleme ekranı: arkası dolu (gökyüzü nesneleri), karakterler büyük, yeşil köşede uyuyor */
+.acilis .adekor i{position:absolute;background-position:center;background-size:contain;background-repeat:no-repeat;filter:drop-shadow(0 6px 5px rgba(70,30,120,.2))}
+.adekor .d1{background-image:url(img/n-ay.webp);right:-10px;top:7%;width:130px;height:80px}
+.adekor .d2{background-image:url(img/n-cirpici-1.webp);left:-24px;top:13%;width:120px;height:70px;animation:don 40s linear infinite}
+.adekor .d3{background-image:url(img/n-merdiven.webp);left:-26px;top:36%;width:104px;height:110px}
+.adekor .d4{background-image:url(img/n-ev.webp);left:-22px;bottom:15%;width:140px;height:134px}
+.adekor .d5{background-image:url(img/n-donut.webp);right:-26px;bottom:5%;width:140px;height:90px}
+.adekor .d6{background-image:url(img/n-seker.webp);right:-14px;top:33%;width:92px;height:76px}
+.adekor .uyu{background-image:url(img/kar-4-kare.webp);background-size:400% 100%;animation:dort-kare 2.4s step-end infinite;right:8%;bottom:12%;width:130px;height:130px}
+.acilis .cek{width:min(112vw,560px)}
+.acilis .izle{width:min(98vw,460px);top:calc(50% + 104px)}
+.acilis p{top:calc(50% + 54px);font-size:30px}
+.acilis .alogo{width:min(84vw,360px);margin-left:calc(min(84vw,360px) / -2);top:calc(50% - 290px)}
+@media (prefers-reduced-motion:reduce){.adekor .d2,.adekor .uyu{animation:none}}
+/* geri düğmeleri hep mor */
+#magazaGeri,#tepsiGeri,#yolGeri{background-image:url(img/top-mor.webp)}
+/* mağaza ve tepsi: başlık ayrı bir şerit değil; içerik başlığın altında eriyerek kayar */
+#sMagaza,#sTepsi{position:relative}
+#sMagaza .ust,#sTepsi .ust{position:absolute;left:0;right:0;top:0;z-index:2;padding:max(12px,env(safe-area-inset-top,0px)) 16px 0}
+.magaza,.figurler{padding-top:calc(max(12px,env(safe-area-inset-top,0px)) + 74px);-webkit-mask:linear-gradient(transparent calc(max(12px,env(safe-area-inset-top,0px)) + 34px),#000 calc(max(12px,env(safe-area-inset-top,0px)) + 76px));mask:linear-gradient(transparent calc(max(12px,env(safe-area-inset-top,0px)) + 34px),#000 calc(max(12px,env(safe-area-inset-top,0px)) + 76px))}
+#sTepsi .aciklama{position:absolute;left:0;right:0;top:calc(max(12px,env(safe-area-inset-top,0px)) + 50px);z-index:2;margin:0}
+.figurler{padding-top:calc(max(12px,env(safe-area-inset-top,0px)) + 96px)}
+/* bölümler: başlığın altında bulut ve şerit yok */
+#sYol .ust{background:none;min-height:0}
+#sYol .ust::before{display:none}
+.sus.kucuk{width:19%;opacity:.95}
+/* joker düğmeleri: Safari süzgeç zincirini bozuyordu. Kalınlık ayrı katman, pasiflik saydamlıkla */
+.guc:not(.tarif),.guc:not(.tarif):active,.guc:not(.tarif):disabled,.guc:not(.tarif)[aria-pressed=true]{filter:none}
+.guc:not(.tarif)::after{content:'';position:absolute;inset:0;top:5px;bottom:-5px;z-index:-1;background:url(img/blok-krem.webp) center/100% 100% no-repeat;filter:brightness(.72)}
+.guc:not(.tarif){isolation:isolate}
+.guc:not(.tarif)::before{z-index:-1}
+.guc:not(.tarif):active{transform:translateY(4px)}
+.guc:not(.tarif):active::after{top:1px;bottom:-1px}
+.guc:not(.tarif):disabled{opacity:.5}
+.guc:not(.tarif)[aria-pressed=true]{outline:3px solid #a274e0;outline-offset:2px;border-radius:16px}
+
+.acilis .adekor .uyu{background-size:400% 100%;background-position:0 50%}
+.acilis .cek{width:min(100vw,520px)}
+.guc:not(.tarif)::after{z-index:-2}
+.adekor .d3{top:27%}
