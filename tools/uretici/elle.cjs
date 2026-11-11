@@ -17,7 +17,7 @@ const BOLUM = {
   6: { tanitim: true, t: 40, hint: ['Dar aralıktan tek tek geçir, sonra birleştir.', 'Pass them through the gap one by one, then join them.'],
     map: ['r...r', '.....', '##.##', '.....', '.....'],
     molds: ['.....', '.....', '.....', '.....', '.RR..'] },
-  9: { t: 60, hint: ['Yan yana yapışan parça dar aralıktan geçmez.', 'A piece stuck side by side cannot pass the narrow gap.'],
+  10: { t: 60, hint: ['Yan yana yapışan parça dar aralıktan geçmez.', 'A piece stuck side by side cannot pass the narrow gap.'],
     map: ['r.r...', '......', 'r.r...', '###.##', '......', '......', '......'],
     molds: ['......', '......', '......', '......', '......', '.RR...', '.RR...'] },
   // --- yeşil ---
