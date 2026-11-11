@@ -625,6 +625,16 @@ function yastik(hex) {
     o[i * 4] = r * k * (1 - un) + 255 * un; o[i * 4 + 1] = g * k * (1 - un) + 255 * un; o[i * 4 + 2] = b * k * (1 - un) + 255 * un; o[i * 4 + 3] = blokGri[i * 2 + 1]; }
   x.putImageData(id, 0, 0); if (boyali.size > 80) boyali.clear(); boyali.set(hex, c); return c;
 }
+// Doku deseni: bloğun orta bölgesinden (kenar gölgesi ve un yok) dört yöne aynalanmış, eksiz döşenen karo. Kareler arasındaki dolgu,
+// iç köşeler ve yan yüz bununla boyanır: hiçbir yer düz boya kalmaz.
+const desenler = new Map();
+function doku(hex) {
+  const sp = yastik(hex); if (!sp) return hex;
+  const t = Math.max(8, Math.round(cell * .42)), k = hex + t; let d = desenler.get(k); if (d) return d;
+  const c = document.createElement('canvas'); c.width = c.height = t * 2; const x = c.getContext('2d');
+  for (const [fx, fy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) { x.save(); x.translate(fx < 0 ? 2 * t : 0, fy < 0 ? 2 * t : 0); x.scale(fx, fy); x.drawImage(sp, BLOK * .28, BLOK * .3, BLOK * .44, BLOK * .44, 0, 0, t, t); x.restore(); }
+  d = x.createPattern(c, 'repeat'); if (desenler.size > 60) desenler.clear(); desenler.set(k, d); return d;
+}
 const koyu = (h, s) => '#' + rgb(h).map(v => Math.round(v * s).toString(16).padStart(2, '0')).join('');
 // Parçanın gövdesi: her kare ayrı yastık olarak kalır. Komşu iki karenin arası aynı renkle dolar, dikişte hafif bir çukur gölgesi olur.
 // renkOf(i): i. karenin rengi (#rrggbb). Çizim parçanın ilk karesinin köşesine göredir. cukur: dikiş gölgesinin koyuluğu.
@@ -632,7 +642,7 @@ function govde(p, renkOf, cukur = .2) {
   const sk = p.sik, st2 = sk ? (performance.now() - sk.t0) / 420 : 1, sa = st2 < 1 && !RM ? Math.sin(st2 * Math.PI) * (1 - st2 * .5) * .34 : 0;
   const SX = c => sa ? (sk.x - (c[0] + .5)) * cell * sa : 0, SY = c => sa ? (sk.y - (c[1] + .5)) * cell * sa : 0;
   const [x0, y0] = p.cells[0], S = new Set(p.cells.map(c => c[0] + ',' + c[1])), ins = cell * .02, rad = cell * .2, dolu = (x, y) => S.has(x + ',' + y);
-  const dik = (sp, hex, x, y, w, h) => { if (sp) ctx.drawImage(sp, BLOK * .32, BLOK * .32, BLOK * .36, BLOK * .36, x, y, w, h); else { ctx.fillStyle = hex; ctx.fillRect(x, y, w, h); } };
+  const dik = (sp, hex, x, y, w, h) => { ctx.fillStyle = doku(hex); ctx.fillRect(x, y, w, h); };
   p.cells.forEach((c, i) => {   // köprüler
     const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell + SX(c), Y = (c[1] - y0) * cell + SY(c), sag = dolu(c[0] + 1, c[1]), alt = dolu(c[0], c[1] + 1);
     if (sag) dik(sp, hex, X + cell - rad, Y + rad * .85, rad * 2, cell - rad * 1.7);
@@ -755,7 +765,7 @@ function drawPiece(p, now, k, glow) {
   ctx.save();   // yumuşak gölge
   ctx.translate(0, cell * (.07 + .1 * p.lift) * k); ctx.shadowColor = 'rgba(60,25,100,' + (.5 * k) + ')'; ctx.shadowBlur = cell * (.14 + .3 * p.lift) * dpr; ctx.shadowOffsetY = cell * .03 * dpr;
   ctx.fillStyle = 'rgba(60,25,100,' + (.2 * k) + ')'; ctx.fill(p.path); ctx.restore();
-  ctx.save(); ctx.translate(0, -up); ctx.fillStyle = koyu(C[p.color], .7); ctx.fill(p.path); govde(p, () => koyu(C[p.color], .72), 0); ctx.restore();   // yan yüz: düz boya değil, üst yüzle aynı hamur dokusu (koyu tonda)
+  ctx.save(); ctx.translate(0, -up); ctx.fillStyle = doku(koyu(C[p.color], .7)); ctx.fill(p.path); govde(p, () => koyu(C[p.color], .72), 0); ctx.restore();   // yan yüz: düz boya değil, üst yüzle aynı hamur dokusu (koyu tonda)
   ctx.translate(0, -up - depth);
   body(p, now);
   if (p.flash) {
