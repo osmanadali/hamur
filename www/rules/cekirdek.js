@@ -59,7 +59,8 @@
     const makas = [];
     L.molds.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'x') makas.push({ x, y, open: true }); }));
     return { W, H, walls, wallCells, makas,
-      pieces: groups(L.map, 'rybgop').map(g => ({ color: g.ch, cells: g.cells })),
+      // Donmuş parça (D1): map'te büyük harf (R Y B …). Oyuncu onu sürükleyemez; başka bir parça ona yapışınca çözülür (birleşen parça serbesttir).
+      pieces: groups(L.map.map(r => r.replace(/[RYBGOP]/g, c => c.toLowerCase())), 'rybgop').map(g => { const p = { color: g.ch, cells: g.cells }; if (g.cells.some(c => /[RYBGOP]/.test(L.map[c[1]][c[0]]))) p.donuk = true; return p; }),
       holes: groups(L.molds, 'RYBGOP').map(g => ({ color: g.ch.toLowerCase(), cells: g.cells, filled: false })) };
   }
   const fuseColor = (a, b) => a === b ? a : MIX[a + b];
@@ -72,6 +73,7 @@
   const ayril = (st, p) => { if (st.makas) for (const m of st.makas) if (m.hold && p.cells.some(c => c[0] === m.x && c[1] === m.y)) m.hold = false; };
   // Parçanın (dx,dy) kadar kayması: 'yol' = serbest · 'makas' = yalnız açık makas engelliyor (çok kareli parça; kesilerek girilir) · '' = engel
   function gecis(st, p, dx, dy) {
+    if (p.donuk) return '';   // donmuş parça kıpırdamaz
     const occ = new Set(); let m = false;
     for (const q of st.pieces) if (q !== p) for (const c of q.cells) occ.add(key(c[0], c[1]));
     for (const [x, y] of p.cells) {
@@ -124,9 +126,9 @@
   function fuse(st, p, q) {
     const color = fuseColor(p.color, q.color), s = seam(p, q, st);
     if (!color || !s.length) return null;
-    const ev = { type: 'fuse', seam: s, color, mixed: color !== p.color || color !== q.color, q,
+    const ev = { type: 'fuse', seam: s, color, mixed: color !== p.color || color !== q.color, q, cozuldu: !!(p.donuk || q.donuk),
       cols: p.cells.map(() => p.color).concat(q.cells.map(() => q.color)) };
-    p.cells = p.cells.concat(q.cells); p.color = color;
+    p.cells = p.cells.concat(q.cells); p.color = color; delete p.donuk;
     st.pieces.splice(st.pieces.indexOf(q), 1);
     return ev;
   }
@@ -208,12 +210,12 @@
   // Durumun kopyası (geri alma, arama). Yalnız kural alanları kopyalanır; walls ve wallCells paylaşılır (değişmezler).
   function clone(st) {
     return { W: st.W, H: st.H, walls: st.walls, wallCells: st.wallCells, makas: (st.makas || []).map(m => ({ x: m.x, y: m.y, open: m.open, hold: !!m.hold })),
-      pieces: st.pieces.map(p => ({ color: p.color, cells: p.cells.map(c => [c[0], c[1]]) })),
+      pieces: st.pieces.map(p => { const q = { color: p.color, cells: p.cells.map(c => [c[0], c[1]]) }; if (p.donuk) q.donuk = true; return q; }),
       holes: st.holes.map(h => ({ color: h.color, cells: h.cells, filled: h.filled })) };
   }
   // Durumun kimliği: parça sırasından bağımsız. Aynı kimlik = aynı oyun durumu.
   function stateKey(st) {
-    const ps = st.pieces.map(p => p.color + p.cells.map(c => c[1] * st.W + c[0]).sort((a, b) => a - b).join('.')).sort();
+    const ps = st.pieces.map(p => (p.donuk ? '*' : '') + p.color + p.cells.map(c => c[1] * st.W + c[0]).sort((a, b) => a - b).join('.')).sort();
     return ps.join('|') + '#' + st.holes.map(h => h.filled ? 1 : 0).join('') + (st.makas && st.makas.length ? '#' + st.makas.map(m => m.open ? 1 : m.hold ? 2 : 0).join('') : '');
   }
   // Bölüm dosyası doğrulaması: hata metinlerinin listesi (boşsa geçerli). Çözülebilirliğe bakmaz (o çözücünün işi).
@@ -223,7 +225,7 @@
     const W = L.map[0].length, H = L.map.length;
     if (W > 10 || H > 10) E.push('tahta en çok 10×10 olabilir');
     if (L.molds.length !== H) E.push('map ve molds aynı sayıda satır içermeli');
-    for (const [ad, rows, ok] of [['map', L.map, '.#rybgop'], ['molds', L.molds, '.RYBGOPx']]) rows.forEach((r, y) => {
+    for (const [ad, rows, ok] of [['map', L.map, '.#rybgopRYBGOP'], ['molds', L.molds, '.RYBGOPx']]) rows.forEach((r, y) => {
       if (typeof r !== 'string' || r.length !== W) E.push(`${ad} ${y + 1}. satır ${W} kare olmalı`);
       else for (const ch of r) if (!ok.includes(ch)) E.push(`${ad} ${y + 1}. satırda geçersiz harf: ${ch}`);
     });

@@ -67,19 +67,19 @@ const BANT = [
   { no: 7, ad: 'makaslı karışık', bas: 91, son: 120, havuz: 60, boy: [[5, 6], [6, 6], [6, 7]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [3, 6], makas: [1, 2],
     renk: [['g', 'g'], ['p', 'p'], ['o', 'o'], ['r', 'r', 'g'], ['b', 'b', 'o'], ['g', 'g', 'b'], ['p', 'p', 'y'], ['o', 'o', 'b'], ['g', 'g', 'p'], ['p', 'p', 'o']], karisim: 1 },
   { no: 8, ad: 'büyük tahta', bas: 121, son: 150, havuz: 60, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik', 'adacik'], kalip: [3, 4], kalipBoy: [2, 4], parca: [5, 8],
-    renk: [['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'p', 'r'], ['g', 'o', 'b'], ['p', 'o', 'y'], ['g', 'p', 'o', 'r']], karisim: 1 },  { no: 9, ad: 'ileri 1', bas: 151, son: 200, havuz: 150, tohum: 71271, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
+    renk: [['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'p', 'r'], ['g', 'o', 'b'], ['p', 'o', 'y'], ['g', 'p', 'o', 'r']], karisim: 1 },  { no: 9, ad: 'donmuş 1', donuk: [1, 2], bas: 151, son: 200, havuz: 150, tohum: 71271, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
     renk: [['g', 'p'], ['g', 'o'], ['p', 'o'], ['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'g', 'p'], ['p', 'p', 'o'], ['g', 'b', 'o']], karisim: 1 },
   { no: 10, ad: 'ileri 2', bas: 201, son: 250, havuz: 150, tohum: 79190, boy: [[5, 6], [6, 6], [6, 7]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [3, 6], makas: [1, 2],
     renk: [['g', 'g'], ['p', 'p'], ['o', 'o'], ['r', 'r', 'g'], ['b', 'b', 'o'], ['g', 'g', 'b'], ['p', 'p', 'y'], ['o', 'o', 'b'], ['g', 'g', 'p'], ['p', 'p', 'o']], karisim: 1 },
-  { no: 11, ad: 'ileri 3', bas: 251, son: 300, havuz: 150, tohum: 87109, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik', 'adacik'], kalip: [3, 4], kalipBoy: [2, 4], parca: [5, 8],
+  { no: 11, ad: 'donmuş 3', donuk: [1, 2], bas: 251, son: 300, havuz: 150, tohum: 87109, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik', 'adacik'], kalip: [3, 4], kalipBoy: [2, 4], parca: [5, 8],
     renk: [['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'p', 'r'], ['g', 'o', 'b'], ['p', 'o', 'y'], ['g', 'p', 'o', 'r']], karisim: 1 },
   { no: 12, ad: 'ileri 4', bas: 301, son: 350, havuz: 150, tohum: 95028, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
     renk: [['g', 'p'], ['g', 'o'], ['p', 'o'], ['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'g', 'p'], ['p', 'p', 'o'], ['g', 'b', 'o']], karisim: 1 },
-  { no: 13, ad: 'ileri 5', bas: 351, son: 400, havuz: 150, tohum: 102947, boy: [[5, 6], [6, 6], [6, 7]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [3, 6], makas: [1, 2],
+  { no: 13, ad: 'donmuş 5', donuk: [1, 2], bas: 351, son: 400, havuz: 150, tohum: 102947, boy: [[5, 6], [6, 6], [6, 7]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [3, 6], makas: [1, 2],
     renk: [['g', 'g'], ['p', 'p'], ['o', 'o'], ['r', 'r', 'g'], ['b', 'b', 'o'], ['g', 'g', 'b'], ['p', 'p', 'y'], ['o', 'o', 'b'], ['g', 'g', 'p'], ['p', 'p', 'o']], karisim: 1 },
   { no: 14, ad: 'ileri 6', bas: 401, son: 450, havuz: 150, tohum: 110866, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik', 'adacik'], kalip: [3, 4], kalipBoy: [2, 4], parca: [5, 8],
     renk: [['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'p', 'r'], ['g', 'o', 'b'], ['p', 'o', 'y'], ['g', 'p', 'o', 'r']], karisim: 1 },
-  { no: 15, ad: 'ileri 7', bas: 451, son: 500, havuz: 150, tohum: 118785, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
+  { no: 15, ad: 'donmuş 7', donuk: [1, 2], bas: 451, son: 500, havuz: 150, tohum: 118785, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
     renk: [['g', 'p'], ['g', 'o'], ['p', 'o'], ['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'g', 'p'], ['p', 'p', 'o'], ['g', 'b', 'o']], karisim: 1 },
 ];
 const PARTS = K.PARTS;
@@ -218,10 +218,18 @@ const sekilKanon = cells => {
 };
 const tur = L => { const st = K.load(L), sinif = c => 'ryb'.includes(c) ? 'a' : 'k'; return st.holes.map(h => sinif(h.color) + sekilKanon(h.cells)).sort().join(',') + ':' + st.pieces.map(p => sinif(p.color) + p.cells.length).sort().join('') + ':' + st.makas.length; };   // duvar anahtara girmez: aynı bulmacanın duvarlı hali de aynı histir
 
+// Donmuş parça: adayın rastgele n parçası dondurulur (map'te büyük harf). Çözülemez olursa puanla eler: donmuş parça tek başına
+// kalıp dolduramaz, ancak başka bir parçanın ona yapışacağı kurgularda yaşar.
+function dondur(r, L, n) {
+  const ps = karistir(r, K.load(L).pieces).slice(0, n), map = L.map.map(row => [...row]);
+  for (const p of ps) for (const [x, y] of p.cells) map[y][x] = map[y][x].toUpperCase();
+  return { ...L, map: map.map(row => row.join('')) };
+}
 function havuz(B, n = 70, tohum = 1000) {
   const r = rastgele(tohum + B.no * 7919), out = [], gor = new Set(); let deneme = 0;
   while (out.length < n && deneme++ < n * 400) {
-    const L = aday(r, B); if (!L) continue;
+    let L = aday(r, B); if (!L) continue;
+    if (B.donuk) L = dondur(r, L, B.donuk[0] + Math.floor(r() * (B.donuk[1] - B.donuk[0] + 1)));
     const k = imza(L); if (gor.has(k)) continue; gor.add(k);
     const p = puanla(L, B); if (p) out.push(p);
   }

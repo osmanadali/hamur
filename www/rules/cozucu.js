@@ -183,6 +183,7 @@
   // i. parçanın şu anki durumda ulaşabildiği yerler: [{ dx, dy, d (kare adımı), tip: 'otur' | 'yapis' | 'yer', park }]
   // Kalıbının üstüne gelen parça oraya oturur ve daha ileri gidemez. park: 'kalip' = parça açık bir kalıbın tamamen içinde.
   function hedefler(ctx, st, i) {
+    if (st.pieces[i].donuk) return [];   // donmuş parça hamle yapamaz (ona yapışılır)
     const { W, H, wall } = ctx, p = st.pieces[i], occ = new Int8Array(W * H), hole = new Int8Array(W * H).fill(-1), mk = new Uint8Array(W * H), ya = new Uint8Array(W * H), cok = p.cells.length > 1;
     if (st.makas) for (const m of st.makas) { if (m.open) mk[m.y * W + m.x] = 1; if (m.open || m.hold) ya[m.y * W + m.x] = 1; }
     for (const c of p.cells) if (!mk[c[1] * W + c[0]]) ya[c[1] * W + c[0]] = 0;   // parça ayrılınca altındaki "tutan" makas kapanır

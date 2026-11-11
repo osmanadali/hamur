@@ -174,6 +174,7 @@ function olaylar(p, ev) {
   const now = performance.now();
   for (const e of ev) {
     if (e.type === 'fuse') {
+      if (e.cozuldu) { const [bx, by] = center(p); burst(bx, by, ['#ffffff', '#cfeaff', '#a8d8ff'], 18, cell * 3.4); tone(1568, .12, 'triangle', 2093, .06); tone(2637, .18, 'triangle', 0, .05, .08); buzz([8, 30, 8]); }   // buz kırılır
       const [x0, y0] = p.cells[0];
       let mx = 0, my = 0;
       for (const s of e.seam) { mx += s[0] + .5 + s[2] / 2 - x0; my += s[1] + .5 + s[3] / 2 - y0; }
@@ -509,6 +510,7 @@ cv.addEventListener('pointerdown', e => {
   if (makasKoy) { e.preventDefault(); return makasKonur(gx, gy); }
   const p = st.pieces.find(q => q.cells.some(c => c[0] === gx && c[1] === gy));
   if (!p) return;
+  if (p.donuk) { p.shakeT = performance.now() - 900; p.pv += 1; sonGirdi = performance.now(); buzz(18); tone(1900, .05, 'triangle', 1500, .05); tone(2400, .08, 'triangle', 1800, .04, .05); bilgi(L('Donmuş! Yanına bir hamur getir', 'Frozen! Bring dough next to it')); return; }   // donmuş parça sürüklenmez
   e.preventDefault();
   try { cv.setPointerCapture(e.pointerId); } catch {}
   drag = { p, id: e.pointerId, gi: p.cells.findIndex(c => c[0] === gx && c[1] === gy), offx: x / cell - gx - .5, offy: y / cell - gy - .5, px: x, py: y,
@@ -726,6 +728,7 @@ function damga(renk, cx, cy, boy, a) {
 const DIKEY = { yukari: 0, asagi: 1 };
 const YUZ = { sakin: 0, mutlu: 1, kirp: 2, sol: 3, sag: 4, telas: 5, saskin: 6, uzgun: 7 };
 function ifade(p, now) {
+  if (p.donuk) return 'kirp';   // donmuş parça uyur
   if (p.ifade) return p.ifade;   // açılış sahnesi ifadeyi kendisi verir
   if (p.mutluT && now < p.mutluT && state === 'play' && !(p.shakeT && now - p.shakeT < 1600)) return 'mutlu';   // yapıştıktan sonra kısa süre mutlu
   if (state === 'lost' || (p.shakeT && now - p.shakeT < 1600)) return 'uzgun';
@@ -807,6 +810,17 @@ function drawPiece(p, now, k, glow) {
   // (tutunca dışta yanıp sönen renk çizgisi kaldırıldı: yaklaşan parçalar eğilerek ve iplikle haber verir)
   if (save.damga && !p.mix) p.cells.forEach((c, i) => { if (i !== p.face || p.cells.length === 1) damga(p.color, (c[0] - x0 + .5) * cell, (c[1] - y0 + (p.cells.length === 1 ? .23 : .5)) * cell, p.cells.length === 1 ? .32 : .5, .75); });   // tek karede yüzün üstüne (alna) küçük damga
   if (k > .25) face(p, now);
+  if (p.donuk) {   // buz: soğuk mavi-beyaz örtü, üstte kar, köşelerde kırağı pırıltısı
+    ctx.save(); ctx.clip(p.path);
+    ctx.fillStyle = 'rgba(205,232,255,.62)'; ctx.fill(p.path);
+    const g = ctx.createLinearGradient(0, 0, cell * .9, cell * .9); g.addColorStop(0, 'rgba(255,255,255,.75)'); g.addColorStop(.28, 'rgba(255,255,255,0)'); g.addColorStop(.6, 'rgba(255,255,255,.28)'); g.addColorStop(.72, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fill(p.path);
+    ctx.restore();
+    ctx.lineWidth = cell * .07; ctx.strokeStyle = 'rgba(235,247,255,.95)'; ctx.stroke(p.path);
+    ctx.fillStyle = '#fff';
+    for (const c of p.cells) { const X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell, pr = .5 + .5 * Math.sin(now / 420 + c[0] * 2 + c[1]);
+      for (const [fx, fy, r] of [[.2, .2, .05], [.8, .28, .035], [.3, .82, .03]]) { ctx.globalAlpha = .55 + .45 * pr; ctx.beginPath(); ctx.arc(X + fx * cell, Y + fy * cell, cell * r, 0, 6.2832); ctx.fill(); } }
+    ctx.globalAlpha = 1;
+  }
   ctx.restore();
 }
 // Hamur ipliği: iki parçanın ortak kenarında, çıkacak renkte, doldukça kalınlaşan köprü. Oyuncu ne olacağını buradan görür.

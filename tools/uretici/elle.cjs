@@ -49,6 +49,9 @@ const BOLUM = {
     molds: ['.....', '.....', '..x..', 'G...G'] },
 };
 // Üretilen bölümlere eklenen ipuçları (bölüm numarası → [Türkçe, English]): yeni bir kavramın ilk göründüğü ipuçsuz bölümler için.
+// Donmuş parça (151): tanıtım
+BOLUM[151] = { tanitim: true, t: 40, hint: ['Donmuş hamur kıpırdamaz. Yanına aynı renkten bir parça getir: buz çözülür.', 'Frozen dough cannot move. Bring a matching piece next to it: the ice melts.'],
+  map: ['.....', 'r...R', '.....', '.....'], molds: ['.....', '.....', '.....', '.RR..'] };
 BOLUM.ipucu = {
   3: ['Her renk kendi kalıbına gider.', 'Each color goes to its own mold.'],
 };
