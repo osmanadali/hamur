@@ -554,3 +554,11 @@ button.bas{animation:bas .15s ease both}
 .hud{margin-top:14px}
 /* yol üstündeki karakterler */
 .sus.kar.ustte{width:21%;z-index:1}
+
+/* şerit kuzey-güney yönünde dar; yazı yayı bandın yayıyla aynı */
+.tost b{aspect-ratio:480/230}
+/* alt köşelerdeki yeşil (uyur) ve mavi (kenardan bakar) kare kare canlanır */
+#sOyun .foot::before{background-image:url(img/kar-4-kare.webp);background-size:400% 100%;background-position:0 50%;animation:dort-kare 2.4s step-end infinite;width:104px;height:104px}
+#sOyun .foot::after{background-image:url(img/kar-3-kare.webp);background-size:400% 100%;background-position:0 50%;animation:dort-kare 1.8s step-end infinite;width:104px;height:104px;right:-26px}
+@keyframes dort-kare{0%{background-position:0 50%}25%{background-position:33.333% 50%}50%{background-position:66.667% 50%}75%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){#sOyun .foot::before,#sOyun .foot::after{animation:none}}

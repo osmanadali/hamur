@@ -393,9 +393,9 @@ async function reklamDevam() {   // kaybedince: ödüllü reklam izleyip 15 sn i
   if (oldu && state === 'lost') canlan();
 }
 // Şerit yazısı: şerit kavisli olduğu için yazı da aynı yay üstünde dizilir (SVG textPath). Uzun yazı küçülür.
-function seritYazi(m) {
+function seritYazi(m) {   // şerit dikeyde daraltılmış çizilir (480×230); yazının yayı şeridin krem bandının yayıyla aynıdır
   const b = document.createElement('b'), boy = m.length > 17 ? 25 : m.length > 13 ? 31 : m.length > 9 ? 38 : 46;
-  b.innerHTML = `<svg viewBox="0 0 480 317" aria-hidden="true"><path id="seritYay" d="M62,199 Q240,133 418,199" fill="none"/><text font-size="${boy}" text-anchor="middle"><textPath href="#seritYay" startOffset="50%"></textPath></text></svg>`;
+  b.innerHTML = `<svg viewBox="0 0 480 230" aria-hidden="true"><path id="seritYay" d="M66,${124 + boy * .34} Q240,${78 + boy * .34} 414,${124 + boy * .34}" fill="none"/><text font-size="${boy}" text-anchor="middle"><textPath href="#seritYay" startOffset="50%"></textPath></text></svg>`;
   b.querySelector('textPath').textContent = m; b.setAttribute('aria-label', m); return b;
 }
 let bilgiT = 0;
