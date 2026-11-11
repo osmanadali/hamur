@@ -34,7 +34,7 @@ const BOLUM = {
   29: { t: 55, hint: ['Kırmızı sarının yanında kalmasın: turuncunun kalıbı yok.', 'Do not leave red next to yellow: there is no orange mold.'],
     map: ['r.....', '......', '..y...', '......', '.....b', '......'],
     molds: ['......', '......', '......', '......', '.PP...', '.....Y'] },
-  30: { t: 70, hint: ['Önce aynı renkleri birleştir, sonra karıştır.', 'Join the same colors first, then mix.'],
+  28: { t: 70, hint: ['Önce aynı renkleri birleştir, sonra karıştır.', 'Join the same colors first, then mix.'],
     map: ['y..r.b', '......', '##..##', '......', 'b....y', '......', '......'],
     molds: ['......', '......', '......', '......', '......', 'GG..P.', 'G...P.'] },
   // --- makas ---
