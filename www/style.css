@@ -665,3 +665,21 @@ body[data-dunya="1"].oyun-acik .gok{opacity:0}
 .magaza .urun:not(:first-child):not(:has(em)) .icerik{flex:1}
 body[data-dunya="1"].oyun-acik #secs{color:#fff6d8;text-shadow:0 2px 0 #2a1d5c}
 body[data-dunya="1"].oyun-acik .saat{background:url(img/kadran.webp) center/74% no-repeat,conic-gradient(var(--halka) calc(var(--k)*360deg),rgba(255,255,255,.28) 0)}
+/* renk tarifi: düz kareler yerine oyundaki hamur blokları (gri blok, renkle çarpılır) */
+.rx i,.guc .mini i{background-image:url(img/blok.webp)!important;background-size:100% 100%!important;background-blend-mode:multiply;filter:brightness(2.05) saturate(1.1);-webkit-mask:url(img/blok.webp) center/100% 100% no-repeat;mask:url(img/blok.webp) center/100% 100% no-repeat;border-radius:0;box-shadow:none}
+.rx i{width:30px;height:30px}
+.rx.damgali i{width:32px;height:32px}
+.rx{font-size:20px;gap:6px 16px;padding:2px 4px}
+.rx span{gap:4px;color:#4a2d5e}
+/* tarif düğmesi: mavi + sarı = yeşil mini hamurlar, mor hamur hap */
+.guc.tarif{width:92px;background:none;box-shadow:none;border-style:solid;border-color:transparent;border-width:12px 20px;border-image:url(img/hap-mor.webp) 92 192 fill / 12px 20px stretch;filter:drop-shadow(0 4px 3px rgba(100,60,150,.35))}
+.guc .mini{display:flex;align-items:center;gap:2px}
+.guc .mini i{width:18px;height:18px;flex:none}
+.guc .mini i:nth-child(2)::before{content:'+'}
+.guc .mini i:last-child{width:22px;height:22px;margin-left:3px}
+.rx{font-size:16px;gap:4px 9px;max-width:calc(100vw - 20px);box-sizing:border-box}
+.rx i{width:24px;height:24px}
+.rx.damgali i{width:26px;height:26px}
+.rx span{gap:3px}
+.guc .mini i:nth-child(2)::before{content:none}
+.guc .mini i,.guc .mini i:last-child{width:20px;height:20px;margin:0}
