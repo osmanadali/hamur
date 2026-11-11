@@ -579,11 +579,11 @@ function drawHole(h, now) {
   const c = C[h.color], [hx, hy] = h.cells[0];
   ctx.save();
   if (h.shown) {
-    ctx.fillStyle = C.pit; ctx.fill(h.path);
+    ctx.fillStyle = +document.body.dataset.dunya === 1 ? '#5a2a66' : C.pit; ctx.fill(h.path);   // gece dünyasında çukur koyu
     ctx.save(); ctx.clip(h.path); ctx.translate(hx * cell, hy * cell + cell * .03); govde(h, () => koyu(c, .9), .05); ctx.restore();
     ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .12; ctx.strokeStyle = 'rgba(50,20,80,.3)'; ctx.translate(0, cell * .05); ctx.stroke(h.path); ctx.restore();
   } else {
-    ctx.fillStyle = C.pit; ctx.fill(h.path);
+    ctx.fillStyle = +document.body.dataset.dunya === 1 ? '#5a2a66' : C.pit; ctx.fill(h.path);   // gece dünyasında çukur koyu
     // içte koyu üst gölge (çukur derinliği): kenar çizgisinin gölgesi aşağı düşürülür ve kalıbın içine kırpılır; her şekilde kenarı izler
     ctx.save(); ctx.clip(h.path);
     ctx.lineWidth = cell * .1; ctx.strokeStyle = 'rgba(40,10,70,.45)';
