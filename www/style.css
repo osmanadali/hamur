@@ -806,3 +806,8 @@ html{background:#c9a8ee}
 .acilis .adekor .bs{aspect-ratio:3.08;top:calc(50% + 246px * var(--o))}
 .acilis .adekor .bs{top:calc(50% + 196px * var(--o))}
 .adekor .d3{display:none}
+/* yükleme: yakın başlar, belirgin açılır. Hareket yalnız transform ile (yerleşim yeniden hesaplanmaz): ekran hızında akıcı */
+.acilis .cek{--w:min(100vw,520px);width:var(--w)}
+.acilis .mavi,.cek .ad.sol{right:50.5%;transform:translate3d(calc(var(--y) * -.115 * var(--w)),0,0);will-change:transform}
+.acilis .kirmizi,.cek .ad.sag{left:50.5%;transform:translate3d(calc(var(--y) * .115 * var(--w)),0,0);will-change:transform}
+.acilis .hs{width:calc(24% + 2px);transform:translateX(-50%) scaleX(calc((1 + var(--y) * 23) / 24));will-change:transform}
