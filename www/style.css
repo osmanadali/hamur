@@ -683,3 +683,12 @@ body[data-dunya="1"].oyun-acik .saat{background:url(img/kadran.webp) center/74% 
 .rx span{gap:3px}
 .guc .mini i:nth-child(2)::before{content:none}
 .guc .mini i,.guc .mini i:last-child{width:20px;height:20px;margin:0}
+/* güçlendirici düğmeleri: düz beyaz kutu yerine krem hamur bloğu (oyundaki blokla aynı doku), altında kalınlık */
+.guc:not(.tarif){width:60px;height:56px;border-radius:0;box-shadow:none;background:none;filter:drop-shadow(0 4px 0 #c9a070) drop-shadow(0 5px 4px rgba(100,60,150,.35))}
+.guc:not(.tarif)::before{content:'';position:absolute;inset:0;background:#ffe2ad url(img/blok.webp) center/100% 100% no-repeat;background-blend-mode:multiply;filter:brightness(2.05);-webkit-mask:url(img/blok.webp) center/100% 100% no-repeat;mask:url(img/blok.webp) center/100% 100% no-repeat}
+.guc:not(.tarif)>*{position:relative}
+.guc:not(.tarif) b{position:absolute}
+.guc:not(.tarif) small{position:absolute;color:#6a3f10}
+.guc:not(.tarif):active{transform:translateY(3px);filter:drop-shadow(0 1px 0 #c9a070) brightness(.92)}
+.guc:not(.tarif):disabled{filter:drop-shadow(0 4px 0 #b9a895) grayscale(.75) opacity(.6)}
+.guc:not(.tarif)[aria-pressed=true]{outline:0;filter:drop-shadow(0 4px 0 #c9a070) drop-shadow(0 0 7px #a274e0) drop-shadow(0 0 2px #a274e0)}
