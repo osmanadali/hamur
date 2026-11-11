@@ -32,8 +32,9 @@ const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
 const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
+const TEMA_GORSEL = [];   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
 const IMG = {};
-for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', ...TEMA_GORSEL]) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -444,7 +445,7 @@ async function sonraki(i) {
   const eski = li;
   if (!RM && cv.animate) { try { await cv.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(-55%)', opacity: 0 }], { duration: 230, easing: 'ease-in' }).finished; } catch {} }
   if (li !== eski || (App.ekran && App.ekran.acik !== 'oyun')) return;   // bu arada başka bölüme geçildi
-  setup(i); setTimeout(() => { if (li === i && $('ov').hidden) basla(); }, 700);
+  setup(i); if (!window.__hamurRobot) setTimeout(() => { if (li === i && $('ov').hidden) basla(); }, 700);
   if (!RM && cv.animate) cv.animate([{ transform: 'translateX(55%)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 260, easing: 'ease-out' });
 }
 // Kazanç, tahta boşaldığı an kayda yazılır (bindirme gelmeden başka bölüme geçilse de kaybolmaz). Deneme bölümü ilerlemeye yazmaz.

@@ -36,6 +36,7 @@ function check(id, name, pass, detail = '', severity = 'high') {
 // Capacitor eklentilerinin sahtesi: reklam, titreşim, paylaşım çağrılarını kaydeder.
 const MOCK = `
   window.__log = { ads: [], hap: 0, share: [], raf: 0, errors: [] };
+  window.__hamurRobot = !window.__gercekAkis;   // robot: düğme çökme gecikmesi, bölüm başlangıç penceresi ve kendiliğinden süre başlangıcı kapalı (kendi testlerinde açılır)
   if (!window.__acilisTest) window.__hamurAcilis = 0;   // açılış animasyonu yalnız kendi testinde oynar
   if (!window.__anaEkran) window.__hamurEkran = 'oyun';   // robot doğrudan oyun ekranında başlar; ekran testleri __anaEkran ile ana ekrandan başlar
   const _raf = window.requestAnimationFrame.bind(window);
@@ -205,7 +206,7 @@ async function inViewport(page, sel) {
   {
     let bytes = 0; const walk = d => fs.readdirSync(d).forEach(f => { const p = path.join(d, f); fs.statSync(p).isDirectory() ? walk(p) : bytes += fs.statSync(p).size; });
     walk(ROOT); metrics.webBytes = bytes;
-    check('size', 'Web paketi < 1,5 MB', bytes < 1.5 * 1024 * 1024, `${(bytes / 1024).toFixed(0)} KB`, 'low');
+    check('size', 'Web paketi < 6 MB (yüksek çözünürlüklü görseller, müzik ve efektler dahil)', bytes < 6 * 1024 * 1024, `${(bytes / 1024).toFixed(0)} KB`, 'low');
   }
   }
 

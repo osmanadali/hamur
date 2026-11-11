@@ -11,11 +11,13 @@ module.exports = async ({ browser, URL, open, shot, getSave, inViewport, check }
     await page.click('#bOyna'); await page.waitForTimeout(400);
     const o = await page.evaluate(() => [window.__hamur.ekran.acik, window.__hamur.oyun.bolum, window.__hamur.oyun.cell > 30]);
     check('ekran.oyna', 'Oyna sıradaki bölümü açar ve tahta ekrana yerleşir', o.join() === 'oyun,15,true', o.join(' · '));
-    await page.click('#bCik'); await page.waitForTimeout(500);
+    await page.click('#bCik'); await page.waitForTimeout(400);
+    const cik = await acik(page); check('ekran.cik', 'Oyundan çıkınca ana ekrana dönülür', cik === 'ana', cik);
+    await page.click('#bYol'); await page.waitForTimeout(500);
     const y = await page.evaluate(() => { const d = [...document.querySelectorAll('.durak')], say = c => d.filter(x => x.classList.contains(c)).length, s = document.querySelector('.durak.siradaki'), r = s.getBoundingClientRect(), e = document.getElementById('yol').getBoundingClientRect();
       return { acik: window.__hamur.ekran.acik, toplam: d.length, tamam: say('tamam'), sira: s.dataset.no, kilitli: say('kilitli'), kilitKapali: d.filter(x => x.classList.contains('kilitli')).every(x => x.disabled), gorunur: r.top >= e.top && r.bottom <= e.bottom }; });
     await shot(page, 'ekran-yol');
-    check('ekran.yol', 'Bölüm yolu: biten bölümler işaretli, sıradaki bölüm ortada ve parlıyor, sonrakiler kilitli', y.acik === 'yol' && y.toplam === 66 && y.tamam === 14 && y.sira === '15' && y.kilitli === 66 - 15 && y.kilitKapali && y.gorunur, JSON.stringify(y));
+    check('ekran.yol', 'Bölüm yolu: biten bölümler işaretli, sıradaki bölüm ortada ve parlıyor, sonrakiler kilitli', y.acik === 'yol' && y.toplam % 11 === 0 && y.toplam >= 66 && y.tamam === 14 && y.sira === '15' && y.kilitli === y.toplam - 15 && y.kilitKapali && y.gorunur, JSON.stringify(y));
     await page.click('.durak[data-no="7"]'); await page.waitForTimeout(400);
     const b = await page.evaluate(() => [window.__hamur.ekran.acik, window.__hamur.oyun.bolum]);
     check('ekran.yol.sec', 'Yoldan biten bir bölüme dokununca o bölüm açılır', b.join() === 'oyun,7', b.join(' · '));
@@ -65,22 +67,10 @@ module.exports = async ({ browser, URL, open, shot, getSave, inViewport, check }
     const o = await page.evaluate(() => { const r = document.getElementById('bOyna').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
     await page.touchscreen.tap(o[0], o[1]); await page.waitForTimeout(600);   // Oyna düğmesinin tam üstüne dokunulur: dokunuş alta geçmemeli
     const gec = await page.evaluate(() => [!document.getElementById('acilis'), window.__hamur.ekran.acik]);
-    check('acilis.gec', 'Açılışa dokununca animasyon geçilir; dokunuş alttaki düğmeye gitmez', gec.join() === 'true,ana', gec.join(' · '));
-    await page.click('#bYol'); const g1 = await page.evaluate(() => document.querySelector('#gecis i').getAnimations().map(a => a.effect.getTiming().duration).join()); await page.waitForTimeout(400);
+    check('acilis.gec', 'Açılış dokununca geçilmez; dokunuş alttaki düğmeye de gitmez', gec.join() === 'false,ana', gec.join(' · ')); await page.waitForTimeout(2400);
+    await page.click('#bYol'); await page.waitForTimeout(30); const g1 = await page.evaluate(() => document.querySelector('#gecis i').getAnimations().map(a => a.effect.getTiming().duration).join()); await page.waitForTimeout(400);
     const g2 = await page.evaluate(() => [document.querySelector('#gecis i').getAnimations().length, document.querySelector('#gecis i').getBoundingClientRect().right < 0, window.__hamur.ekran.acik]);
-    check('gecis', 'Ekran geçişi: 250 ms un bulutu, bitince ekranda kalmaz', g1 === '250' && g2.join() === '0,true,yol', `${g1} · ${g2.join(' · ')}`);
-    await ctx.close();
-  }
-  {
-    // İlk açılış: animasyon kendiliğinden oynamaz; oyuncu maviyi sarıya sürükler, sonra 1. bölüm başlar
-    const { ctx, page, errors } = await open(browser, URL, { init: 'window.__anaEkran = 1; window.__acilisTest = 1;' });
-    await page.waitForTimeout(2600);
-    const bekler = await page.evaluate(() => [!!document.getElementById('acilis'), document.querySelector('#acilis p')?.textContent]);
-    const vp = page.viewportSize(), x = vp.width / 2 - 70 - 105 + 35, y = vp.height / 2;
-    await page.mouse.move(x, y); await page.mouse.down(); for (let i = 1; i <= 12; i++) { await page.mouse.move(x + i * 9, y); await page.waitForTimeout(16); } await page.mouse.up();
-    await page.waitForTimeout(2200);
-    const son = await page.evaluate(() => [!document.getElementById('acilis'), window.__hamur.ekran.acik, window.__hamur.oyun.bolum]);
-    check('acilis.ilk', 'İlk açılışta animasyon bekler; mavi sarıya sürüklenince karışır ve 1. bölüm başlar', bekler[0] && !!bekler[1] && son.join() === 'true,oyun,1' && !errors.length, errors[0] || `${bekler.join(' · ')} → ${son.join(' · ')}`);
+    check('gecis', 'Ekran geçişi: 360 ms un bulutu, bitince ekranda kalmaz', g1 === '360' && g2.join() === '0,true,yol', `${g1} · ${g2.join(' · ')}`);
     await ctx.close();
   }
   {

@@ -37,8 +37,8 @@ function goster(ad) {
   if (ad === 'magaza') magaza();
   window.Olcum?.event('screen_view', { screen_name: ad });
 }
-function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, false); setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }   // pencere, un bulutu geçtikten sonra açılır
-function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik'); O.setup(O.gunlukNo(), true); setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }   // günlük kalıp: canlı arka plan
+function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, false); if (!window.__hamurRobot) setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }
+function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik'); O.setup(O.gunlukNo(), true); if (!window.__hamurRobot) setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }   // günlük kalıp: canlı arka plan
 
 /* ---------- ana ekran ---------- */
 function canCiz() { $('canN').textContent = O.can.n + '/' + O.can.max; const k = O.can.kalan(); $('canT').textContent = k ? O.can.yazi(k) : L('Dolu', 'Full'); }
@@ -90,7 +90,8 @@ const FIGUR = [['Kedi', 'Cat'], ['Ev', 'House'], ['Çiçek', 'Flower'], ['Balık
   ['Gece kedisi', 'Night cat'], ['Şeker ev', 'Candy house'], ['Mor çiçek', 'Purple flower']].slice(0, Math.ceil(N / 10));
 // Görsel: figur-<no>.webp varsa o; yoksa ilk altı figürden biri, rengi kaydırılmış (yeni varyasyon)
 const VAR_FIGUR = new Set();   // kendi görseli olan numaralar (yüklenince işaretlenir)
-function figurResim(im, k) { im.src = `img/figur-${k + 1}.webp`; im.onerror = () => { im.onerror = null; im.src = `img/figur-${k % 6 + 1}.webp`; im.style.filter = (im.style.filter || '') + ` hue-rotate(${Math.floor(k / 6) * 70}deg)`; }; }
+const FIGUR_GORSEL = 6;   // kendi görseli olan figür sayısı (figur-1 … figur-N); yenileri gelince artırılır
+function figurResim(im, k) { if (k < FIGUR_GORSEL) { im.src = `img/figur-${k + 1}.webp`; return; } im.src = `img/figur-${k % 6 + 1}.webp`; im.style.filter = (im.style.filter || '') + ` hue-rotate(${Math.floor(k / 6) * 70}deg)`; }
 const figurDurum = k => { let v = 0; for (let n = k * 10 + 1; n <= k * 10 + 10; n++) if (bitti(n)) v++; return v; };
 function tepsi() {
   const el = $('figurler'); el.innerHTML = '';
@@ -224,6 +225,7 @@ addEventListener('pointerdown', muzik, { once: true }); document.addEventListene
 
 // Basma tepkisi: her düğme basılınca içine çöker, işlem çökme bittikten sonra yapılır (ekran değişse de çökme görülür).
 document.addEventListener('click', e => {
+  if (window.__hamurRobot) return;   // test robotu düğmeleri beklemeden sınar
   const b = e.target.closest && e.target.closest('button'); if (!b || b.disabled) return;
   if (b._gec) { b._gec = false; return; }
   e.stopImmediatePropagation(); e.preventDefault();
