@@ -692,3 +692,8 @@ body[data-dunya="1"].oyun-acik .saat{background:url(img/kadran.webp) center/74% 
 .guc:not(.tarif):active{transform:translateY(3px);filter:drop-shadow(0 1px 0 #c9a070) brightness(.92)}
 .guc:not(.tarif):disabled{filter:drop-shadow(0 4px 0 #b9a895) grayscale(.75) opacity(.6)}
 .guc:not(.tarif)[aria-pressed=true]{outline:0;filter:drop-shadow(0 4px 0 #c9a070) drop-shadow(0 0 7px #a274e0) drop-shadow(0 0 2px #a274e0)}
+
+/* tarif düğmesi: hazır hamur görseli (mavi + sarı = yeşil) */
+.guc.tarif{width:118px;height:52px;border:0;border-image:none;background:url(img/tarif.webp) center/100% 100% no-repeat;filter:drop-shadow(0 4px 3px rgba(100,60,150,.35))}
+.guc.tarif .mini{display:none}
+.guc.tarif[aria-expanded=true]{outline:0;filter:drop-shadow(0 0 7px #fff3c4) drop-shadow(0 4px 3px rgba(100,60,150,.35))}
