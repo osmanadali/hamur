@@ -618,3 +618,13 @@ body[data-dunya="2"].oyun-acik::before{content:'';position:fixed;inset:0;z-index
 /* izleyenler ortadaki çekişmeye bakar: soldaki ikisi sağa, sağdaki ikisi sola */
 .acilis .iz.turuncu,.acilis .iz.mor{transform:scaleX(-1)}
 .acilis .izle{top:calc(50% + 100px)}
+/* açılış (son): çekenlerin elleri hamuru gerçekten tutuyor; aradaki uzayan kısım aynı hamurdan kesilmiş dilim */
+.acilis .cek{height:auto;aspect-ratio:3.828;width:min(96vw,440px);transform:translate(-50%,-50%)}
+.acilis .ck{width:38%;height:100%;aspect-ratio:auto;bottom:auto;top:0;background-size:400% 100%}
+.acilis .mavi{right:calc(50% + 3% + var(--y) * 9%)}
+.acilis .kirmizi{left:calc(50% + 3% + var(--y) * 9%)}
+.acilis .hs{z-index:0;bottom:auto;top:47.58%;height:26.06%;width:calc(6% + var(--y) * 18% + 2px);background:url(img/hamur-dilim.webp) 0 0/100% 100% repeat-x;filter:none}
+.acilis .izle{top:calc(50% + 90px);width:min(92vw,400px)}
+.acilis .iz.turuncu,.acilis .iz.mor{transform:none}   /* yeni görselde zaten ortaya dönükler */
+.acilis p{top:calc(50% + 46px)}
+.acilis .cek{width:min(104vw,500px)}
