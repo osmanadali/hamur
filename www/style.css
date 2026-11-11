@@ -811,3 +811,8 @@ html{background:#c9a8ee}
 .acilis .mavi,.cek .ad.sol{right:50.5%;transform:translate3d(calc(var(--y) * -.115 * var(--w)),0,0);will-change:transform}
 .acilis .kirmizi,.cek .ad.sag{left:50.5%;transform:translate3d(calc(var(--y) * .115 * var(--w)),0,0);will-change:transform}
 .acilis .hs{width:calc(24% + 2px);transform:translateX(-50%) scaleX(calc((1 + var(--y) * 23) / 24));will-change:transform}
+/* bulut seti: ince şerit değil; büyük, ekranın altına kadar inen ve arka plandaki bulutlara karışan zemin */
+.acilis .adekor .bs{width:max(150vw,620px);top:calc(50% + 200px * var(--o));filter:none}
+.acilis .adekor .bs::after{content:'';position:absolute;left:-6%;right:-6%;top:58%;height:140%;background:url(img/bulut-seti.webp) center top/100% auto no-repeat;transform:scaleX(-1)}
+.acilis .adekor .bs{top:calc(50% + 163px * var(--o))}
+.acilis .adekor .bs::after{display:none}
