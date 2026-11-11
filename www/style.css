@@ -887,3 +887,17 @@ body.ana-acik .gok .n-ay{display:none}
 .card p,.panel .secenek,.card .secenek{background:rgba(90,40,120,.3)}
 .top{width:58px;height:58px}
 #sAna .ust .top{width:60px;height:60px}
+/* oyun üst çubuğu: büyük düğmeler */
+#sOyun .btn.resim{width:54px;height:54px;background-size:contain}
+#sOyun #bCik{width:54px;height:54px}
+#sOyun .row{gap:6px}
+#lvlNo{font-size:22px}
+/* jokerler: simgeler net ve büyük; pasiflik yalnız düğmenin kendisinde */
+.guc:not(.tarif){width:68px;height:68px;opacity:1}
+.guc:not(.tarif) i{width:38px;height:38px;margin-bottom:7px;opacity:1;filter:drop-shadow(0 1px 0 rgba(90,40,20,.25))}
+.guc:not(.tarif) small{bottom:10px;font-size:11px}
+.guc:not(.tarif):disabled{opacity:1}
+.guc:not(.tarif):disabled::before{filter:grayscale(.6) brightness(.93)}
+.guc:not(.tarif):disabled i{opacity:.45}
+.guc b{min-width:26px;height:26px;line-height:24px;font-size:13px;color:#fff}
+.gucler{gap:8px;align-items:center}
