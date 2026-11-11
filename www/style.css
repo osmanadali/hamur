@@ -962,3 +962,8 @@ body.ana-acik .gok .n-ay{display:none}
 body[data-dunya="2"].oyun-acik{background:#f79a6a url(img/gok-3.webp) center/cover no-repeat}
 body[data-dunya="2"].oyun-acik::before{display:none}
 body[data-dunya="2"].oyun-acik .gok{opacity:0}
+
+/* dünya 4 */
+body[data-dunya="3"].oyun-acik{background:#8fe0b8 url(img/gok-4.webp) center/cover no-repeat}
+body[data-dunya="3"].oyun-acik::before{display:none}
+body[data-dunya="3"].oyun-acik .gok{opacity:0}
