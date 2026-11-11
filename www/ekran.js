@@ -193,7 +193,7 @@ O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGU
 // Paralaks: parmağın ya da telefonun eğiminin konumuna göre gökyüzü katmanları hafifçe kayar. Hareket azaltmada kapalı.
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   const gok = document.querySelector('.gok'), yaz = (x, y) => { gok.style.setProperty('--px', Math.max(-1, Math.min(1, x)).toFixed(3)); gok.style.setProperty('--py', Math.max(-1, Math.min(1, y)).toFixed(3)); };
-  addEventListener('pointermove', e => yaz(e.clientX / innerWidth * 2 - 1, e.clientY / innerHeight * 2 - 1), { passive: true });
+  // (parmakla paralaks kaldırıldı: dokununca arka plan sallanıyordu)
   addEventListener('deviceorientation', e => { if (e.gamma != null) yaz(e.gamma / 25, (e.beta - 45) / 25); }, { passive: true });
 }
 

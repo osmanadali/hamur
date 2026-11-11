@@ -427,7 +427,13 @@ function duraklat() {
   if (state !== 'play' || durak) return;
   durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
   showOv(L('Duraklatıldı', 'Paused'), '', L('Sürdür', 'Resume'), devam, L('Çıkış', 'Quit'), () => App.ekran.goster('ana'));
-  $('ovB2').classList.add('cikis');   // Sürdür yeşil, Çıkış kırmızı; anahtar, açıklama ve kapat düğmesi yok
+  $('ovB2').classList.add('cikis');   // Sürdür yeşil, Çıkış kırmızı; ses, müzik ve titreşim anahtarları
+  const ek = $('ovEk'); ek.innerHTML = ''; ek.hidden = false;
+  for (const [k, tr, en] of [['sound', 'Sesler', 'Sounds'], ['music', 'Müzik', 'Music'], ['vib', 'Titreşim', 'Vibration']]) {
+    const b = document.createElement('button'), acik = () => save[k] !== false; b.type = 'button'; b.className = 'secenek'; b.setAttribute('role', 'switch');
+    b.append(Object.assign(document.createElement('span'), { textContent: L(tr, en) }), Object.assign(document.createElement('i'), { className: 'anahtar' }));
+    const ciz = () => b.setAttribute('aria-checked', String(acik())); b.onclick = () => { save[k] = !acik(); App.persist(); ciz(); paintSound(); App.ekran.muzik?.(); buzz(8); }; ciz(); ek.appendChild(b);
+  }
 }
 // Bölüm sürerken çıkmak isteyene sorulur: çıkmak 1 can götürür.
 function cikisSor() {

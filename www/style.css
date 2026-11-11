@@ -697,3 +697,22 @@ body[data-dunya="1"].oyun-acik .saat{background:url(img/kadran.webp) center/74% 
 .guc.tarif{width:118px;height:52px;border:0;border-image:none;background:url(img/tarif.webp) center/100% 100% no-repeat;filter:drop-shadow(0 4px 3px rgba(100,60,150,.35))}
 .guc.tarif .mini{display:none}
 .guc.tarif[aria-expanded=true]{outline:0;filter:drop-shadow(0 0 7px #fff3c4) drop-shadow(0 4px 3px rgba(100,60,150,.35))}
+
+/* ================= iPhone geri bildirimi ================= */
+.acilis .hs{top:54.39%;height:12.73%}
+/* iOS: sabitlenmiş arka plan üstte düz renk bırakıyordu */
+body,body.ana-acik,body.gunluk-acik,body[data-dunya="1"].oyun-acik{background-attachment:scroll!important}
+html{background:#c9a8ee}
+/* can göstergesi: koyu hap ve büyük gölge yerine beyaz hamur */
+#sAna .can{background:#fff6e6;border:3px solid #e6c9a0;box-shadow:0 3px 0 #d3b184;padding:2px 14px 2px 2px;min-height:42px}
+.can i{filter:none}
+.can b{color:#6a3aa6;text-shadow:none}
+.can small{color:#8a5a2a}
+/* Oyna'nın altındaki bölüm yazısı da başlık yazısıyla */
+.hap small{font:400 17px var(--display);opacity:1;letter-spacing:.3px}
+/* güçlendirici düğmeleri ve tarif blokları: hazır boyalı görsel (maske ve karışım yok) */
+.guc:not(.tarif)::before{background:url(img/blok-krem.webp) center/100% 100% no-repeat;filter:none;-webkit-mask:none;mask:none}
+.rx i,.guc .mini i{background-color:transparent!important;background-blend-mode:normal;filter:none;-webkit-mask:none;mask:none}
+.rx i[data-c=r]{background-image:url(img/blok-r.webp)!important}.rx i[data-c=y]{background-image:url(img/blok-y.webp)!important}.rx i[data-c=b]{background-image:url(img/blok-b.webp)!important}
+.rx i[data-c=g]{background-image:url(img/blok-g.webp)!important}.rx i[data-c=o]{background-image:url(img/blok-o.webp)!important}.rx i[data-c=p]{background-image:url(img/blok-p.webp)!important}
+.acilis .hs{top:53.9%;height:13.7%}
