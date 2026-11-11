@@ -6,7 +6,9 @@
 window.Shop = (() => {
   const ITEMS = [
     { key: 'noads', id: 'hamur_reklamsiz', nc: true },   // bölüm arası reklamı kapatır; ödüllü reklam isteyene açık kalır
-    { key: 'bst', id: 'hamur_guclendirici', give: { bst: { geri: 3, sure: 3, makas: 3 } } },   // geri alma, +15 sn, makas
+    { key: 'bst', id: 'hamur_guclendirici', give: { bst: { geri: 3, sure: 3, makas: 3 } } },
+    { key: 'buyuk', id: 'hamur_buyuk_paket', give: { bst: { geri: 10, sure: 10, makas: 10 }, can: true } },   // büyük paket: onar güçlendirici + canlar dolu
+    { key: 'can', id: 'hamur_can', give: { can: true } },   // canları doldurur   // geri alma, +15 sn, makas
   ];
   const byKey = Object.fromEntries(ITEMS.map(x => [x.key, x])), byId = Object.fromEntries(ITEMS.map(x => [x.id, x]));
   const C = () => window.CdvPurchase;

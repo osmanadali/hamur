@@ -23,6 +23,10 @@ yama(MAN, '</manifest>', '    <uses-permission android:name="android.permission.
 
 // 2) Bildirim simgesi: Hamur'un ikonu 3. aşamada (görsel kimlik) çizilince eklenir (Ray: tools/android/ic_stat_ray.xml + LocalNotifications.smallIcon)
 
+// 2b) Bildirim simgesi: tools/android/ic_stat_hamur.xml → res/drawable (capacitor.config.json › LocalNotifications.smallIcon)
+fs.mkdirSync(path.join(A, 'app/src/main/res/drawable'), { recursive: true });
+fs.copyFileSync(path.join(__dirname, 'ic_stat_hamur.xml'), path.join(A, 'app/src/main/res/drawable/ic_stat_hamur.xml')); console.log('✓ Bildirim simgesi');
+
 // 3) Kenardan kenara: Capacitor 8 SystemBars belgesi BridgeActivity'de EdgeToEdge.enable() önerir (Capacitor 9'da varsayılan olacak).
 //    Böylece Android 15 öncesi de 15+ gibi davranır; güvenli alanı SystemBars (insetsHandling) + CSS env()/--safe-area-inset-* çözer.
 const MA = bul(path.join(A, 'app/src/main/java'), 'MainActivity.java');

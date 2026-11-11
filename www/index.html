@@ -18,7 +18,7 @@
 <!-- Gökyüzü: geçiş kodla, bulutlar ayrı katmanda yavaşça kayar (hareket azaltmada sabit) -->
 <div class="gok" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i><i class="b6"></i><b class="n-ay"></b><b class="n-c1"></b><b class="n-c2"></b><b class="n-merdiven"></b><b class="n-ev"></b><b class="n-seker"></b><b class="n-donut"></b><b class="n-oklava"></b></div>
 <section class="ekran" id="sAna" hidden>
-  <header class="ust"><span></span><button class="top" id="bAyar" type="button" aria-label="Ayarlar" data-en-label="Settings"><i style="background-image:url(img/ayarlar.webp)"></i></button></header>
+  <header class="ust"><span></span><button class="top yesil" id="bMagaza" type="button" aria-label="Mağaza" data-en-label="Shop"><i style="background-image:url(img/canta.webp)"></i></button><button class="top" id="bAyar" type="button" aria-label="Ayarlar" data-en-label="Settings"><i style="background-image:url(img/ayarlar.webp)"></i></button></header>
   <div class="can" id="canKutu" role="status"><i aria-hidden="true"></i><b id="canN">5</b><small id="canT"></small></div>
   <img class="ada" src="img/ada.webp" alt="" aria-hidden="true">
   <div class="baslik-yeri"><img class="logo" src="img/logo.webp" alt="Dough!" width="640" height="208"></div>
@@ -39,6 +39,10 @@
   <header class="ust"><button class="top" id="tepsiGeri" type="button" aria-label="Geri" data-en-label="Back"><i class="sola" style="background-image:url(img/oynat.webp)"></i></button><h2 data-en="Tray">Tepsi</h2><span class="bos"></span></header>
   <p class="aciklama" data-en="Every 10 levels complete one figure.">Her 10 bölümde bir figür tamamlanır.</p>
   <div class="figurler" id="figurler"></div>
+</section>
+<section class="ekran" id="sMagaza" hidden>
+  <header class="ust"><button class="top" id="magazaGeri" type="button" aria-label="Geri" data-en-label="Back"><i class="sola" style="background-image:url(img/oynat.webp)"></i></button><h2 data-en="Shop">Mağaza</h2><span class="bos"></span></header>
+  <div class="magaza" id="magaza"></div>
 </section>
 <section class="ekran app" id="sOyun" hidden>
   <header class="hud">

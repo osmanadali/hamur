@@ -61,6 +61,13 @@ const BANT = [
   // yapışık başlar) ve "karıştır, kes, dağıt" (aynı ara renkte iki kalıp, her biri tek ana renk parçayla dolar: önce karışıp sonra kesilmeli).
   { no: 5, ad: 'makas', bas: 51, son: 60, boy: [[5, 5], [5, 6], [6, 6]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [2, 5], makas: [1, 2],
     renk: [['r', 'r'], ['y', 'y'], ['b', 'b'], ['g', 'g'], ['p', 'p'], ['o', 'o'], ['r', 'r', 'g'], ['b', 'b', 'o'], ['g', 'g', 'b'], ['p', 'p', 'y']], karisim: 1 },
+  // 61 sonrası: yeni mekanik yok, öğrenilenler karışır ve tahta büyür (ikinci ve üçüncü dünya). Zorluk önceki bantların üstünden başlar.
+  { no: 6, ad: 'karışık renkler', bas: 61, son: 90, havuz: 230, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
+    renk: [['g', 'p'], ['g', 'o'], ['p', 'o'], ['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'g', 'p'], ['p', 'p', 'o'], ['g', 'b', 'o']], karisim: 1 },
+  { no: 7, ad: 'makaslı karışık', bas: 91, son: 120, havuz: 230, boy: [[5, 6], [6, 6], [6, 7]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [3, 6], makas: [1, 2],
+    renk: [['g', 'g'], ['p', 'p'], ['o', 'o'], ['r', 'r', 'g'], ['b', 'b', 'o'], ['g', 'g', 'b'], ['p', 'p', 'y'], ['o', 'o', 'b'], ['g', 'g', 'p'], ['p', 'p', 'o']], karisim: 1 },
+  { no: 8, ad: 'büyük tahta', bas: 121, son: 150, havuz: 230, boy: [[6, 7], [7, 7], [7, 8]], duvar: ['yok', 'aralik', 'adacik', 'adacik'], kalip: [3, 4], kalipBoy: [2, 4], parca: [6, 9],
+    renk: [['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'p', 'r'], ['g', 'o', 'b'], ['p', 'o', 'y'], ['g', 'p', 'o', 'r']], karisim: 1 },
 ];
 const PARTS = K.PARTS;
 
@@ -219,6 +226,9 @@ const HEDEF = {
   3: { rahat: 18, orta: 21, zor: 24, enzor: 26 },
   4: { rahat: 20, orta: 23.5, zor: 26.5, enzor: 28 },
   5: { rahat: 14, orta: 18, zor: 21.5, enzor: 24.5 },
+  6: { rahat: 22, orta: 25.5, zor: 28.5, enzor: 30.5 },
+  7: { rahat: 20, orta: 24, zor: 27, enzor: 29.5 },
+  8: { rahat: 24, orta: 27.5, zor: 30.5, enzor: 33 },
 };
 // Bütün bantlar birlikte seçilir: 10'luk döngü bant sınırını aşabilir (31-40) ve döngünün en zoru her zaman 10. bölüm olmalıdır.
 function secHepsi(bantlar) {

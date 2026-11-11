@@ -3,7 +3,7 @@
 (() => {
 'use strict';
 const App = window.__hamur, O = App.oyun, save = App.save, $ = id => document.getElementById(id);
-const N = O.ASIL, EKRAN = { ana: 'sAna', yol: 'sYol', tepsi: 'sTepsi', oyun: 'sOyun' };
+const N = O.ASIL, EKRAN = { ana: 'sAna', yol: 'sYol', tepsi: 'sTepsi', magaza: 'sMagaza', oyun: 'sOyun' };
 let acik = '';
 
 // Sıradaki bölüm: bitirilmemiş ilk bölüm. Açık bölümler: sıradakine kadar (ayarlardan "bütün bölümler açık" test seçeneği).
@@ -34,6 +34,7 @@ function goster(ad) {
   if (ad === 'ana') ana();
   if (ad === 'yol') yol();
   if (ad === 'tepsi') tepsi();
+  if (ad === 'magaza') magaza();
   window.Olcum?.event('screen_view', { screen_name: ad });
 }
 function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, false); setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }   // pencere, un bulutu geçtikten sonra açılır
@@ -46,7 +47,8 @@ function ana() {
   const n = siradaki(), hepsi = (save.done || []).length >= N;
   if ((save.done || []).length >= 3 && !save.bildirimSoruldu) { save.bildirimSoruldu = true; App.persist(); hatirlat(true); } else hatirlat(false);
   canCiz();
-  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '');
+  const seri = save.seri && save.seri.gun >= O.bugun() - 1 ? save.seri.n : 0;
+  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '') + (seri > 1 ? L(` · ${seri} gün`, ` · ${seri} days`) : '');
   $('oynaNo').textContent = hepsi ? L('Hepsi tamam', 'All done') : L('Bölüm ', 'Level ') + n;
 }
 
@@ -83,20 +85,55 @@ function yol() {
 
 /* ---------- tepsi koleksiyonu ---------- */
 // Her 10 bölümde bir figür tamamlanır. Boş siluet görselin kendi alfa kanalından gelir (CSS: karartılmış, soluk).
-const FIGUR = [['Kedi', 'Cat'], ['Ev', 'House'], ['Çiçek', 'Flower'], ['Balık', 'Fish'], ['Kalp', 'Heart'], ['Roket', 'Rocket']];
+const FIGUR = [['Kedi', 'Cat'], ['Ev', 'House'], ['Çiçek', 'Flower'], ['Balık', 'Fish'], ['Kalp', 'Heart'], ['Roket', 'Rocket'],
+  ['Tavşan', 'Rabbit'], ['Ağaç', 'Tree'], ['Araba', 'Car'], ['Yelkenli', 'Sailboat'], ['Kelebek', 'Butterfly'], ['Taç', 'Crown'],
+  ['Gece kedisi', 'Night cat'], ['Şeker ev', 'Candy house'], ['Mor çiçek', 'Purple flower']].slice(0, Math.ceil(N / 10));
+// Görsel: figur-<no>.webp varsa o; yoksa ilk altı figürden biri, rengi kaydırılmış (yeni varyasyon)
+const VAR_FIGUR = new Set();   // kendi görseli olan numaralar (yüklenince işaretlenir)
+function figurResim(im, k) { im.src = `img/figur-${k + 1}.webp`; im.onerror = () => { im.onerror = null; im.src = `img/figur-${k % 6 + 1}.webp`; im.style.filter = (im.style.filter || '') + ` hue-rotate(${Math.floor(k / 6) * 70}deg)`; }; }
 const figurDurum = k => { let v = 0; for (let n = k * 10 + 1; n <= k * 10 + 10; n++) if (bitti(n)) v++; return v; };
 function tepsi() {
   const el = $('figurler'); el.innerHTML = '';
   FIGUR.forEach((ad, k) => {
     const v = figurDurum(k), kart = document.createElement('div'); kart.className = 'figur' + (v >= 10 ? ' tamam' : '');
-    const im = document.createElement('img'); im.src = `img/figur-${k + 1}.webp`; im.alt = ''; im.width = im.height = 256;
+    const im = document.createElement('img'); figurResim(im, k); im.alt = ''; im.width = im.height = 256;
     // tamamlanmamış figür: alttan yukarı doğru, biten bölüm sayısı kadar dolar
-    if (v < 10) { const dolu = document.createElement('img'); dolu.src = im.src; dolu.alt = ''; dolu.className = 'dolu'; dolu.style.clipPath = `inset(${100 - v * 10}% 0 0 0)`; im.className = 'siluet'; const sar = document.createElement('div'); sar.className = 'resim'; sar.append(im, dolu); kart.append(sar); } else kart.append(im);
+    if (v < 10) { const dolu = document.createElement('img'); figurResim(dolu, k); dolu.alt = ''; dolu.className = 'dolu'; dolu.style.clipPath = `inset(${100 - v * 10}% 0 0 0)`; im.className = 'siluet'; const sar = document.createElement('div'); sar.className = 'resim'; sar.append(im, dolu); kart.append(sar); } else kart.append(im);
     const b = document.createElement('b'); b.textContent = L(...ad);
     const s = document.createElement('small'); s.textContent = v >= 10 ? L('Tamamlandı', 'Completed') : `${v} / 10`;
     kart.append(b, s); kart.setAttribute('role', 'img'); kart.setAttribute('aria-label', `${L(...ad)}: ${s.textContent}`);
     el.appendChild(kart);
   });
+}
+
+/* ---------- mağaza ---------- */
+// Kart: üstte içerik (ne verdiği simgelerle), altta ad ve yeşil fiyat düğmesi. Fiyat mağazadan gelir; mağaza yoksa (tarayıcı) düğme pasif.
+const URUN = [
+  { key: 'bst', tr: 'Güçlendirici paketi', en: 'Booster pack', ic: [['geri', '×3'], ['saat', '+15 ×3'], ['makas', '×3']] },
+  { key: 'buyuk', tr: 'Büyük paket', en: 'Big pack', rozet: ['En iyi teklif', 'Best value'], ic: [['geri', '×10'], ['saat', '+15 ×10'], ['makas', '×10'], ['kalp', L('dolu', 'full')]] },
+  { key: 'can', tr: 'Canları doldur', en: 'Refill lives', ic: [['kalp', '×5']] },
+  { key: 'noads', tr: 'Reklamları kaldır', en: 'Remove ads', ic: [['klaket', L('bölüm arası reklam yok', 'no ads between levels')]] },
+];
+function magaza() {
+  const el = $('magaza'); el.innerHTML = '';
+  const kart = (u, fiyat, tikla, pasif) => {
+    const k = document.createElement('div'); k.className = 'urun';
+    k.innerHTML = (u.rozet ? `<em>${L(...u.rozet)}</em>` : '') + `<div class="icerik">${u.ic.map(([r, y]) => `<span><i style="background-image:url(img/${r}.webp)"></i><b>${y}</b></span>`).join('')}</div><div class="serit2"><b>${L(u.tr, u.en)}</b></div>`;
+    const b = Object.assign(document.createElement('button'), { type: 'button', className: 'hap yesil fiyat', textContent: fiyat }); b.disabled = !!pasif; b.onclick = tikla; k.querySelector('.serit2').appendChild(b); el.appendChild(k);
+  };
+  // günde bir ücretsiz güçlendirici: ödüllü reklamla
+  const bugun = O.bugun(), aldi = save.hediyeGun === bugun;
+  kart({ tr: 'Günün hediyesi', en: 'Daily gift', ic: [['makas', '+1'], ['saat', '+15 · +1']] }, aldi ? L('Yarın', 'Tomorrow') : L('Reklam izle', 'Watch ad'), async () => {
+    let r = ''; try { r = await bekle.sar(Ads.rewarded(), 'top'); } catch {}
+    if (r === 'earned') { save.bst = { ...save.bst, makas: (save.bst.makas | 0) + 1, sure: (save.bst.sure | 0) + 1 }; save.hediyeGun = bugun; App.persist(); magaza(); }
+  }, aldi || !Ads.online());
+  for (const u of URUN) {
+    const sahip = u.key === 'noads' && save.noads, hazir = Shop.avail() && Shop.ready(u.key);
+    kart(u, sahip ? L('Alındı', 'Owned') : Shop.price(u.key) || '—', async () => { const r = await bekle.sar(Shop.buy(u.key), 'top'); if (r === 'ok') magaza(); }, sahip || !hazir);
+  }
+  const g = Object.assign(document.createElement('button'), { type: 'button', className: 'hap mor geri-yukle', textContent: L('Satın alımları geri yükle', 'Restore purchases') });
+  g.onclick = async () => { await bekle.sar(Shop.restore(), 'top'); magaza(); }; el.appendChild(g);
+  if (!Shop.avail()) el.appendChild(Object.assign(document.createElement('p'), { className: 'aciklama', textContent: L('Satın alma yalnız telefondaki uygulamada çalışır.', 'Purchases work only in the app on your phone.') }));
 }
 
 /* ---------- ayarlar ---------- */
@@ -141,7 +178,7 @@ function ayarKapat() {
 /* ---------- bağlantılar ---------- */
 $('bOyna').onclick = () => oyna(siradaki()); $('bGunluk').onclick = gunlukAc;
 $('bYol').onclick = () => goster('yol'); $('bTepsi').onclick = () => goster('tepsi');
-$('yolGeri').onclick = $('tepsiGeri').onclick = () => goster('ana');
+$('yolGeri').onclick = $('tepsiGeri').onclick = $('magazaGeri').onclick = () => goster('ana'); $('bMagaza').onclick = () => goster('magaza');
 $('bCik').onclick = () => O.cikisSor();   // oyundan çıkınca ana ekran
 $('bAyar').onclick = ayar; $('ayarKapat').onclick = ayarKapat;
 $('ayar').addEventListener('click', e => { if (e.target === $('ayar')) ayarKapat(); });
@@ -150,7 +187,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape') ayarKapat(); });
 window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') O.cikisSor(); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
 
 // Oyun bir figürü tamamlayan bölümü bildirir (kutlama yazısı için)
-O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10}.webp` } : null;
+O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10 > 6 ? (n / 10 - 1) % 6 + 1 : n / 10}.webp`, kaydir: n / 10 > 6 ? Math.floor((n / 10 - 1) / 6) * 70 : 0 } : null;
 
 // Paralaks: parmağın ya da telefonun eğiminin konumuna göre gökyüzü katmanları hafifçe kayar. Hareket azaltmada kapalı.
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -162,7 +199,7 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
 // Tepsi ödülü: figür tamamlanınca tam ekran kutlama (ışınlar, büyüyerek gelen figür). Dokununca ya da 3 sn sonra kapanır.
 let kutlaT = 0;
 function kutla(fig) {
-  const k = $('kutla'); k.querySelector('img').src = fig.resim; k.querySelector('h2').textContent = fig.ad + L(' tamamlandı!', ' completed!');
+  const k = $('kutla'); k.querySelector('img').src = fig.resim; k.querySelector('img').style.filter = fig.kaydir ? `hue-rotate(${fig.kaydir}deg) drop-shadow(0 14px 14px rgba(40,10,80,.45))` : ''; k.querySelector('h2').textContent = fig.ad + L(' tamamlandı!', ' completed!');
   k.hidden = false; clearTimeout(kutlaT); kutlaT = setTimeout(() => { k.hidden = true; }, 3000); k.onclick = () => { clearTimeout(kutlaT); k.hidden = true; };
   Ses.buzz([20, 60, 20, 60, 40]); [523, 659, 784, 1047, 1319].forEach((f, i) => Ses.fx(f, .3, 'triangle', 0, .07, .1 + i * .11));
 }

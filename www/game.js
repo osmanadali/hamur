@@ -33,7 +33,7 @@ const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).to
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
 const IMG = {};
-for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3']) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -111,7 +111,7 @@ function giydir(p) {
 const bugun = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5), gunlukNo = () => 10 + (bugun() * 7919) % 40;
 function setup(i, g) {
   gunluk = g === undefined ? gunluk && i === li : !!g; ekGuc = 0;
-  li = i; Lv = LEVELS[i]; st = K.load(Lv); cz = Coz.hazirla(st);
+  li = i; Lv = LEVELS[i]; document.body.dataset.dunya = gunluk || i >= ASIL ? 0 : Math.floor(i / 60); st = K.load(Lv); cz = Coz.hazirla(st);
   if (i < ASIL && !gunluk) { save.level = i + 1; App.persist(); }
   st.pieces.forEach(giydir);
   ekSure = i < ASIL && !gunluk && (save.fails?.[i + 1] || 0) >= 3 ? 10 : 0;   // aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir
@@ -458,7 +458,12 @@ function kazanKaydet() {
   if ((li < ASIL && !gunluk)) { done.add(li + 1); save.done = [...done]; save.wins = (save.wins || 0) + 1; if (save.fails?.[li + 1]) { save.fails = { ...save.fails }; delete save.fails[li + 1]; } App.persist(); $('lvlNo').classList.add('done'); }
   sonYildiz = yildizSay();
   if (li < ASIL && !gunluk) { save.yildiz = { ...save.yildiz, [li + 1]: Math.max(save.yildiz?.[li + 1] || 0, sonYildiz) }; App.persist(); }
-  if (gunluk) { save.gunluk = { gun: bugun(), bitti: true, sure: Math.ceil(timeLeft), yildiz: sonYildiz }; App.persist(); }
+  if (gunluk) {   // günlük seri: üst üste günler; her gün +1 can, 7. günde birer güçlendirici
+    const g = bugun(), ilkKez = !(save.gunluk && save.gunluk.gun === g && save.gunluk.bitti);
+    if (ilkKez) { const e = save.seri || { gun: 0, n: 0 }; save.seri = { gun: g, n: e.gun === g - 1 ? e.n + 1 : 1 }; canVer(1);
+      if (save.seri.n % 7 === 0) save.bst = { ...save.bst, geri: stok('geri') + 1, sure: stok('sure') + 1, makas: stok('makas') + 1 }; }
+    save.gunluk = { gun: g, bitti: true, sure: Math.ceil(timeLeft), yildiz: sonYildiz }; App.persist();
+  }
   window.Olcum?.event('level_end', { level: li + 1, time_left: Math.ceil(timeLeft), stars: sonYildiz, daily: gunluk });
 }
 function win() {
@@ -466,7 +471,7 @@ function win() {
   Ses.cal('kazan', .8, () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09)));
   Ads.warm();
   const kalan = L('Kalan süre ', 'Time left: ') + Math.ceil(timeLeft) + L(' sn.', ' s.');
-  if (gunluk) return showOv(L('Günlük kalıp tamam', 'Daily mold done'), yildizYazi(sonYildiz) + ' · ' + kalan + L(' Yarın yeni kalıp var.', ' A new mold comes tomorrow.'), L('Paylaş', 'Share'), paylas, L('Ana ekran', 'Home'), () => App.ekran.goster('ana'));
+  if (gunluk) return showOv(L('Günlük kalıp tamam', 'Daily mold done'), yildizYazi(sonYildiz) + ' · ' + kalan + L(` Seri: ${save.seri?.n || 1} gün.`, ` Streak: ${save.seri?.n || 1} days.`) + ((save.seri?.n || 1) % 7 === 0 ? L(' 7. gün ödülü: birer güçlendirici!', ' Day 7 reward: one of each booster!') : L(' Yarın yeni kalıp var.', ' A new mold comes tomorrow.')), L('Paylaş', 'Share'), paylas, L('Ana ekran', 'Home'), () => App.ekran.goster('ana'));
   if (li >= ASIL) return showOv(L('Deneme tamam', 'Test complete'), kalan, L('Yeniden oyna', 'Play again'), () => setup(li));   // editörden gelen deneme bölümü
   const lastOne = li === ASIL - 1;
   if (!lastOne) {   // bölüm bitince menü açılmaz: kısa bir kutlama, sonra tahta kayar ve sıradaki bölüm gelir
@@ -514,22 +519,25 @@ paintSound();
 /* ---------- çizim ---------- */
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 function board() {
-  const W = st.W * cell, H = st.H * cell;
+  const W = st.W * cell, H = st.H * cell, dunya = +document.body.dataset.dunya || 0;
+  // dünya teması: tepsi-<n> ve hucre-<n> görseli varsa o; yoksa eldeki tepsinin rengi kaydırılır
+  const ozel = dunya && IMG['tepsi-' + (dunya + 1)]; if (dunya && !ozel) ctx.filter = dunya === 1 ? 'hue-rotate(-55deg) saturate(1.15) brightness(.92)' : 'hue-rotate(60deg) saturate(1.1)';
   // şekerli tepsi: görsel dokuz dilim halinde tahta boyuna gerilir (köşeler bozulmaz)
-  const im = IMG.tepsi;
+  const im = (dunya && IMG['tepsi-' + (dunya + 1)]) || IMG.tepsi, hucreIm = (dunya && IMG['hucre-' + (dunya + 1)]) || IMG.hucre;
   if (im) {
     const s = im.width, sh = im.height, c = s * .17, x0 = -PAD, y0 = -PAD, w = W + 2 * PAD, h = H + 2 * PAD, d = Math.min(PAD + 12, w / 2, h / 2);
     const X = [[0, c, x0, d], [c, s - 2 * c, x0 + d, w - 2 * d], [s - c, c, x0 + w - d, d]], Y = [[0, c, y0, d], [c, sh - 2 * c, y0 + d, h - 2 * d], [sh - c, c, y0 + h - d, d]];
     for (const [sx, sw, dx, dw] of X) for (const [sy, sh2, dy, dh] of Y) ctx.drawImage(im, sx, sy, sw, sh2, dx, dy, dw + .5, dh + .5);
   } else { rr(-PAD + 1, -PAD + 1, W + 2 * PAD - 2, H + 2 * PAD - 2, 18); ctx.fillStyle = C.mat; ctx.fill(); rr(0, 0, W, H, 8); ctx.fillStyle = C.field; ctx.fill(); }
   // ızgara çizgisi yok: her kareye tepsi-hucre karosu döşenir; tekdüzelik kırılsın diye kareye göre 90 derecelik dönüşle
-  if (IMG.hucre) {
+  if (hucreIm) {
     ctx.save(); rr(0, 0, W, H, 10); ctx.clip();
     for (let y = 0; y < st.H; y++) for (let x = 0; x < st.W; x++) {
-      ctx.save(); ctx.translate((x + .5) * cell, (y + .5) * cell); ctx.rotate(((x * 7 + y * 13 + li * 3) % 4) * Math.PI / 2); ctx.drawImage(IMG.hucre, -cell / 2 - .5, -cell / 2 - .5, cell + 1, cell + 1); ctx.restore();
+      ctx.save(); ctx.translate((x + .5) * cell, (y + .5) * cell); ctx.rotate(((x * 7 + y * 13 + li * 3) % 4) * Math.PI / 2); ctx.drawImage(hucreIm, -cell / 2 - .5, -cell / 2 - .5, cell + 1, cell + 1); ctx.restore();
     }
     ctx.restore();
   }
+  ctx.filter = 'none';
   // duvar: kesme şeker
   if (IMG.duvar) {
     for (const [x, y] of st.wallCells) {

@@ -9,10 +9,10 @@
   let s = {};
   try { s = JSON.parse(localStorage.getItem('hamur') || '{}') || {}; } catch {}
   const devRaw = String((navigator.languages && navigator.languages[0]) || navigator.language || 'tr'), dev = devRaw.toLowerCase();
-  const fromDev = dev.startsWith('tr') ? 'tr' : dev.startsWith('de') ? 'de' : dev.startsWith('es') ? 'es' : dev.startsWith('pt') ? 'pt-BR' : dev.startsWith('fr') ? 'fr' : 'en';
-  const lang = LOCALE[s.lang] ? s.lang : fromDev;
+  const fromDev = dev.startsWith('tr') ? 'tr' : 'en';   // yalnız Türkçe ve İngilizce
+  const lang = s.lang === 'tr' || s.lang === 'en' ? s.lang : fromDev;
   window.HAMUR_LANG = lang;
-  window.HAMUR_LANGS = [['tr', 'Türkçe'], ['en', 'English'], ['de', 'Deutsch'], ['es', 'Español'], ['pt-BR', 'Português'], ['fr', 'Français']];
+  window.HAMUR_LANGS = [['tr', 'Türkçe'], ['en', 'English']];
   // tarih ve sayı biçimi: cihaz aynı dildeyse onun bölgesi (es-MX, fr-CA…), değilse dilin varsayılanı; Portekizce hep Brezilya
   window.HAMUR_LOCALE = lang !== 'pt-BR' && dev.split('-')[0] === lang.split('-')[0] && /^[a-z]{2}-[a-z]{2}$/.test(dev) ? devRaw : LOCALE[lang];
   document.documentElement.lang = lang;

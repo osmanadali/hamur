@@ -17,6 +17,7 @@ Ses.init(() => save);
 function grant(item, tx) {
   if (tx && save.iapTx.includes(tx)) return true;
   for (const [k, n] of Object.entries(item.give?.bst || {})) save.bst[k] = (save.bst[k] || 0) + n;
+  if (item.give?.can) save.can = { n: 5, t: 0 };
   if (tx) save.iapTx = [...save.iapTx, tx].slice(-200);
   return persist();
 }

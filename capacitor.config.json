@@ -12,6 +12,10 @@
       "backgroundColor": "#c28bee",
       "showSpinner": false
     },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_hamur",
+      "iconColor": "#c28bee"
+    },
     "SystemBars": {
       "insetsHandling": "css",
       "initialViewportFitValueHint": "cover"
