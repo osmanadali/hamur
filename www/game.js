@@ -32,7 +32,7 @@ const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
 const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
-const TEMA_GORSEL = [];   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
+const TEMA_GORSEL = ['tepsi-2', 'hucre-2'];   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
 const IMG = {};
 for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', ...TEMA_GORSEL]) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
 

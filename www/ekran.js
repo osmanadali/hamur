@@ -48,7 +48,7 @@ function ana() {
   if ((save.done || []).length >= 3 && !save.bildirimSoruldu) { save.bildirimSoruldu = true; App.persist(); hatirlat(true); } else hatirlat(false);
   canCiz();
   const seri = save.seri && save.seri.gun >= O.bugun() - 1 ? save.seri.n : 0;
-  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '') + (seri > 1 ? L(` · ${seri} gün`, ` · ${seri} days`) : '');
+  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '') + (seri > 1 ? ' · ' + seri : ''); $('bGunluk').classList.toggle('serili', seri > 1);
   $('oynaNo').textContent = hepsi ? L('Hepsi tamam', 'All done') : L('Bölüm ', 'Level ') + n;
 }
 
@@ -90,8 +90,8 @@ const FIGUR = [['Kedi', 'Cat'], ['Ev', 'House'], ['Çiçek', 'Flower'], ['Balık
   ['Gece kedisi', 'Night cat'], ['Şeker ev', 'Candy house'], ['Mor çiçek', 'Purple flower']].slice(0, Math.ceil(N / 10));
 // Görsel: figur-<no>.webp varsa o; yoksa ilk altı figürden biri, rengi kaydırılmış (yeni varyasyon)
 const VAR_FIGUR = new Set();   // kendi görseli olan numaralar (yüklenince işaretlenir)
-const FIGUR_GORSEL = 6;   // kendi görseli olan figür sayısı (figur-1 … figur-N); yenileri gelince artırılır
-function figurResim(im, k) { if (k < FIGUR_GORSEL) { im.src = `img/figur-${k + 1}.webp`; return; } im.src = `img/figur-${k % 6 + 1}.webp`; im.style.filter = (im.style.filter || '') + ` hue-rotate(${Math.floor(k / 6) * 70}deg)`; }
+const FIGUR_GORSEL = 12;   // kendi görseli olan figür sayısı (figur-1 … figur-N); yenileri gelince artırılır
+function figurResim(im, k) { if (k < FIGUR_GORSEL) { im.src = `img/figur-${k + 1}.webp`; return; } im.src = `img/figur-${k % 6 + 1}.webp`; im.dataset.kaydir = Math.floor(k / 6) * 70; im.style.setProperty('--kaydir', Math.floor(k / 6) * 70 + 'deg'); }
 const figurDurum = k => { let v = 0; for (let n = k * 10 + 1; n <= k * 10 + 10; n++) if (bitti(n)) v++; return v; };
 function tepsi() {
   const el = $('figurler'); el.innerHTML = '';
@@ -110,21 +110,21 @@ function tepsi() {
 /* ---------- mağaza ---------- */
 // Kart: üstte içerik (ne verdiği simgelerle), altta ad ve yeşil fiyat düğmesi. Fiyat mağazadan gelir; mağaza yoksa (tarayıcı) düğme pasif.
 const URUN = [
-  { key: 'buyuk', tr: 'Büyük paket', en: 'Big pack', rozet: ['En iyi teklif', 'Best value'], ic: [['geri', '×10'], ['saat', '+15 ×10'], ['makas', '×10'], ['kalp', L('dolu', 'full')]] },
-  { key: 'bst', tr: 'Güçlendirici paketi', en: 'Booster pack', ic: [['geri', '×3'], ['saat', '+15 ×3'], ['makas', '×3']] },
-  { key: 'can', tr: 'Canları doldur', en: 'Refill lives', ic: [['kalp', '×5']] },
-  { key: 'noads', tr: 'Reklamları kaldır', en: 'Remove ads', ic: [['klaket', L('reklam yok', 'no ads')]] },
+  { key: 'buyuk', g: 'm-sandik', tr: 'Büyük paket', en: 'Big pack', rozet: ['En iyi teklif', 'Best value'], ic: [['geri', '×10'], ['saat', '+15 ×10'], ['makas', '×10'], ['kalp', L('dolu', 'full')]] },
+  { key: 'bst', g: 'm-canta', tr: 'Güçlendirici paketi', en: 'Booster pack', ic: [['geri', '×3'], ['saat', '+15 ×3'], ['makas', '×3']] },
+  { key: 'can', g: 'm-kalpler', tr: 'Canları doldur', en: 'Refill lives', ic: [['kalp', '×5']] },
+  { key: 'noads', g: 'm-reklamsiz', tr: 'Reklamları kaldır', en: 'Remove ads', ic: [['klaket', L('reklam yok', 'no ads')]] },
 ];
 function magaza() {
   const el = $('magaza'); el.innerHTML = '';
   const kart = (u, fiyat, tikla, pasif) => {
     const k = document.createElement('div'); k.className = 'urun';
-    k.innerHTML = (u.rozet ? `<em>${L(...u.rozet)}</em>` : '') + `<div class="icerik">${u.ic.map(([r, y]) => `<span><i style="background-image:url(img/${r}.webp)"></i><b>${y}</b></span>`).join('')}</div><div class="serit2"><b>${L(u.tr, u.en)}</b></div>`;
+    k.innerHTML = (u.rozet ? `<em>${L(...u.rozet)}</em>` : '') + `<div class="icerik">${u.g ? `<img class="mg" src="img/${u.g}.webp" alt="">` : ''}${u.ic.map(([r, y]) => `<span><i style="background-image:url(img/${r}.webp)"></i><b>${y}</b></span>`).join('')}</div><div class="serit2"><b>${L(u.tr, u.en)}</b></div>`;
     const b = Object.assign(document.createElement('button'), { type: 'button', className: 'hap yesil fiyat', textContent: fiyat }); b.disabled = !!pasif; b.onclick = tikla; k.querySelector('.serit2').appendChild(b); el.appendChild(k);
   };
   // günde bir ücretsiz güçlendirici: ödüllü reklamla
   const bugun = O.bugun(), aldi = save.hediyeGun === bugun;
-  kart({ tr: 'Günün hediyesi', en: 'Daily gift', ic: [['makas', '+1'], ['saat', '+15 · +1']] }, aldi ? L('Yarın', 'Tomorrow') : L('Reklam izle', 'Watch ad'), async () => {
+  kart({ g: 'm-hediye', tr: 'Günün hediyesi', en: 'Daily gift', ic: [['makas', '+1'], ['saat', '+15 · +1']] }, aldi ? L('Yarın', 'Tomorrow') : L('Reklam izle', 'Watch ad'), async () => {
     let r = ''; try { r = await bekle.sar(Ads.rewarded(), 'top'); } catch {}
     if (r === 'earned') { save.bst = { ...save.bst, makas: (save.bst.makas | 0) + 1, sure: (save.bst.sure | 0) + 1 }; save.hediyeGun = bugun; App.persist(); magaza(); }
   }, aldi || !Ads.online());
@@ -188,7 +188,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape') ayarKapat(); });
 window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') O.cikisSor(); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
 
 // Oyun bir figürü tamamlayan bölümü bildirir (kutlama yazısı için)
-O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10 > 6 ? (n / 10 - 1) % 6 + 1 : n / 10}.webp`, kaydir: n / 10 > 6 ? Math.floor((n / 10 - 1) / 6) * 70 : 0 } : null;
+O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10 > FIGUR_GORSEL ? (n / 10 - 1) % 6 + 1 : n / 10}.webp`, kaydir: n / 10 > FIGUR_GORSEL ? Math.floor((n / 10 - 1) / 6) * 70 : 0 } : null;
 
 // Paralaks: parmağın ya da telefonun eğiminin konumuna göre gökyüzü katmanları hafifçe kayar. Hareket azaltmada kapalı.
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
