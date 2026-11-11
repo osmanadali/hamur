@@ -57,7 +57,7 @@ function ana() {
 const DURAK = [[0.4982,0.955],[0.4179,0.8641],[0.2571,0.7732],[0.3063,0.6823],[0.5723,0.5914],[0.725,0.5005],[0.5634,0.4096],[0.2732,0.3187],[0.2643,0.2278],[0.4464,0.1369],[0.5045,0.046]];
 // Dünyalar: 60 bölümde bir. Bölüm yolunda her dünyanın kendi gökyüzü rengi vardır; sınırın düştüğü karoda renkler yumuşakça birbirine geçer.
 const DUNYA = [['Hamur Diyarı', 'Dough Land', null], ['Gece Fırını', 'Night Bakery', [58, 42, 128]], ['Gün Batımı', 'Sunset', [247, 150, 100]], ['Nane Bahçesi', 'Mint Garden', [120, 215, 170]],
-  ['Çilek Tarlası', 'Strawberry Field', [245, 135, 165]], ['Çikolata Vadisi', 'Chocolate Valley', [140, 92, 62]], ['Kış Masalı', 'Winter Tale', [175, 215, 240]], ['Limon Bahçesi', 'Lemon Grove', [245, 225, 105]], ['Gökkuşağı', 'Rainbow', [215, 180, 240]]];
+  ['Kurabiye Ormanı', 'Cookie Forest', [110, 185, 235]], ['Çikolata Vadisi', 'Chocolate Valley', [140, 92, 62]], ['Kış Masalı', 'Winter Tale', [175, 215, 240]], ['Limon Bahçesi', 'Lemon Grove', [245, 225, 105]], ['Gökkuşağı', 'Rainbow', [215, 180, 240]]];
 const dunyaNo = n => Math.min(DUNYA.length - 1, Math.floor((n - 1) / 60));
 const dunyaRenk = (n, a) => { const r = DUNYA[dunyaNo(Math.max(1, n))][2]; return r ? `rgba(${r.join(',')},${a})` : 'rgba(201,168,238,0)'; };
 function yol() {
