@@ -782,3 +782,7 @@ html{background:#c9a8ee}
 .adekor .z4{background-image:url(img/bulut-6.webp);right:-4%;bottom:calc(7% - 30px);width:210px;height:86px}
 .acilis p{top:calc(50% + 70px)}
 .acilis .adekor .un-a,.acilis .adekor .un-y{top:calc(50% + 104px)}
+/* bulut zeminler geri alındı (önceki hâl) */
+.acilis .adekor .zm{display:none}
+.acilis p{top:calc(50% + 54px)}
+.acilis .adekor .un-a,.acilis .adekor .un-y{top:calc(50% + 96px)}
