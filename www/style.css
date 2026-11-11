@@ -817,3 +817,6 @@ html{background:#c9a8ee}
 .acilis .adekor .bs{top:calc(50% + 163px * var(--o))}
 .acilis .adekor .bs::after{display:none}
 .acilis .adekor .bs{-webkit-mask:linear-gradient(#000 38%,transparent 82%);mask:linear-gradient(#000 38%,transparent 82%)}
+/* ana düğme: "Oyna" yerine doğrudan "Bölüm N" */
+#bOyna>b{display:none}
+#bOyna small{font:400 29px var(--display);letter-spacing:.3px;opacity:1}
