@@ -500,3 +500,11 @@ body.ana-acik .gok{opacity:1}
 @media (prefers-reduced-motion:reduce){.akar i{animation:none;translate:0 0}.acilis p{animation:none}}
 
 .acilis p{animation-delay:.5s;font-size:27px}
+
+/* açılış: altı hamurun birlikte oynadığı sahne (hareketli görsel); kenarları zemine eriyerek karışır */
+.acilis .agrup{position:absolute;left:50%;top:50%;width:min(92vw,400px);height:auto;aspect-ratio:1;margin-left:calc(min(92vw,400px) / -2);margin-top:-150px;opacity:0;-webkit-mask:radial-gradient(closest-side,#000 72%,transparent 100%);mask:radial-gradient(closest-side,#000 72%,transparent 100%)}
+.acilis.logolu .agrup{opacity:1;transition:opacity .35s ease .2s}
+.acilis .alogo{top:calc(50% - 300px)}
+.acilis p{bottom:calc(50% - 300px)}
+.acilis{background:#c998f3}   /* hareketli görselin zemin rengi (sistem ekranındaki #c59af1 ile gözle ayırt edilmez) */
+.acilis .agrup{-webkit-mask:none;mask:none}
