@@ -611,3 +611,7 @@ body[data-dunya="2"].oyun-acik::before{content:'';position:fixed;inset:0;z-index
 .acilis .mavi{right:calc(50% + 4% + var(--y) * 17%)}
 .acilis .kirmizi{left:calc(50% + 4% + var(--y) * 17%)}
 .acilis .hs{width:calc(20% + var(--y) * 34%)}
+/* hamur önde ve uçları ellerin içinde */
+.acilis .hs{z-index:2;bottom:31%;height:25%;width:calc(31% + var(--y) * 34%)}
+.acilis .ck{z-index:1}
+.acilis .hs{bottom:22%;height:20%;width:calc(26% + var(--y) * 34%)}
