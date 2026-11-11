@@ -621,7 +621,8 @@ function yastik(hex) {
   let c = boyali.get(hex); if (c || !blokGri) return c || null;
   c = document.createElement('canvas'); c.width = c.height = BLOK;
   const x = c.getContext('2d'), id = x.createImageData(BLOK, BLOK), o = id.data, [r, g, b] = rgb(hex);
-  for (let i = 0; i < BLOK * BLOK; i++) { const k = blokGri[i * 2] / blokOrt; o[i * 4] = r * k; o[i * 4 + 1] = g * k; o[i * 4 + 2] = b * k; o[i * 4 + 3] = blokGri[i * 2 + 1]; }
+  for (let i = 0; i < BLOK * BLOK; i++) { const k = blokGri[i * 2] / blokOrt, un = k > 1.3 ? Math.min(1, (k - 1.3) / .45) : 0;   // çok açık pikseller un serpintisidir: beyaza döner
+    o[i * 4] = r * k * (1 - un) + 255 * un; o[i * 4 + 1] = g * k * (1 - un) + 255 * un; o[i * 4 + 2] = b * k * (1 - un) + 255 * un; o[i * 4 + 3] = blokGri[i * 2 + 1]; }
   x.putImageData(id, 0, 0); if (boyali.size > 80) boyali.clear(); boyali.set(hex, c); return c;
 }
 const koyu = (h, s) => '#' + rgb(h).map(v => Math.round(v * s).toString(16).padStart(2, '0')).join('');
