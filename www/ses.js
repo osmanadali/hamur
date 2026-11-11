@@ -141,5 +141,19 @@ window.Ses = (() => {
       s.connect(f); f.connect(g); g.connect(ac.destination); s.start(t, Math.random() * .3, d + .05);
     } catch {}
   }
-  return { init: f => { A = f; }, tone, fx, pat, buzz, haptic, Music, ctx: () => ac };
+  // Kayıtlı efektler (ElevenLabs ile üretildi: ses/*.mp3). İlk seste çözülür; hazır değilse ya da çözülemezse yedek(ler) çalar.
+  const KAYIT = ['yapis', 'otur', 'kes', 'kazan', 'kayip'], tampon = {}; let yuklendi = false;
+  function yukle() {
+    if (yuklendi) return; yuklendi = true;
+    for (const ad of KAYIT) fetch('ses/' + ad + '.mp3').then(r => r.arrayBuffer()).then(b => ac.decodeAudioData(b)).then(t => { tampon[ad] = t; }).catch(() => {});
+  }
+  function cal(ad, v, yedek) {
+    if (!A().sound) return;
+    try {
+      ensureAC(); yukle();
+      const t = tampon[ad]; if (!t) { if (yedek) yedek(); return; }
+      const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = t; g.gain.value = v || .8; s.connect(g); g.connect(ac.destination); s.start();
+    } catch { if (yedek) yedek(); }
+  }
+  return { init: f => { A = f; }, tone, fx, pat, cal, buzz, haptic, Music, ctx: () => ac };
 })();

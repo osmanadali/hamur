@@ -181,7 +181,7 @@ function olaylar(p, ev) {
       if (e.mixed) p.mix = { t0: now, cols: e.cols, lead: lighten(C[e.color], .42), srcs: [a, b], seed: Math.random() * 6, ox: mx, oy: my };
       else if (p.mix) p.mix.cols = p.mix.cols.concat(e.cols.slice(p.mix.cols.length));
       if (p.mix) p.mix.maxR = Math.max(...p.cells.map(c => Math.hypot(c[0] + .5 - x0 - p.mix.ox, c[1] + .5 - y0 - p.mix.oy))) + .8;
-      p.mutluT = now + (e.mixed ? MIXMS : 0) + 900; p.ezT = now; p.sik = { t0: now, x: x0 + mx, y: y0 + my }; Ses.pat(.14, 1100, 220, .28); if (e.mixed) Ses.pat(.5, 700, 300, .1, .1);   // ezilip uzar; şlap
+      p.mutluT = now + (e.mixed ? MIXMS : 0) + 900; p.ezT = now; p.sik = { t0: now, x: x0 + mx, y: y0 + my }; Ses.cal('yapis', .9, () => Ses.pat(.14, 1100, 220, .28)); if (e.mixed) Ses.pat(.5, 700, 300, .1, .1);   // ezilip uzar; şlap
       p.flash = { t0: now, segs: e.seam.map(s => [s[0] - x0, s[1] - y0, s[2], s[3]]) };
       p.pv += 1.5;
       burst((x0 + mx) * cell, (y0 + my) * cell, [a, b], 7, cell * 2.6); un((x0 + mx) * cell, (y0 + my) * cell, 4);
@@ -225,7 +225,7 @@ function kes(p, dx, dy) {
   if (!e) return;
   for (const q of e.parts) { giydir(q); q.ox = p.ox - dx * cell; q.oy = p.oy - dy * cell; q.pv = 1.2; q.path = relPath(q); }
   for (const [x, y] of e.at) { burst((x + .5) * cell, (y + .5) * cell, [C[p.color], '#ffffff'], 10, cell * 2.4); }
-  Ses.pat(.05, 7000, 3000, .22); Ses.pat(.06, 6000, 2500, .2, .07); buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
+  Ses.cal('kes', .9, () => { Ses.pat(.05, 7000, 3000, .22); Ses.pat(.06, 6000, 2500, .2, .07); }); buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
   for (const s of e.sonra) olaylar(s.p, s.ev);
   denetle(e.parts.find(q => st.pieces.includes(q)) || st.pieces[0]);
 }
@@ -302,7 +302,7 @@ function showOv(t, p, b, fn, b2, fn2) {
 }
 let kayipTur = '', ovResim = '';   // ovResim: sıradaki pencere için özel görsel (ör. eriyen kalp)
 function lose(kind, piece) {
-  state = 'lost'; kayipTur = kind; makasKoy = false; paintUndo(); canHarca(); running = false; drag = null; threads = new Map();
+  state = 'lost'; kayipTur = kind; makasKoy = false; paintUndo(); canHarca(); setTimeout(() => Ses.cal('kayip', .7), kind === 'doom' ? 900 : 150); running = false; drag = null; threads = new Map();
   if ((li < ASIL && !gunluk)) { save.fails = { ...save.fails, [li + 1]: (save.fails?.[li + 1] || 0) + 1 }; App.persist(); }
   const now = performance.now(), yine = L('Tekrar dene', 'Try again');
   // ne kadar yaklaşıldı: kaç kalıp doldu; süre bittiyse yaklaşık kaç saniye eksik kaldı (kalan en kısa çözümden)
@@ -417,7 +417,7 @@ function makasKonur(gx, gy) {
   if (dolu) { buzz(20); tone(180, .1, 'square', 140, .04); return; }
   st.makas.push({ x: gx, y: gy, open: true, hold: false }); cz = Coz.hazirla(st); geri = null;   // geri alma makası geri getirmez
   harca('makas'); makasKoy = false; $('hint').textContent = L(...Lv.hint); paintUndo();
-  Ses.pat(.05, 7000, 3000, .22); Ses.pat(.06, 6000, 2500, .2, .07); buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
+  Ses.cal('kes', .9, () => { Ses.pat(.05, 7000, 3000, .22); Ses.pat(.06, 6000, 2500, .2, .07); }); buzz([10, 30, 18]); tone(1500, .05, 'square', 900, .05); tone(1900, .06, 'square', 1100, .05, .07);
 }
 // Renk tarifi: düğmeye basınca çubuğun üstünde yatay bir şerit olarak açılır, yeniden basınca ya da dışına dokununca kapanır.
 function tarif(ac) { $('rx').hidden = !ac; $('gTarif').setAttribute('aria-expanded', String(!!ac)); }
@@ -463,7 +463,7 @@ function kazanKaydet() {
 }
 function win() {
   konfeti();
-  [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09));
+  Ses.cal('kazan', .8, () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09)));
   Ads.warm();
   const kalan = L('Kalan süre ', 'Time left: ') + Math.ceil(timeLeft) + L(' sn.', ' s.');
   if (gunluk) return showOv(L('Günlük kalıp tamam', 'Daily mold done'), yildizYazi(sonYildiz) + ' · ' + kalan + L(' Yarın yeni kalıp var.', ' A new mold comes tomorrow.'), L('Paylaş', 'Share'), paylas, L('Ana ekran', 'Home'), () => App.ekran.goster('ana'));
@@ -869,7 +869,7 @@ function update(dt, now) {
     if (now - s.t0 >= 340) {
       s.h.shown = true; s.gone = true; rings.push({ h: s.h, t0: now });
       const [x, y] = center(s.p); burst(x, y, [C[s.h.color], '#ffffff'], 9, cell * 3); un(x, y, 3 + Math.min(4, s.p.cells.length));
-      Ses.pat(.2, 600, 90, .32); buzz(22); tone(170, .2, 'sine', 85, .2); tone(784, .16, 'triangle', 0, .07, .08); tone(1175, .24, 'triangle', 0, .06, .16);
+      Ses.cal('otur', 1, () => Ses.pat(.2, 600, 90, .32)); buzz(22); tone(170, .2, 'sine', 85, .2); tone(784, .16, 'triangle', 0, .07, .08); tone(1175, .24, 'triangle', 0, .06, .16);
     }
   }
   sinks = sinks.filter(s => !s.gone);
