@@ -857,3 +857,6 @@ html{background:#c9a8ee}
 .acilis .alogo{width:min(88vw,380px);margin-left:calc(min(88vw,380px) / -2);top:max(5vh,calc(env(safe-area-inset-top,0px) + 16px))}
 .baslik-yeri .logo{filter:drop-shadow(0 8px 6px rgba(50,20,90,.4))}
 @media (prefers-reduced-motion:reduce){.acilis .kat{animation:none}}
+/* ana ekran da derin gökyüzünde; eski ay-kaşık gizli (yeni gökyüzünde ay var) */
+body.ana-acik{background:#7a5cc4 url(img/gok-derin.webp) center/cover no-repeat}
+body.ana-acik .gok .n-ay{display:none}
