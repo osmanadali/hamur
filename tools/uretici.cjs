@@ -221,11 +221,11 @@ const RITIM = ['rahat', 'rahat', 'orta', 'rahat', 'zor', 'rahat', 'rahat', 'orta
 // Bant başına mutlak hedef puanlar (cozucu rapor puanı). Bantlar üst üste biner: yeni mekanik gelince zorluk bir basamak iner,
 // sonra önceki bandın üstüne çıkar. Bant içinde aynı basamak sona doğru 1,5 puan zorlaşır. Kapalı test verisiyle ayarlanır.
 const HEDEF = {
-  1: { rahat: 12, orta: 16, zor: 19, enzor: 21 },
-  2: { rahat: 17, orta: 20, zor: 22.5, enzor: 24.5 },
-  3: { rahat: 20.5, orta: 23.5, zor: 26.5, enzor: 28.5 },
-  4: { rahat: 22.5, orta: 26, zor: 29, enzor: 31 },
-  5: { rahat: 18, orta: 22, zor: 25, enzor: 27.5 },
+  1: { rahat: 11, orta: 14, zor: 16.5, enzor: 18 },
+  2: { rahat: 15.5, orta: 18, zor: 19.5, enzor: 21 },
+  3: { rahat: 20, orta: 23, zor: 25.5, enzor: 27.5 },
+  4: { rahat: 22.5, orta: 25.5, zor: 28, enzor: 30 },
+  5: { rahat: 17, orta: 21, zor: 24, enzor: 26 },
   6: { rahat: 22, orta: 25.5, zor: 28.5, enzor: 30.5 },
   7: { rahat: 20, orta: 24, zor: 27, enzor: 29.5 },
   8: { rahat: 24, orta: 27.5, zor: 30.5, enzor: 33 },
