@@ -118,7 +118,7 @@ function setup(i, g) {
   ekSure = i < ASIL && !gunluk && (save.fails?.[i + 1] || 0) >= 3 ? 10 : 0;   // aynı bölümde üç kez kaybeden oyuncuya 10 sn eklenir
   state = 'play'; timeLeft = Lv.t + ekSure; running = false; drag = null; sinks = []; parts = []; rings = []; after = null; wonAt = 0; shownS = -1; sonGirdi = performance.now();
   threads = new Map(); geri = null; geriKalan = CFG.geriHak; kesim = null; durak = false; makasKoy = false; cv.style.visibility = '';
-  $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); tarif(false); $('gTarif').hidden = i < 20; $('rx').classList.toggle('damgali', !!save.damga);   // renk tarifi düğmesi karışımın öğretildiği 21. bölümden itibaren
+  $('ov').hidden = true; $('tost').hidden = true; clearTimeout(gecisT); $('hint').textContent = L(...Lv.hint); tarif(false); $('gTarif').hidden = i < 12; $('rx').classList.toggle('damgali', !!save.damga);   // renk tarifi düğmesi karışımın öğretildiği 21. bölümden itibaren
   $('lvlNo').textContent = gunluk ? L('Günlük kalıp', 'Daily mold') : i < ASIL ? L('Bölüm ', 'Level ') + (i + 1) : L('Deneme', 'Test'); $('lvlNo').classList.toggle('done', done.has(i + 1));
   paintUndo(); layout();
   window.Olcum?.event('level_start', { level: i + 1 });

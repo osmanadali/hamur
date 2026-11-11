@@ -86,14 +86,14 @@ module.exports = async ({ check, metrics }) => {
     const erken = [];
     BOLUM.forEach((L, i) => {
       const n = i + 1, c = renkler(L), ana = ['r', 'y', 'b'].filter(x => c.has(x)).length;
-      if (n <= 10 && has(L, /#/)) erken.push(n + ': duvar');
-      if (n <= 20 && ana > 1) erken.push(n + ': iki ana renk');
-      if (n <= 35 && c.has('r') && (c.has('y') || c.has('b'))) erken.push(n + ': kırmızı karışımı');
-      if (n <= 50 && has(L, /x/)) erken.push(n + ': makas');
+      if (n <= 5 && has(L, /#/)) erken.push(n + ': duvar');
+      if (n <= 12 && ana > 1) erken.push(n + ': iki ana renk');
+      if (n <= 25 && c.has('r') && (c.has('y') || c.has('b'))) erken.push(n + ': kırmızı karışımı');
+      if (n <= 40 && has(L, /x/)) erken.push(n + ': makas');
     });
-    check('bolum.takvim', 'Mekanik takvimi: duvar 11, karışım 21, mor ve turuncu 36, makas 51. bölümden önce görünmez', !erken.length, erken.join(' · '));
-    const makas = R.slice(50, 60).map((r, i) => r && r.kes ? 0 : 51 + i).filter(Boolean);
-    check('bolum.makas', 'Makas bölümlerinin (51-60) en kısa çözümü kesim içerir', !makas.length, makas.join(', '));
+    check('bolum.takvim', 'Mekanik takvimi: duvar 6, karışım 13, mor ve turuncu 26, makas 41. bölümden önce görünmez', !erken.length, erken.join(' · '));
+    const makas = R.slice(40, 50).map((r, i) => r && r.kes ? 0 : 41 + i).filter(Boolean);
+    check('bolum.makas', 'Makas bölümlerinin (41-50) en kısa çözümü kesim içerir', !makas.length, makas.join(', '));
     const ayni = new Set(BOLUM.map(L => L.map.join('/') + '|' + L.molds.join('/'))).size;
     check('bolum.farkli', 'Birbirinin aynısı bölüm yok', ayni === BOLUM.length, `${ayni}/${BOLUM.length}`);
     // zorluk ritmi: her 10'lukta 10. bölüm döngünün en zoru, 1. bölüm en zorlardan değil

@@ -716,3 +716,4 @@ html{background:#c9a8ee}
 .rx i[data-c=r]{background-image:url(img/blok-r.webp)!important}.rx i[data-c=y]{background-image:url(img/blok-y.webp)!important}.rx i[data-c=b]{background-image:url(img/blok-b.webp)!important}
 .rx i[data-c=g]{background-image:url(img/blok-g.webp)!important}.rx i[data-c=o]{background-image:url(img/blok-o.webp)!important}.rx i[data-c=p]{background-image:url(img/blok-p.webp)!important}
 .acilis .hs{top:53.9%;height:13.7%}
+.hap.gunluk.serili::after{content:none}

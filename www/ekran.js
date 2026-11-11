@@ -48,7 +48,7 @@ function ana() {
   if ((save.done || []).length >= 3 && !save.bildirimSoruldu) { save.bildirimSoruldu = true; App.persist(); hatirlat(true); } else hatirlat(false);
   canCiz();
   const seri = save.seri && save.seri.gun >= O.bugun() - 1 ? save.seri.n : 0;
-  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '') + (seri > 1 ? ' · ' + seri : ''); $('bGunluk').classList.toggle('serili', seri > 1);
+  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '') + '';
   $('oynaNo').textContent = hepsi ? L('Hepsi tamam', 'All done') : L('Bölüm ', 'Level ') + n;
 }
 
