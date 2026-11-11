@@ -641,3 +641,8 @@ body[data-dunya="2"].oyun-acik::before{content:'';position:fixed;inset:0;z-index
 .magaza .urun .fiyat{width:100%;min-width:0}
 .magaza .urun:first-child .fiyat,.magaza .urun:has(em) .fiyat{width:auto;min-width:110px}
 .magaza .geri-yukle,.magaza .aciklama{grid-column:1/-1;justify-self:center}
+.magaza{grid-auto-rows:max-content}
+.magaza .urun .icerik{flex-direction:row;flex-wrap:wrap;flex:none}
+.magaza .urun .icerik b{font-size:17px}
+.magaza .urun:not(:first-child):not(:has(em)) .icerik span{flex-direction:column;gap:2px;text-align:center}
+.magaza div.urun:last-of-type{grid-column:1/-1}

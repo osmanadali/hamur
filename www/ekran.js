@@ -110,10 +110,10 @@ function tepsi() {
 /* ---------- mağaza ---------- */
 // Kart: üstte içerik (ne verdiği simgelerle), altta ad ve yeşil fiyat düğmesi. Fiyat mağazadan gelir; mağaza yoksa (tarayıcı) düğme pasif.
 const URUN = [
-  { key: 'bst', tr: 'Güçlendirici paketi', en: 'Booster pack', ic: [['geri', '×3'], ['saat', '+15 ×3'], ['makas', '×3']] },
   { key: 'buyuk', tr: 'Büyük paket', en: 'Big pack', rozet: ['En iyi teklif', 'Best value'], ic: [['geri', '×10'], ['saat', '+15 ×10'], ['makas', '×10'], ['kalp', L('dolu', 'full')]] },
+  { key: 'bst', tr: 'Güçlendirici paketi', en: 'Booster pack', ic: [['geri', '×3'], ['saat', '+15 ×3'], ['makas', '×3']] },
   { key: 'can', tr: 'Canları doldur', en: 'Refill lives', ic: [['kalp', '×5']] },
-  { key: 'noads', tr: 'Reklamları kaldır', en: 'Remove ads', ic: [['klaket', L('bölüm arası reklam yok', 'no ads between levels')]] },
+  { key: 'noads', tr: 'Reklamları kaldır', en: 'Remove ads', ic: [['klaket', L('reklam yok', 'no ads')]] },
 ];
 function magaza() {
   const el = $('magaza'); el.innerHTML = '';
