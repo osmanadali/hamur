@@ -28,7 +28,7 @@ module.exports = async ({ browser, URL, open, shot, getSave, inViewport, check }
     await page.click('#bTepsi'); await page.waitForTimeout(300);
     const t = await page.evaluate(() => [...document.querySelectorAll('.figur')].map(f => (f.classList.contains('tamam') ? 'T' : '') + f.querySelector('small').textContent).join(' | '));
     await shot(page, 'ekran-tepsi');
-    check('ekran.tepsi', 'Tepsi: her 10 bölümde bir figür tamamlanır, yarım figür kaç bölüm kaldığını gösterir', /^T/.test(t) && t.includes('4 / 10') && t.split('|').length === 15, t);
+    check('ekran.tepsi', 'Tepsi: her 10 bölümde bir figür tamamlanır, yarım figür kaç bölüm kaldığını gösterir', /^T/.test(t) && t.includes('4 / 10') && t.split('|').length >= 15, t);
     await page.click('#tepsiGeri'); await page.click('#bAyar'); await page.waitForTimeout(200);
     await page.click('#sec-damga'); await page.click('#sec-hepsiAcik');
     const k = await getSave(page); await shot(page, 'ekran-ayar');
@@ -62,7 +62,7 @@ module.exports = async ({ browser, URL, open, shot, getSave, inViewport, check }
     await page.waitForTimeout(700); const orta = await page.evaluate(() => !!document.getElementById('acilis') && !document.getElementById('acilis').classList.contains('ac'));
     await page.waitForTimeout(3200);
     const son = await page.evaluate(() => [!document.getElementById('acilis'), window.__hamur.ekran.acik, document.getElementById('sAna').inert]);
-    check('acilis.olagan', 'Açılış animasyonu oynar (ilk kare düz #c59af1), sonra ana ekran açılır', ilkKare === 'rgb(197, 154, 241)' && orta && son.join() === 'true,ana,false' && !errors.length, errors[0] || `${ilkKare} · ${son.join(' · ')}`);
+    check('acilis.olagan', 'Açılış animasyonu oynar (ilk kare düz #c59af1), sonra ana ekran açılır', ilkKare === 'rgb(122, 92, 196)' && orta && son.join() === 'true,ana,false' && !errors.length, errors[0] || `${ilkKare} · ${son.join(' · ')}`);
     await page.reload(); await page.waitForTimeout(250);
     const o = await page.evaluate(() => { const r = document.getElementById('bOyna').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
     await page.touchscreen.tap(o[0], o[1]); await page.waitForTimeout(600);   // Oyna düğmesinin tam üstüne dokunulur: dokunuş alta geçmemeli

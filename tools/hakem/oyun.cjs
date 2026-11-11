@@ -174,7 +174,7 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await u.basla(0, 1); await u.gotur(1, 1, 100); await u.birak(); await u.page.evaluate(() => { window.__hamur.save.bst = { geri: 0, sure: 0, makas: 0 }; window.__hamur.oyun.sure = .1; }); await u.page.waitForTimeout(500);
     const metin = await u.page.evaluate(() => document.getElementById('ovP').textContent); await u.page.evaluate(() => { const b2 = document.getElementById('ovB2'); (b2.hidden ? document.getElementById('ovB') : b2).click(); }); await u.page.waitForTimeout(150);   // "Tekrar dene": reklam varsa ikinci düğmedir
     const yeni = await u.page.evaluate(() => window.__hamur.oyun.sure), ks = await getSave(u.page);
-    check('oyun.eksure', 'Aynı bölümde üç kez kaybedince sıradaki denemede 10 saniye eklenir; kayıpta ne kadar yaklaşıldığı yazılır', yeni === 40 && ks.fails?.[1] === 3 && /10 saniye/.test(metin) && /saniye daha gerekiyordu/.test(metin), `${yeni} sn · "${metin}"`);
+    check('oyun.eksure', 'Aynı bölümde üç kez kaybedince sıradaki denemede 10 saniye eklenir; kayıp penceresinde yazı yoktur', yeni === 40 && ks.fails?.[1] === 3 && metin === '', `${yeni} sn · "${metin}"`);
     await u.ctx.close();
     const bekle = await ac({ save: { level: 1 } }); await bekle.page.waitForTimeout(600);
     const t = await bekle.page.evaluate(() => window.__hamur.oyun.sure);

@@ -87,7 +87,9 @@ function yol() {
 // Her 10 bölümde bir figür tamamlanır. Boş siluet görselin kendi alfa kanalından gelir (CSS: karartılmış, soluk).
 const FIGUR = [['Kedi', 'Cat'], ['Ev', 'House'], ['Çiçek', 'Flower'], ['Balık', 'Fish'], ['Kalp', 'Heart'], ['Roket', 'Rocket'],
   ['Tavşan', 'Rabbit'], ['Ağaç', 'Tree'], ['Araba', 'Car'], ['Yelkenli', 'Sailboat'], ['Kelebek', 'Butterfly'], ['Taç', 'Crown'],
-  ['Gece kedisi', 'Night cat'], ['Şeker ev', 'Candy house'], ['Mor çiçek', 'Purple flower']].slice(0, Math.ceil(N / 10));
+  ['Gece kedisi', 'Night cat'], ['Şeker ev', 'Candy house'], ['Mor çiçek', 'Purple flower']];
+for (let k = FIGUR.length; k < Math.ceil(N / 10); k++) FIGUR.push([FIGUR[k % 12][0] + ' ' + (Math.floor(k / 12) + 1), FIGUR[k % 12][1] + ' ' + (Math.floor(k / 12) + 1)]);   // görseli henüz olmayan figürler
+FIGUR.length = Math.ceil(N / 10);
 // Görsel: figur-<no>.webp varsa o; yoksa ilk altı figürden biri, rengi kaydırılmış (yeni varyasyon)
 const VAR_FIGUR = new Set();   // kendi görseli olan numaralar (yüklenince işaretlenir)
 const FIGUR_GORSEL = 12;   // kendi görseli olan figür sayısı (figur-1 … figur-N); yenileri gelince artırılır
@@ -111,7 +113,7 @@ function tepsi() {
 // Kart: üstte içerik (ne verdiği simgelerle), altta ad ve yeşil fiyat düğmesi. Fiyat mağazadan gelir; mağaza yoksa (tarayıcı) düğme pasif.
 const URUN = [
   { key: 'buyuk', g: 'm-sandik', tr: 'Büyük paket', en: 'Big pack', rozet: ['En iyi teklif', 'Best value'], ic: [['geri', '×10'], ['saat', '+15 ×10'], ['makas', '×10'], ['kalp', L('dolu', 'full')]] },
-  { key: 'bst', g: 'm-canta', tr: 'Güçlendirici paketi', en: 'Booster pack', ic: [['geri', '×3'], ['saat', '+15 ×3'], ['makas', '×3']] },
+  { key: 'bst', g: 'm-canta', tr: 'Güçlendirici paketi', en: 'Booster pack', ic: [['geri', '×3'], ['makas', '×3'], ['saat', '+15 ×3']] },
   { key: 'can', g: 'm-kalpler', tr: 'Canları doldur', en: 'Refill lives', ic: [['kalp', '×5']] },
   { key: 'noads', g: 'm-reklamsiz', tr: 'Reklamları kaldır', en: 'Remove ads', ic: [['klaket', L('reklam yok', 'no ads')]] },
 ];

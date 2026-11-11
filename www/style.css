@@ -913,3 +913,47 @@ body.ana-acik .gok .n-ay{display:none}
 #lvlNo{top:-8px}
 #lvlNo{top:-9px}
 #lvlNo{top:-3px}
+
+/* ================= ekran taraması düzeltmeleri ================= */
+#lvlNo{top:-3px}
+/* düğme yazıları üst yüzün ortasında (alttaki kalınlık kadar yukarı) */
+.hap,.go{padding-bottom:10px}
+#bOyna{padding-bottom:13px}
+.urun .fiyat{padding-bottom:8px}
+/* saat: sarı halka ve boğumlar yok; kadran ve dönen akrep yeter */
+.saat,body[data-dunya="1"].oyun-acik .saat{background:url(img/kadran.webp) center/100% no-repeat;width:58px;height:58px}
+.saat .bogum{display:none}
+.saat .akrep{top:9px;width:9px;height:24px}
+.timer.low .saat::after{inset:4px}
+/* mağaza: yan yana kutularda alt mor bölüm aynı boyda; güçlendirici paketinde geri al ve makas bir satırda, süre altında */
+.magaza .urun:not(:first-child):not(:has(em)) .icerik{flex-direction:row;flex-wrap:wrap;align-content:center;gap:6px 10px}
+.magaza .urun:not(:first-child):not(:has(em)) .icerik .mg{flex:0 0 100%;height:84px}
+.magaza .urun:not(:first-child):not(:has(em)) .icerik>span:nth-of-type(3){flex:0 0 100%;justify-content:center}
+.magaza .urun:not(:first-child):not(:has(em)) .serit2{height:104px;justify-content:space-between;box-sizing:border-box}
+.magaza .urun:not(:first-child):not(:has(em)) .serit2>b{flex:1;display:grid;place-items:center}
+/* bölümler: yol başlığın altında eriyerek kayar (kurabiye ve süsler başlığa binmez) */
+.yol{-webkit-mask:linear-gradient(transparent calc(max(10px,env(safe-area-inset-top,0px)) + 30px),#000 calc(max(10px,env(safe-area-inset-top,0px)) + 84px));mask:linear-gradient(transparent calc(max(10px,env(safe-area-inset-top,0px)) + 30px),#000 calc(max(10px,env(safe-area-inset-top,0px)) + 84px))}
+/* bölüm başlangıcı: bilgiler tek satır */
+.bs{padding-left:4%;gap:6px}
+.bs b{font-size:17px;white-space:nowrap}
+.bs i{width:30px;height:30px}
+/* kapat düğmesinde odak halkası yok */
+.kapat:focus,.kapat:focus-visible{outline:0}
+
+/* kayıp penceresi: yazısız; iki simge düğme yan yana (joker ve başa sarma) */
+.card.ikonlu{display:grid;grid-template-columns:1fr 1fr;justify-items:center;gap:12px}
+.card.ikonlu>img,.card.ikonlu>h2,.card.ikonlu>p,.card.ikonlu>.secenekler{grid-column:1/-1}
+.card.ikonlu.tek .go{grid-column:1/-1}
+.card.ikonlu .go[data-ik]{width:92px;height:92px;min-height:0;margin:0;padding:0;border:0;border-image:none;font-size:0;background:url(img/guc.webp) center/100% 100% no-repeat;position:relative;filter:drop-shadow(0 5px 4px rgba(40,15,80,.35))}
+.card.ikonlu .go[data-ik]::before{content:'';position:absolute;inset:18% 20% 26%;background:center/contain no-repeat}
+.go[data-ik=geri]::before{background-image:url(img/geri.webp)}
+.go[data-ik=sure]::before{background-image:url(img/saat.webp)}
+.go[data-ik=reklam]::before{background-image:url(img/klaket.webp)}
+.go[data-ik=sure]::after,.go[data-ik=reklam]::after{content:'+15';position:absolute;left:0;right:0;bottom:15%;font:400 15px var(--display);color:#6a3f10;text-shadow:none}
+.card.ikonlu .go[data-ik=bastan]{background-image:url(img/bastan.webp)}
+.card.ikonlu .go[data-ik=bastan]::before{display:none}
+.card.ikonlu #ovB[data-ik],.card.ikonlu #ovB2[data-ik]{font-size:0;color:transparent;text-shadow:none;min-height:0}
+.card.ikonlu .go[data-ik=geri]::before{background-image:url(img/geri.webp)}
+.card.ikonlu .go[data-ik=sure]::before{background-image:url(img/saat.webp)}
+.card.ikonlu .go[data-ik=reklam]::before{background-image:url(img/klaket.webp)}
+.card.ikonlu .go[data-ik=sure]::after,.card.ikonlu .go[data-ik=reklam]::after{font-size:15px;color:#6a3f10}

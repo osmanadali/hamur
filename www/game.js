@@ -296,7 +296,12 @@ function birak() {
 function showOv(t, p, b, fn, b2, fn2) {
   $('ovT').textContent = t; $('ovP').textContent = p; $('ovB').textContent = b; $('ovB').onclick = fn;
   $('ovB2').hidden = !b2; if (b2) { $('ovB2').textContent = b2; $('ovB2').onclick = fn2; }
-  $('ovB2').classList.remove('cikis'); $('ovEk').hidden = true; $('ovX').hidden = true;   // duraklatma bunları kendisi açar
+  $('ovB2').classList.remove('cikis'); $('ovEk').hidden = true; $('ovX').hidden = true;
+  // Kayıp penceresi: yazı yok; düğmeler joker simgeleri (geri al, +15, reklam) ve başa sarma
+  const kart = $('ov').querySelector('.card'), ik = f => f === geriAl ? 'geri' : f === surDevam ? 'sure' : f === reklamDevam ? 'reklam' : f === tekrar ? 'bastan' : '';
+  const ikonlu = state === 'lost' && !!ik(fn); kart.classList.toggle('ikonlu', ikonlu); kart.classList.toggle('tek', ikonlu && !b2);
+  for (const [el, f, yazi] of [[$('ovB'), fn, b], [$('ovB2'), fn2, b2]]) { if (ikonlu && ik(f)) { el.dataset.ik = ik(f); el.setAttribute('aria-label', yazi || ''); } else { delete el.dataset.ik; el.removeAttribute('aria-label'); } }
+  if (ikonlu) $('ovP').textContent = '';   // duraklatma bunları kendisi açar
   const r = ovResim || (state === 'won' ? 'kazanc' : state === 'lost' ? (kayipTur === 'time' ? 'kayip-sure' : 'kayip-yapisma') : ''); ovResim = '';   // sonuç görseli; yazı ve düğmeler altında
   $('ovR').hidden = !r; if (r) $('ovR').src = 'img/' + r + '.webp';
   $('ov').hidden = false;
