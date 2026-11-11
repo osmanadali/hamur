@@ -860,3 +860,30 @@ html{background:#c9a8ee}
 /* ana ekran da derin gökyüzünde; eski ay-kaşık gizli (yeni gökyüzünde ay var) */
 body.ana-acik{background:#7a5cc4 url(img/gok-derin.webp) center/cover no-repeat}
 body.ana-acik .gok .n-ay{display:none}
+
+/* ================= yeni düğme seti (logoyla aynı dil: tombul hamur, koyu mor arkalık, üstte un) ================= */
+.hap,.go{border-image-slice:86 150 fill;border-width:17px 30px;border-image-width:17px 30px;filter:drop-shadow(0 4px 3px rgba(60,25,100,.3))}
+.hap.buyuk,#bOyna{border-width:22px 38px;border-image-width:22px 38px}
+.ana-dugmeler .hap{border-width:15px 26px;border-image-width:15px 26px}
+.urun .fiyat{border-width:13px 22px;border-image-width:13px 22px}
+.hap,.go{padding-bottom:5px}                      /* üst yüz, alttaki kalınlık yüzünden biraz yukarıda */
+.top i{width:54%;height:54%;margin-bottom:9%}
+.top .sola{width:44%;height:44%;margin-right:4%;margin-bottom:9%}
+#bMagaza i{width:54%;height:54%}
+.top.kucuk i{margin:0}
+#yolGeri,#tepsiGeri,#magazaGeri,#bCik{background-image:url(img/top-mor.webp)}
+/* joker düğmeleri: krem kare hamur düğme; rozet mor hamur */
+.guc:not(.tarif)::before{background:url(img/guc.webp) center/100% 100% no-repeat}
+.guc:not(.tarif)::after{display:none}
+.guc:not(.tarif){width:62px;height:62px}
+.guc:not(.tarif) i{width:30px;height:30px;margin-bottom:5px}
+.guc:not(.tarif) small{bottom:9px}
+.guc:not(.tarif):active{transform:translateY(2px) scale(.95)}
+.guc b{background:url(img/rozet.webp) center/100% 100% no-repeat;min-width:24px;height:24px;line-height:22px;right:-7px;top:-8px;padding:0;text-align:center}
+.guc:disabled b{background:url(img/rozet.webp) center/100% 100% no-repeat;filter:grayscale(1)}
+/* pencere gövdesi: hamur panel */
+.card,.panel{border:solid transparent;border-width:46px 40px 50px;border-image:url(img/pencere.webp) 112 100 118 fill / 46px 40px 50px stretch;background:none;box-shadow:none;border-radius:0;padding:0 2px 2px;filter:drop-shadow(0 16px 22px rgba(35,10,75,.45))}
+.card .kapat,.panel .kapat{right:-44px;top:-50px}
+.card p,.panel .secenek,.card .secenek{background:rgba(90,40,120,.3)}
+.top{width:58px;height:58px}
+#sAna .ust .top{width:60px;height:60px}
