@@ -513,3 +513,9 @@ body.ana-acik .gok{opacity:1}
 .acilis::before{content:'';position:absolute;inset:0 -40px;opacity:.75;pointer-events:none;animation:kay 9s ease-in-out infinite alternate;
   background:url(img/bulut-1.webp) 4% 9%/190px no-repeat,url(img/bulut-4.webp) 96% 30%/170px no-repeat,url(img/bulut-3.webp) -2% 56%/210px no-repeat,url(img/bulut-2.webp) 102% 68%/200px no-repeat,url(img/bulut-5.webp) 20% 96%/230px no-repeat,url(img/bulut-6.webp) 92% 92%/180px no-repeat}
 @media (prefers-reduced-motion:reduce){.acilis::before{animation:none}}
+
+/* açılış zemini: oyundaki bulutlu gökyüzü; karakter sahnesi saydam zeminli */
+.acilis{background:#c59af1 url(img/gok.webp) center/cover no-repeat}
+.acilis::before{display:none}
+.acilis .agrup{-webkit-mask:none;mask:none;filter:drop-shadow(0 12px 12px rgba(70,30,120,.28))}
+.acilis .agrup{aspect-ratio:316/348;width:min(84vw,360px);margin-left:calc(min(84vw,360px) / -2);margin-top:-170px}
