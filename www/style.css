@@ -615,3 +615,6 @@ body[data-dunya="2"].oyun-acik::before{content:'';position:fixed;inset:0;z-index
 .acilis .hs{z-index:2;bottom:31%;height:25%;width:calc(31% + var(--y) * 34%)}
 .acilis .ck{z-index:1}
 .acilis .hs{bottom:22%;height:20%;width:calc(26% + var(--y) * 34%)}
+/* izleyenler ortadaki çekişmeye bakar: soldaki ikisi sağa, sağdaki ikisi sola */
+.acilis .iz.turuncu,.acilis .iz.mor{transform:scaleX(-1)}
+.acilis .izle{top:calc(50% + 100px)}
