@@ -901,3 +901,15 @@ body.ana-acik .gok .n-ay{display:none}
 .guc:not(.tarif):disabled i{opacity:.45}
 .guc b{min-width:26px;height:26px;line-height:24px;font-size:13px;color:#fff}
 .gucler{gap:8px;align-items:center}
+
+/* yuvarlak düğmeler: simge görselin içinde, üst yüzün tam ortasında */
+#yolGeri,#tepsiGeri,#magazaGeri,#bCik{background-image:url(img/dugme-geri.webp)}
+#bAyar{background-image:url(img/dugme-ayar.webp)}
+#bMagaza{background-image:url(img/dugme-canta.webp)}
+#yolGeri i,#tepsiGeri i,#magazaGeri i,#bCik i,#bAyar i,#bMagaza i{display:none}
+/* bölüm yazısı geri düğmesinin üst yüzüyle aynı hizada */
+#sOyun .nav{align-items:center;gap:8px}
+#lvlNo{position:relative;top:-8px;line-height:1;min-width:0;text-align:left}
+#lvlNo{top:-8px}
+#lvlNo{top:-9px}
+#lvlNo{top:-3px}
