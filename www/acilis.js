@@ -17,5 +17,7 @@ const yazi = kap.querySelector('p'); if (yazi) {   // "Yükleniyor" ve sırayla 
 }
 let bitti = false;
 const bitir = () => { if (bitti) return; bitti = true; kap.classList.add('ac'); setTimeout(() => kap.remove(), 300); };
-setTimeout(bitir, 2300);   // dokununca geçilmez
+// Yükleme: mavi ve kırmızı hamuru iki yana çeker; hamurun uzaması yükleme çubuğudur (--y: 0 → 1)
+const t0 = performance.now(), SURE = 2600;
+(function ilerle(now) { if (!kap.isConnected) return; const y = Math.min(1, (now - t0) / SURE); kap.style.setProperty('--y', (1 - Math.pow(1 - y, 1.6)).toFixed(3)); if (y < 1) requestAnimationFrame(ilerle); else setTimeout(bitir, 250); })(t0);   // dokununca geçilmez
 })();

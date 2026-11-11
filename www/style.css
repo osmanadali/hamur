@@ -588,3 +588,26 @@ body[data-dunya="1"].oyun-acik::before{content:'';position:fixed;inset:0;z-index
 body[data-dunya="2"].oyun-acik::before{content:'';position:fixed;inset:0;z-index:-2;background:linear-gradient(#ff9a6b,#ffc37a 50%,#ff8fa8);opacity:.5;pointer-events:none}
 /* tablet ve geniş ekran: içerik ortada, tahta büyümez */
 @media (min-width:700px){.ekran{max-width:560px}.yol{max-width:560px}#sAna .ada{width:min(100%,600px)}}
+
+/* ================= açılış: iki hamur hamuru sündürür (yükleme çubuğu), dördü şaşkın izler ================= */
+.acilis{--y:0}
+.acilis .agrup{display:none}
+.acilis .cek{position:absolute;left:50%;top:50%;width:min(94vw,420px);height:min(30vw,140px);transform:translate(-50%,-60%)}
+.acilis .ck{position:absolute;bottom:0;width:30%;aspect-ratio:1;background:0 0/400% 100% no-repeat;animation:dort-kare .5s step-end infinite}
+.acilis .mavi{background-image:url(img/ac-mavi.webp);right:calc(50% + 6% + var(--y) * 30%)}
+.acilis .kirmizi{background-image:url(img/ac-kirmizi.webp);left:calc(50% + 6% + var(--y) * 30%);animation-delay:-.25s}
+.acilis .hs{position:absolute;left:50%;bottom:30%;height:28%;width:calc(22% + var(--y) * 60%);transform:translateX(-50%);background:url(img/hamur-serit.webp) center/100% 100% no-repeat;filter:drop-shadow(0 4px 3px rgba(70,30,120,.25))}
+.acilis .izle{position:absolute;left:50%;top:calc(50% + 120px);width:min(88vw,380px);transform:translateX(-50%);display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.acilis .iz{aspect-ratio:1;background:0 0/200% 100% no-repeat;animation:iki-kare 1.1s step-end infinite}
+.acilis .sari{background-image:url(img/ac-sari.webp)}
+.acilis .yesil{background-image:url(img/ac-yesil.webp);animation-delay:-.3s}
+.acilis .turuncu{background-image:url(img/ac-turuncu.webp);animation-delay:-.6s}
+.acilis .mor{background-image:url(img/ac-mor.webp);animation-delay:-.85s}
+@keyframes iki-kare{0%{background-position:0 0}50%{background-position:100% 0}}
+.acilis p{top:calc(50% + 60px);bottom:auto}
+.acilis .alogo{top:calc(50% - 260px)}
+@media (prefers-reduced-motion:reduce){.acilis .ck,.acilis .iz{animation:none}}
+.acilis .ck{width:26%}
+.acilis .mavi{right:calc(50% + 4% + var(--y) * 17%)}
+.acilis .kirmizi{left:calc(50% + 4% + var(--y) * 17%)}
+.acilis .hs{width:calc(20% + var(--y) * 34%)}
