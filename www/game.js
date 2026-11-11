@@ -314,8 +314,8 @@ function lose(kind, piece) {
     const open = st.holes.filter(h => !h.filled);
     const msg = PARTS[piece.color] && !open.some(h => h.color === piece.color) ? NAME[piece.color] + L(' renkte kalıp yok. Bu parça artık hiçbir yere giremez.', ' has no mold. This piece cannot go anywhere now.') : L('Bu parça artık hiçbir kalıba uymuyor.', 'This piece no longer fits any mold.');
     after = { at: now + 1400, fn: () => geriOlur()
-      ? showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin, L('Geri al', 'Undo'), geriAl, yine, tekrar)
-      : showOv(L('Yanlış yapıştı', 'Wrong stick'), msg + yakin + ek, yine, tekrar) };
+      ? showOv(L('Yanlış yapıştı', 'Wrong stick'), yakin.trim(), L('Geri al', 'Undo'), geriAl, yine, tekrar)
+      : showOv(L('Yanlış yapıştı', 'Wrong stick'), (yakin + ek).trim(), yine, tekrar) };
   } else {
     buzz([60, 40, 60]); tone(210, .45, 'sawtooth', 70, .08); geri = null; paintUndo();
     let eksik = '';
@@ -394,8 +394,8 @@ async function reklamDevam() {   // kaybedince: ödüllü reklam izleyip 15 sn i
 }
 // Şerit yazısı: şerit kavisli olduğu için yazı da aynı yay üstünde dizilir (SVG textPath). Uzun yazı küçülür.
 function seritYazi(m) {
-  const b = document.createElement('b'), boy = m.length > 17 ? 22 : m.length > 13 ? 27 : m.length > 9 ? 33 : 42;
-  b.innerHTML = `<svg viewBox="0 0 480 317" aria-hidden="true"><path id="seritYay" d="M88,182 Q240,144 392,182" fill="none"/><text font-size="${boy}" text-anchor="middle"><textPath href="#seritYay" startOffset="50%"></textPath></text></svg>`;
+  const b = document.createElement('b'), boy = m.length > 17 ? 25 : m.length > 13 ? 31 : m.length > 9 ? 38 : 46;
+  b.innerHTML = `<svg viewBox="0 0 480 317" aria-hidden="true"><path id="seritYay" d="M62,199 Q240,133 418,199" fill="none"/><text font-size="${boy}" text-anchor="middle"><textPath href="#seritYay" startOffset="50%"></textPath></text></svg>`;
   b.querySelector('textPath').textContent = m; b.setAttribute('aria-label', m); return b;
 }
 let bilgiT = 0;
@@ -425,17 +425,10 @@ function tarif(ac) { $('rx').hidden = !ac; $('gTarif').setAttribute('aria-expand
 function duraklat() {
   if (state !== 'play' || durak) return;
   durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
-  showOv(L('Duraklatıldı', 'Paused'), L('Süre durdu. Hazır olunca devam et.', 'The timer is stopped. Continue when you are ready.'), L('Sürdür', 'Resume'), devam, L('Çıkış', 'Quit'), () => App.ekran.goster('ana'));
-  // duraklatma penceresi: ses, müzik, titreşim anahtarları; Sürdür yeşil, Çıkış kırmızı; köşede kapat
-  $('ovB2').classList.add('cikis'); $('ovX').hidden = false; $('ovX').onclick = devam;
-  const ek = $('ovEk'); ek.innerHTML = ''; ek.hidden = false;
-  for (const [k, tr, en] of [['sound', 'Sesler', 'Sounds'], ['music', 'Müzik', 'Music'], ['vib', 'Titreşim', 'Vibration']]) {
-    const b = document.createElement('button'), acik = () => save[k] !== false; b.type = 'button'; b.className = 'secenek'; b.setAttribute('role', 'switch');
-    b.append(Object.assign(document.createElement('span'), { textContent: L(tr, en) }), Object.assign(document.createElement('i'), { className: 'anahtar' }));
-    const ciz = () => b.setAttribute('aria-checked', String(acik())); b.onclick = () => { save[k] = !acik(); App.persist(); ciz(); paintSound(); App.ekran.muzik?.(); buzz(8); }; ciz(); ek.appendChild(b);
-  }
+  showOv(L('Duraklatıldı', 'Paused'), '', L('Sürdür', 'Resume'), devam, L('Çıkış', 'Quit'), () => App.ekran.goster('ana'));
+  $('ovB2').classList.add('cikis');   // Sürdür yeşil, Çıkış kırmızı; anahtar, açıklama ve kapat düğmesi yok
 }
-// Bölüm sürerken çıkmak isteyene sorulur (can sistemi gelirse "1 can kaybedeceksin" uyarısı buraya yazılır).
+// Bölüm sürerken çıkmak isteyene sorulur: çıkmak 1 can götürür.
 function cikisSor() {
   if (state !== 'play' || !running || durak) return App.ekran.goster('ana');
   durak = true; drag = null; threads = new Map(); kesim = null; makasKoy = false; tarif(false); cv.style.visibility = 'hidden'; paintUndo();
@@ -946,7 +939,10 @@ App.oyun = { CFG, PAD, setup, geriAl, LEVELS, ASIL, get deneme() { return li >= 
     showOv(gunluk ? L('Günlük kalıp', 'Daily mold') : L('Bölüm ', 'Level ') + (li + 1),
       (y ? yildizYazi(y) + '\n' : '') + L(`Süre ${Math.round(timeLeft)} sn · Geri al ×${geriKalan + stok('geri')} · +15 sn ×${stok('sure')} · Makas ×${stok('makas')}`, `Time ${Math.round(timeLeft)} s · Undo ×${geriKalan + stok('geri')} · +15 s ×${stok('sure')} · Scissors ×${stok('makas')}`),
       L('Oyna', 'Play'), kapat);
-    $('ovP').style.whiteSpace = 'pre-line'; $('ovX').hidden = false; $('ovX').onclick = () => App.ekran.goster('ana');
+    const sat = (resim, yazi) => `<span class="bs"><i style="background-image:url(img/${resim}.webp)"></i><b>${yazi}</b></span>`;
+    $('ovP').innerHTML = (y ? `<span class="bs-yildiz">${[0, 1, 2].map(k => `<i${k >= y ? ' class="bos"' : ''}></i>`).join('')}</span>` : '') + '<span class="bs-izgara">' +
+      sat('saat', Math.round(timeLeft) + L(' sn', ' s')) + sat('geri', '×' + (geriKalan + stok('geri'))) + sat('saat', '+15 ×' + stok('sure')) + sat('makas', '×' + stok('makas')) + '</span>';
+    $('ovX').hidden = false; $('ovX').onclick = () => App.ekran.goster('ana');
   },
   dur() { if (durak || state === 'play') $('ov').hidden = true; durak = false; makasKoy = false; cv.style.visibility = ''; running = false; drag = null; after = null; threads = new Map(); kesim = null; clearTimeout(gecisT); if (state === 'won') wonAt = -1; } };
 })();

@@ -519,3 +519,38 @@ body.ana-acik .gok{opacity:1}
 .acilis::before{display:none}
 .acilis .agrup{-webkit-mask:none;mask:none;filter:drop-shadow(0 12px 12px rgba(70,30,120,.28))}
 .acilis .agrup{aspect-ratio:316/348;width:min(84vw,360px);margin-left:calc(min(84vw,360px) / -2);margin-top:-170px}
+
+/* ================= üçüncü geri bildirim turu ================= */
+html,body{overflow:hidden;overscroll-behavior:none}
+#sAna{overflow:hidden;overflow:clip}                      /* ana ekran sağa sola kaymasın */
+#sAna .baslik-yeri{margin-top:6vh}                         /* logo biraz aşağıda */
+.ana-dugmeler{margin-top:4vh}
+/* basınca çöken düğmeler */
+button.bas{animation:bas .15s ease both}
+@keyframes bas{55%{scale:.9 .82;translate:0 5px;filter:brightness(.88)}100%{scale:.96 .93;translate:0 2px}}
+/* can göstergesi */
+#sAna .can{padding:4px 16px 4px 4px;gap:8px;background:rgba(70,35,125,.62);box-shadow:0 3px 0 rgba(50,20,95,.5)}
+.can b{font-size:24px;line-height:1}
+.can small{font:700 13px/1 var(--body);display:block}
+.can small:empty{display:none}
+#canKutu{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;align-items:center}
+#canKutu i{grid-row:1/3}
+/* pencere: kapat düğmesi yalnız gösterildiğinde; boş açıklama yer tutmaz */
+#ovX[hidden],.top[hidden]{display:none}
+.card p:empty{display:none}
+/* bölüm başlangıcı: bilgiler simgeyle */
+.bs-izgara{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.bs{display:flex;align-items:center;gap:8px;justify-content:flex-start;padding-left:8%}
+.bs i{width:34px;height:34px;flex:none;background:center/contain no-repeat}
+.bs b{font:400 20px var(--display);color:#fffaf0}
+.bs-yildiz{display:flex;justify-content:center;gap:4px;margin-bottom:8px}
+.bs-yildiz i{width:34px;height:34px;background:url(img/yildiz.webp) center/contain no-repeat}
+.bs-yildiz i.bos{background-image:url(img/yildiz-bos.webp)}
+/* bölüm tamam: yıldızlar küçük bir bulutun üstünde */
+.tost .yildiz{margin-top:-6%;padding:26px 46px 20px;background:url(img/bulut-1.webp) center/100% 100% no-repeat}
+/* kutlama yazısı ortalı */
+.kutla p,.kutla h2{text-align:center;width:100%;padding:0 18px;box-sizing:border-box}
+/* oyun üst menüsü biraz aşağıda */
+.hud{margin-top:14px}
+/* yol üstündeki karakterler */
+.sus.kar.ustte{width:21%;z-index:1}

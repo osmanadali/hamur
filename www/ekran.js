@@ -40,7 +40,7 @@ function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, fals
 function gunlukAc() { goster('oyun'); document.body.classList.add('gunluk-acik'); O.setup(O.gunlukNo(), true); setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }   // günlük kalıp: canlı arka plan
 
 /* ---------- ana ekran ---------- */
-function canCiz() { $('canN').textContent = O.can.n; const k = O.can.kalan(); $('canT').textContent = k ? O.can.yazi(k) : ''; }
+function canCiz() { $('canN').textContent = O.can.n + '/' + O.can.max; const k = O.can.kalan(); $('canT').textContent = k ? O.can.yazi(k) : L('Dolu', 'Full'); }
 setInterval(() => { if (acik === 'ana') canCiz(); }, 1000);
 function ana() {
   const n = siradaki(), hepsi = (save.done || []).length >= N;
@@ -74,7 +74,7 @@ function yol() {
     });
     // süsler: yolun karşı tarafında, karoya göre değişen adacıklar (ayrı katman: yol ekran görüntüsü gibi durmasın)
     [.14, .47, .8].forEach((fy, j) => { const d = DURAK.reduce((p, c) => Math.abs(c[1] - fy) < Math.abs(p[1] - fy) ? c : p), su = document.createElement('i'); su.className = 'sus'; su.style.backgroundImage = `url(img/sus-${(k * 3 + j) % 10 + 1}.webp)`; su.style.top = fy * 100 + '%'; su.style.left = (d[0] < .5 ? 78 : 22) + '%'; karo.appendChild(su); });
-    { const d = DURAK[3 + (k % 2) * 4], kr = document.createElement('i'); kr.className = 'sus kar'; kr.style.backgroundImage = `url(img/kar-${k % 6 + 1}.webp)`; kr.style.top = (d[1] * 100 - 1) + '%'; kr.style.left = (d[0] < .5 ? d[0] * 100 + 27 : d[0] * 100 - 27) + '%'; karo.appendChild(kr); }   // yolun kenarında oturan hamur karakter
+    { const d = DURAK[3 + (k % 2) * 4], kr = document.createElement('i'); kr.className = 'sus kar'; kr.style.backgroundImage = `url(img/kar-${k % 6 + 1}.webp)`; const ustunde = k % 6 === 2 || k % 6 === 4, d2 = DURAK[3 + (k % 2) * 4 + 1]; kr.style.top = (ustunde ? (d[1] + d2[1]) * 50 - 1.5 : d[1] * 100 - 1) + '%'; kr.style.left = (ustunde ? (d[0] + d2[0]) * 50 : d[0] < .5 ? d[0] * 100 + 27 : d[0] * 100 - 27) + '%'; if (ustunde) kr.classList.add('ustte'); karo.appendChild(kr); }   // yolun kenarında oturan hamur karakter
     el.appendChild(karo);
   }
   // sıradaki bölüm ekranın ortasına gelsin
@@ -184,6 +184,16 @@ async function hatirlat(sor) {
 const calgi = new Audio('ses/muzik.mp3'); calgi.loop = true; calgi.volume = .32; calgi.preload = 'none';
 function muzik() { try { if (save.music !== false && !document.hidden) calgi.play().catch(() => {}); else calgi.pause(); } catch {} }
 addEventListener('pointerdown', muzik, { once: true }); document.addEventListener('visibilitychange', muzik);
+
+// Basma tepkisi: her düğme basılınca içine çöker, işlem çökme bittikten sonra yapılır (ekran değişse de çökme görülür).
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('button'); if (!b || b.disabled) return;
+  if (b._gec) { b._gec = false; return; }
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (b.classList.contains('bas')) return;
+  b.classList.add('bas'); Ses.buzz(5);
+  setTimeout(() => { b.classList.remove('bas'); if (!b.isConnected || b.disabled) return; b._gec = true; b.click(); }, 140);
+}, true);
 
 // Açılış: ana ekran. Editörden gelen deneme bölümü (#bolum=) ve test robotu (window.__hamurEkran) doğrudan oyunu açar.
 goster(window.__hamurEkran || (O.deneme ? 'oyun' : 'ana'));
