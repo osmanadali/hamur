@@ -759,3 +759,15 @@ html{background:#c9a8ee}
 .acilis .cek{width:min(100vw,520px)}
 .guc:not(.tarif)::after{z-index:-2}
 .adekor .d3{top:27%}
+
+/* yükleme: sarı turuncuya un atıyor, mor izliyor, yeşil uyuyor (altı karakter birer kez) */
+.acilis .izle{display:none}
+.acilis .adekor .un-a,.acilis .adekor .un-y{background-size:400% 100%;background-position:0 50%;width:min(44vw,190px);height:min(44vw,190px);top:calc(50% + 96px);animation:dort-kare 1.6s step-end infinite;filter:none}
+.adekor .un-a{background-image:url(img/ac-un-atan.webp);left:calc(50% - min(46vw,198px))}
+.adekor .un-y{background-image:url(img/ac-un-yiyen.webp);left:calc(50% - 6px)}
+.acilis .adekor .mor-iz{background-image:url(img/ac-mor.webp);background-size:200% 100%;background-position:0 50%;animation:iki-kare 1.1s step-end infinite;width:104px;height:104px;left:6%;bottom:9%}
+.adekor .uyu{right:5%;bottom:7%}
+.adekor .d4{bottom:auto;top:50%;left:-40px;opacity:.9}
+@media (prefers-reduced-motion:reduce){.acilis .adekor .un-a,.acilis .adekor .un-y,.acilis .adekor .mor-iz{animation:none}}
+.adekor .d4{display:none}
+.adekor .d5{right:auto;left:36%;bottom:1%;width:120px}
