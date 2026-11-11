@@ -62,11 +62,11 @@ const BANT = [
   { no: 5, ad: 'makas', bas: 51, son: 60, boy: [[5, 5], [5, 6], [6, 6]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [2, 5], makas: [1, 2],
     renk: [['r', 'r'], ['y', 'y'], ['b', 'b'], ['g', 'g'], ['p', 'p'], ['o', 'o'], ['r', 'r', 'g'], ['b', 'b', 'o'], ['g', 'g', 'b'], ['p', 'p', 'y']], karisim: 1 },
   // 61 sonrası: yeni mekanik yok, öğrenilenler karışır ve tahta büyür (ikinci ve üçüncü dünya). Zorluk önceki bantların üstünden başlar.
-  { no: 6, ad: 'karışık renkler', bas: 61, son: 90, havuz: 230, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
+  { no: 6, ad: 'karışık renkler', bas: 61, son: 90, havuz: 140, boy: [[6, 6], [6, 7], [7, 7]], duvar: ['yok', 'aralik', 'adacik'], kalip: [2, 4], kalipBoy: [2, 4], parca: [5, 8],
     renk: [['g', 'p'], ['g', 'o'], ['p', 'o'], ['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'g', 'p'], ['p', 'p', 'o'], ['g', 'b', 'o']], karisim: 1 },
-  { no: 7, ad: 'makaslı karışık', bas: 91, son: 120, havuz: 230, boy: [[5, 6], [6, 6], [6, 7]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [3, 6], makas: [1, 2],
+  { no: 7, ad: 'makaslı karışık', bas: 91, son: 120, havuz: 140, boy: [[5, 6], [6, 6], [6, 7]], duvar: ['yok', 'yok', 'adacik'], kalip: [2, 3], kalipBoy: [1, 3], parca: [3, 6], makas: [1, 2],
     renk: [['g', 'g'], ['p', 'p'], ['o', 'o'], ['r', 'r', 'g'], ['b', 'b', 'o'], ['g', 'g', 'b'], ['p', 'p', 'y'], ['o', 'o', 'b'], ['g', 'g', 'p'], ['p', 'p', 'o']], karisim: 1 },
-  { no: 8, ad: 'büyük tahta', bas: 121, son: 150, havuz: 230, boy: [[6, 7], [7, 7], [7, 8]], duvar: ['yok', 'aralik', 'adacik', 'adacik'], kalip: [3, 4], kalipBoy: [2, 4], parca: [6, 9],
+  { no: 8, ad: 'büyük tahta', bas: 121, son: 150, havuz: 140, boy: [[6, 7], [7, 7], [7, 8]], duvar: ['yok', 'aralik', 'adacik', 'adacik'], kalip: [3, 4], kalipBoy: [2, 4], parca: [6, 9],
     renk: [['g', 'p', 'o'], ['p', 'y', 'b'], ['o', 'b', 'r'], ['g', 'r', 'y'], ['g', 'p', 'r'], ['g', 'o', 'b'], ['p', 'o', 'y'], ['g', 'p', 'o', 'r']], karisim: 1 },
 ];
 const PARTS = K.PARTS;
@@ -297,4 +297,4 @@ if (require.main === module) {
     console.log(`www/bolumler.js yazıldı: ${B_.length} bölüm`);
   }
 }
-module.exports = { BANT, HEDEF, aday, puanla, havuz, uret, rastgele, RITIM };
+module.exports = { BANT, HEDEF, aday, puanla, havuz, uret, rastgele, RITIM, sure, IPUCU };
