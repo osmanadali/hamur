@@ -967,3 +967,7 @@ body[data-dunya="2"].oyun-acik .gok{opacity:0}
 body[data-dunya="3"].oyun-acik{background:#8fe0b8 url(img/gok-4.webp) center/cover no-repeat}
 body[data-dunya="3"].oyun-acik::before{display:none}
 body[data-dunya="3"].oyun-acik .gok{opacity:0}
+
+/* bölüm yolu: dünyaya göre gökyüzü rengi (karonun arkasında, yumuşak geçişli) ve dünya girişinde ad şeridi */
+.karo{background:url(img/yol.webp) center/100% 100% no-repeat,var(--zemin,none)}
+.kapi{position:absolute;left:50%;transform:translateX(-50%);z-index:2;white-space:nowrap;border:solid transparent;border-width:11px 22px;border-image:url(img/hap-mor.webp) 86 150 fill / 11px 22px stretch;font:400 16px var(--display);color:#fffaf0;text-shadow:-1px -1px 0 #4a2d5e,1px -1px 0 #4a2d5e,-1px 1px 0 #4a2d5e,1px 1px 0 #4a2d5e,0 2px 0 #4a2d5e;padding:0 2px 5px;pointer-events:none;filter:drop-shadow(0 4px 3px rgba(40,15,80,.35))}

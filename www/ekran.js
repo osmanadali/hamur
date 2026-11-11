@@ -55,12 +55,19 @@ function ana() {
 /* ---------- bölüm yolu ---------- */
 // Bir karoda 11 kurabiye var (alttan üste yol sırası). Konumlar karonun eni ve boyuna göre oran (bolum-yolu-tekrar görselinden ölçüldü).
 const DURAK = [[0.4982,0.955],[0.4179,0.8641],[0.2571,0.7732],[0.3063,0.6823],[0.5723,0.5914],[0.725,0.5005],[0.5634,0.4096],[0.2732,0.3187],[0.2643,0.2278],[0.4464,0.1369],[0.5045,0.046]];
+// Dünyalar: 60 bölümde bir. Bölüm yolunda her dünyanın kendi gökyüzü rengi vardır; sınırın düştüğü karoda renkler yumuşakça birbirine geçer.
+const DUNYA = [['Hamur Diyarı', 'Dough Land', null], ['Gece Fırını', 'Night Bakery', [58, 42, 128]], ['Gün Batımı', 'Sunset', [247, 150, 100]], ['Nane Bahçesi', 'Mint Garden', [120, 215, 170]],
+  ['Çilek Tarlası', 'Strawberry Field', [245, 135, 165]], ['Çikolata Vadisi', 'Chocolate Valley', [140, 92, 62]], ['Kış Masalı', 'Winter Tale', [175, 215, 240]], ['Limon Bahçesi', 'Lemon Grove', [245, 225, 105]], ['Gökkuşağı', 'Rainbow', [215, 180, 240]]];
+const dunyaNo = n => Math.min(DUNYA.length - 1, Math.floor((n - 1) / 60));
+const dunyaRenk = (n, a) => { const r = DUNYA[dunyaNo(Math.max(1, n))][2]; return r ? `rgba(${r.join(',')},${a})` : 'rgba(201,168,238,0)'; };
 function yol() {
   const el = $('yol'), sira = siradaki(); el.innerHTML = '';
   const karoSay = Math.ceil(N / DURAK.length);
   let hedef = null;
   for (let k = 0; k < karoSay; k++) {
     const karo = document.createElement('div'); karo.className = 'karo';
+    { const ilk = k * DURAK.length + 1, son = Math.min(N, ilk + DURAK.length - 1), onceki = Math.max(1, ilk - 3), sonraki = Math.min(N, son + 3);   // alt kenar önceki karoyla, üst kenar sonrakiyle aynı renkte: geçiş yumuşak
+      karo.style.setProperty('--zemin', `linear-gradient(to top, ${dunyaRenk(onceki, .82)}, ${dunyaRenk(ilk, .82)} 22%, ${dunyaRenk(son, .82)} 78%, ${dunyaRenk(sonraki, .82)})`); }
     DURAK.forEach(([x, y], i) => {
       const n = k * DURAK.length + i + 1;
       const b = document.createElement('button'); b.type = 'button'; b.className = 'durak'; b.style.left = x * 100 + '%'; b.style.top = y * 100 + '%';
@@ -70,7 +77,8 @@ function yol() {
       b.setAttribute('aria-label', L('Bölüm ', 'Level ') + n + (durum === 'tamam' ? L(', tamamlandı', ', completed') : durum === 'kilitli' ? L(', kilitli', ', locked') : ''));
       if (durum === 'kilitli') b.disabled = true; else { const s = document.createElement('span'); s.textContent = n; b.appendChild(s); b.onclick = () => oyna(n); }
       if (durum === 'tamam') { const y = save.yildiz?.[n] || 1, e = document.createElement('em'); for (let k = 0; k < 3; k++) { const yi = document.createElement('i'); if (k >= y) yi.className = 'bos'; e.appendChild(yi); } b.appendChild(e); }
-      if (n % 10 === 0) b.classList.add('figurlu');   // her 10. bölüm bir figürü tamamlar
+      if (n % 10 === 0) b.classList.add('figurlu');
+      if ((n - 1) % 60 === 0) { const kp = document.createElement('div'); kp.className = 'kapi'; kp.textContent = L(DUNYA[dunyaNo(n)][0], DUNYA[dunyaNo(n)][1]); kp.style.top = (y * 100 - 5.4) + '%'; kp.style.left = (x < .5 ? x * 100 + 6 : x * 100 - 6) + '%'; karo.appendChild(kp); }   // dünyanın girişi   // her 10. bölüm bir figürü tamamlar
       if (n === sira) hedef = b;
       karo.appendChild(b);
     });
