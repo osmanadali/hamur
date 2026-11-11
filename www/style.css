@@ -816,3 +816,4 @@ html{background:#c9a8ee}
 .acilis .adekor .bs::after{content:'';position:absolute;left:-6%;right:-6%;top:58%;height:140%;background:url(img/bulut-seti.webp) center top/100% auto no-repeat;transform:scaleX(-1)}
 .acilis .adekor .bs{top:calc(50% + 163px * var(--o))}
 .acilis .adekor .bs::after{display:none}
+.acilis .adekor .bs{-webkit-mask:linear-gradient(#000 38%,transparent 82%);mask:linear-gradient(#000 38%,transparent 82%)}
