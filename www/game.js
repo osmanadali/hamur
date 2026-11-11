@@ -635,9 +635,12 @@ function govde(p, renkOf, cukur = .2) {
   const dik = (sp, hex, x, y, w, h) => { if (sp) ctx.drawImage(sp, BLOK * .32, BLOK * .32, BLOK * .36, BLOK * .36, x, y, w, h); else { ctx.fillStyle = hex; ctx.fillRect(x, y, w, h); } };
   p.cells.forEach((c, i) => {   // köprüler
     const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell + SX(c), Y = (c[1] - y0) * cell + SY(c), sag = dolu(c[0] + 1, c[1]), alt = dolu(c[0], c[1] + 1);
-    if (sag) dik(sp, hex, X + cell - rad, Y + rad * .85, rad * 2, cell - rad * 1.7);
-    if (alt) dik(sp, hex, X + rad * .85, Y + cell - rad, cell - rad * 1.7, rad * 2);
-    if (sag && alt && dolu(c[0] + 1, c[1] + 1)) dik(sp, hex, X + cell - rad, Y + cell - rad, rad * 2, rad * 2);
+    // köprü düz boya değil, bloğun kendi dokusundan kesilen şerittir: yatay komşuda bloğun orta dikey şeridi (üst ve alt kenar gölgesi,
+    // un serpintisi aynen sürer), dikey komşuda orta yatay şeridi. Böylece iki yastık tek parça hamur gibi birleşir.
+    const serit = (sx, sy, sw, sh, x, y, w, h) => { if (sp) ctx.drawImage(sp, sx, sy, sw, sh, x, y, w, h); else { ctx.fillStyle = hex; ctx.fillRect(x, y, w, h); } };
+    if (sag) serit(BLOK * .42, 0, BLOK * .16, BLOK, X + cell - rad * 1.15, Y + ins, rad * 2.3, cell - 2 * ins);
+    if (alt) serit(0, BLOK * .45, BLOK, BLOK * .16, X + ins, Y + cell - rad * 1.15, cell - 2 * ins, rad * 2.3);
+    if (sag && alt && dolu(c[0] + 1, c[1] + 1)) dik(sp, hex, X + cell - rad * 1.15, Y + cell - rad * 1.15, rad * 2.3, rad * 2.3);
   });
   p.cells.forEach((c, i) => {   // yastıklar
     const hex = renkOf(i), sp = yastik(hex), X = (c[0] - x0) * cell + SX(c), Y = (c[1] - y0) * cell + SY(c);
