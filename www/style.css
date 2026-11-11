@@ -971,3 +971,28 @@ body[data-dunya="3"].oyun-acik .gok{opacity:0}
 /* bölüm yolu: dünyaya göre gökyüzü rengi (karonun arkasında, yumuşak geçişli) ve dünya girişinde ad şeridi */
 .karo{background:url(img/yol.webp) center/100% 100% no-repeat,var(--zemin,none)}
 .kapi{position:absolute;left:50%;transform:translateX(-50%);z-index:2;white-space:nowrap;border:solid transparent;border-width:11px 22px;border-image:url(img/hap-mor.webp) 86 150 fill / 11px 22px stretch;font:400 16px var(--display);color:#fffaf0;text-shadow:-1px -1px 0 #4a2d5e,1px -1px 0 #4a2d5e,-1px 1px 0 #4a2d5e,1px 1px 0 #4a2d5e,0 2px 0 #4a2d5e;padding:0 2px 5px;pointer-events:none;filter:drop-shadow(0 4px 3px rgba(40,15,80,.35))}
+
+/* dünya 5 */
+body[data-dunya="4"].oyun-acik{background:#6ec0f0 url(img/gok-5.webp) center/cover no-repeat}
+body[data-dunya="4"].oyun-acik::before{display:none}
+body[data-dunya="4"].oyun-acik .gok{opacity:0}
+
+/* dünya 6 */
+body[data-dunya="5"].oyun-acik{background:#8a5a3c url(img/gok-6.webp) center/cover no-repeat}
+body[data-dunya="5"].oyun-acik::before{display:none}
+body[data-dunya="5"].oyun-acik .gok{opacity:0}
+
+/* dünya 7 */
+body[data-dunya="6"].oyun-acik{background:#a8d4f0 url(img/gok-7.webp) center/cover no-repeat}
+body[data-dunya="6"].oyun-acik::before{display:none}
+body[data-dunya="6"].oyun-acik .gok{opacity:0}
+
+/* dünya 8 */
+body[data-dunya="7"].oyun-acik{background:#f0e060 url(img/gok-8.webp) center/cover no-repeat}
+body[data-dunya="7"].oyun-acik::before{display:none}
+body[data-dunya="7"].oyun-acik .gok{opacity:0}
+
+/* dünya 9 */
+body[data-dunya="8"].oyun-acik{background:#e0b8f0 url(img/gok-9.webp) center/cover no-repeat}
+body[data-dunya="8"].oyun-acik::before{display:none}
+body[data-dunya="8"].oyun-acik .gok{opacity:0}

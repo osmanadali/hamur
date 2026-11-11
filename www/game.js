@@ -32,10 +32,10 @@ const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
 const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
-const TEMA_GORSEL = ['tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3', 'tepsi-4', 'hucre-4'];
-const CUKUR = { 1: '#5a2a66', 2: '#a8642c', 3: '#5fb98a' };   // dünyaya göre kalıp çukurunun rengi   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
+const TEMA_GORSEL = ['tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3', 'tepsi-4', 'hucre-4', 'tepsi-5', 'hucre-5', 'tepsi-6', 'hucre-6', 'tepsi-7', 'hucre-7', 'tepsi-8', 'hucre-8', 'tepsi-9', 'hucre-9'];
+const CUKUR = { 1: '#5a2a66', 2: '#a8642c', 3: '#5fb98a', 4: '#4f9fd0', 5: '#5a3018', 6: '#7fb0d8', 7: '#d9a520', 8: '#a880d8' };   // dünyaya göre kalıp çukurunun rengi   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
 const IMG = {};
-for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', ...TEMA_GORSEL]) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
+for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', 'buz', ...TEMA_GORSEL]) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
@@ -534,7 +534,7 @@ paintSound();
 /* ---------- çizim ---------- */
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 // Duvar (kesme şeker) dünyanın rengine boyanır: gece lila, gün batımı karamel. Boyalı hâli bir kez hazırlanıp saklanır.
-const DUVAR_RENK = { 1: '#cbb3ee', 2: '#f6cf9a', 3: '#effff5' }, duvarlar = new Map();
+const DUVAR_RENK = { 1: '#cbb3ee', 2: '#f6cf9a', 3: '#effff5', 4: '#d9f0ff', 5: '#e0b088', 6: '#ffffff', 7: '#fff6c0', 8: '#fff0fa' }, duvarlar = new Map();
 function duvarBoyali(dunya) {
   const renk = DUVAR_RENK[dunya], im = IMG.duvar; if (!renk) return im;
   let c = duvarlar.get(dunya); if (c) return c;
@@ -812,8 +812,10 @@ function drawPiece(p, now, k, glow) {
   if (k > .25) face(p, now);
   if (p.donuk) {   // buz: soğuk mavi-beyaz örtü, üstte kar, köşelerde kırağı pırıltısı
     ctx.save(); ctx.clip(p.path);
-    ctx.fillStyle = 'rgba(205,232,255,.62)'; ctx.fill(p.path);
-    const g = ctx.createLinearGradient(0, 0, cell * .9, cell * .9); g.addColorStop(0, 'rgba(255,255,255,.75)'); g.addColorStop(.28, 'rgba(255,255,255,0)'); g.addColorStop(.6, 'rgba(255,255,255,.28)'); g.addColorStop(.72, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fill(p.path);
+    if (IMG.buz) { const b = IMG.buz, W = b.width, H = b.height, var_ = new Set(p.cells.map(c => c[0] + ',' + c[1]));   // buz görselinin ortası her kareye doku olur; üstü açık karelere karlı üst kenar biner
+      ctx.globalAlpha = .5; for (const c of p.cells) ctx.drawImage(b, W * .2, H * .24, W * .6, H * .56, (c[0] - x0) * cell - 1, (c[1] - y0) * cell - 1, cell + 2, cell + 2);
+      ctx.globalAlpha = 1; for (const c of p.cells) if (!var_.has(c[0] + ',' + (c[1] - 1))) ctx.drawImage(b, W * .14, 0, W * .72, H * .2, (c[0] - x0) * cell - 1, (c[1] - y0) * cell, cell + 2, cell * .26);
+    } else { ctx.fillStyle = 'rgba(205,232,255,.62)'; ctx.fill(p.path); }
     ctx.restore();
     ctx.lineWidth = cell * .07; ctx.strokeStyle = 'rgba(235,247,255,.95)'; ctx.stroke(p.path);
     ctx.fillStyle = '#fff';

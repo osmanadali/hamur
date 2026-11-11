@@ -60,6 +60,7 @@ const DUNYA = [['Hamur Diyarı', 'Dough Land', null], ['Gece Fırını', 'Night 
   ['Kurabiye Ormanı', 'Cookie Forest', [110, 185, 235]], ['Çikolata Vadisi', 'Chocolate Valley', [140, 92, 62]], ['Kış Masalı', 'Winter Tale', [175, 215, 240]], ['Limon Bahçesi', 'Lemon Grove', [245, 225, 105]], ['Gökkuşağı', 'Rainbow', [215, 180, 240]]];
 const dunyaNo = n => Math.min(DUNYA.length - 1, Math.floor((n - 1) / 60));
 const dunyaRenk = (n, a) => { const r = DUNYA[dunyaNo(Math.max(1, n))][2]; return r ? `rgba(${r.join(',')},${a})` : 'rgba(201,168,238,0)'; };
+const SUS_DUNYA = new Set([4, 5, 7, 8, 9]);   // kendi süs seti olan dünyalar (sus-dN-1…6)
 function yol() {
   const el = $('yol'), sira = siradaki(); el.innerHTML = '';
   const karoSay = Math.ceil(N / DURAK.length);
@@ -83,7 +84,7 @@ function yol() {
       karo.appendChild(b);
     });
     // süsler: yolun karşı tarafında, karoya göre değişen adacıklar (ayrı katman: yol ekran görüntüsü gibi durmasın)
-    [.14, .3, .47, .64, .8].forEach((fy, j) => { const d = DURAK.reduce((p, c) => Math.abs(c[1] - fy) < Math.abs(p[1] - fy) ? c : p), su = document.createElement('i'); su.className = 'sus'; su.style.backgroundImage = `url(img/sus-${(k * 5 + j) % 10 + 1}.webp)`; if (j % 2) su.classList.add('kucuk'); su.style.top = fy * 100 + '%'; su.style.left = (d[0] < .5 ? (j % 2 ? 90 : 78) : (j % 2 ? 10 : 22)) + '%'; karo.appendChild(su); });
+    [.14, .3, .47, .64, .8].forEach((fy, j) => { const d = DURAK.reduce((p, c) => Math.abs(c[1] - fy) < Math.abs(p[1] - fy) ? c : p), su = document.createElement('i'); su.className = 'sus'; { const dn = dunyaNo(k * DURAK.length + 1) + 1; su.style.backgroundImage = SUS_DUNYA.has(dn) ? `url(img/sus-d${dn}-${(k * 5 + j) % 6 + 1}.webp)` : `url(img/sus-${(k * 5 + j) % 10 + 1}.webp)`; } if (j % 2) su.classList.add('kucuk'); su.style.top = fy * 100 + '%'; su.style.left = (d[0] < .5 ? (j % 2 ? 90 : 78) : (j % 2 ? 10 : 22)) + '%'; karo.appendChild(su); });
     { const d = DURAK[3 + (k % 2) * 4], kr = document.createElement('i'); kr.className = 'sus kar'; kr.style.backgroundImage = `url(img/kar-${k % 6 + 1}.webp)`; const ustunde = k % 6 === 2 || k % 6 === 4, d2 = DURAK[3 + (k % 2) * 4 + 1]; kr.style.top = (ustunde ? (d[1] + d2[1]) * 50 - 1.5 : d[1] * 100 - 1) + '%'; kr.style.left = (ustunde ? (d[0] + d2[0]) * 50 : d[0] < .5 ? d[0] * 100 + 27 : d[0] * 100 - 27) + '%'; if (ustunde) kr.classList.add('ustte'); karo.appendChild(kr); }   // yolun kenarında oturan hamur karakter
     el.appendChild(karo);
   }
@@ -98,10 +99,11 @@ const FIGUR = [['Kedi', 'Cat'], ['Ev', 'House'], ['Çiçek', 'Flower'], ['Balık
   ['Gece kedisi', 'Night cat'], ['Şeker ev', 'Candy house'], ['Mor çiçek', 'Purple flower']];
 for (let k = FIGUR.length; k < Math.ceil(N / 10); k++) FIGUR.push([FIGUR[k % 12][0] + ' ' + (Math.floor(k / 12) + 1), FIGUR[k % 12][1] + ' ' + (Math.floor(k / 12) + 1)]);   // görseli henüz olmayan figürler
 FIGUR.length = Math.ceil(N / 10);
+[['Ayı', 'Bear'], ['Tavşan', 'Bunny'], ['Tilki', 'Fox'], ['Baykuş', 'Owl'], ['Kirpi', 'Hedgehog'], ['Kuş', 'Bird']].forEach((a, j) => { if (24 + j < FIGUR.length) FIGUR[24 + j] = a; });   // Kurabiye Ormanı'nın hayvanları
 // Görsel: figur-<no>.webp varsa o; yoksa ilk altı figürden biri, rengi kaydırılmış (yeni varyasyon)
 const VAR_FIGUR = new Set();   // kendi görseli olan numaralar (yüklenince işaretlenir)
 const FIGUR_GORSEL = 12;   // kendi görseli olan figür sayısı (figur-1 … figur-N); yenileri gelince artırılır
-function figurResim(im, k) { if (k < FIGUR_GORSEL) { im.src = `img/figur-${k + 1}.webp`; return; } im.src = `img/figur-${k % 6 + 1}.webp`; im.dataset.kaydir = Math.floor(k / 6) * 70; im.style.setProperty('--kaydir', Math.floor(k / 6) * 70 + 'deg'); }
+function figurResim(im, k) { if (k >= 24 && k < 30) { im.src = `img/hayvan-${k - 23}.webp`; return; } if (k < FIGUR_GORSEL) { im.src = `img/figur-${k + 1}.webp`; return; } im.src = `img/figur-${k % 6 + 1}.webp`; im.dataset.kaydir = Math.floor(k / 6) * 70; im.style.setProperty('--kaydir', Math.floor(k / 6) * 70 + 'deg'); }
 const figurDurum = k => { let v = 0; for (let n = k * 10 + 1; n <= k * 10 + 10; n++) if (bitti(n)) v++; return v; };
 function tepsi() {
   const el = $('figurler'); el.innerHTML = '';
@@ -198,7 +200,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape') ayarKapat(); });
 window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => { if (!$('ayar').hidden) ayarKapat(); else if (acik === 'oyun') O.cikisSor(); else if (acik !== 'ana') goster('ana'); else window.Capacitor.Plugins.App.exitApp?.(); });
 
 // Oyun bir figürü tamamlayan bölümü bildirir (kutlama yazısı için)
-O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: `img/figur-${n / 10 > FIGUR_GORSEL ? (n / 10 - 1) % 6 + 1 : n / 10}.webp`, kaydir: n / 10 > FIGUR_GORSEL ? Math.floor((n / 10 - 1) / 6) * 70 : 0 } : null;
+O.figurAdi = n => n % 10 === 0 && figurDurum(n / 10 - 1) >= 10 ? { ad: L(...FIGUR[n / 10 - 1]), resim: n > 240 && n <= 300 ? `img/hayvan-${n / 10 - 24}.webp` : `img/figur-${n / 10 > FIGUR_GORSEL ? (n / 10 - 1) % 6 + 1 : n / 10}.webp`, kaydir: n > 240 && n <= 300 ? 0 : n / 10 > FIGUR_GORSEL ? Math.floor((n / 10 - 1) / 6) * 70 : 0 } : null;
 
 // Paralaks: parmağın ya da telefonun eğiminin konumuna göre gökyüzü katmanları hafifçe kayar. Hareket azaltmada kapalı.
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
