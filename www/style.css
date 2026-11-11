@@ -836,3 +836,11 @@ html{background:#c9a8ee}
 .adekor .d2{z-index:1;opacity:.85}
 .acilis .alogo{z-index:5;filter:drop-shadow(0 10px 10px rgba(60,25,100,.4))}
 @media (prefers-reduced-motion:reduce){.acilis .adekor .isin,.acilis .adekor .on{animation:none}}
+/* ================= yükleme (kahraman görseli): tek kompozisyon, perspektifli; altta hamur yükleme çubuğu ================= */
+.acilis .cek,.acilis .adekor>i:not(.isin){display:none}
+.acilis .adekor .isin{top:52%}
+.acilis .kahraman{position:absolute;left:50%;bottom:0;width:min(100%,56vh);max-width:560px;height:auto;transform:translateX(-50%);z-index:2;-webkit-mask:linear-gradient(transparent 0,#000 9%);mask:linear-gradient(transparent 0,#000 9%)}
+.acilis .alogo{top:max(7vh,calc(env(safe-area-inset-top,0px) + 22px));width:min(80vw,340px);margin-left:calc(min(80vw,340px) / -2);z-index:5}
+.acilis p{top:auto;bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 40px);font-size:25px;z-index:6}
+.acilis .ybar{position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));width:min(72vw,300px);height:24px;transform:translateX(-50%);z-index:6;border-radius:12px;background:rgba(70,35,125,.5);box-shadow:inset 0 2px 3px rgba(40,15,80,.5),0 2px 0 rgba(255,255,255,.35);padding:3px;box-sizing:border-box;overflow:hidden}
+.acilis .ybar i{display:block;height:100%;border-radius:9px;background:url(img/hamur-dilim.webp) left center/auto 100% repeat-x;transform-origin:left center;transform:scaleX(calc(.04 + var(--y) * .96));will-change:transform;box-shadow:inset 0 -3px 0 rgba(150,100,50,.25)}
