@@ -32,7 +32,8 @@ const rgba = (h, a) => 'rgba(' + rgb(h).join(',') + ',' + a + ')';
 const lighten = (h, t) => '#' + rgb(h).map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
 const tone = Ses.fx, buzz = Ses.buzz;
 // Görseller (docs/gorseller kaynaklarından küçültüldü). Yüklenene kadar düz renkle çizilir; oyun görselsiz de çalışır.
-const TEMA_GORSEL = ['tepsi-2', 'hucre-2'];   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
+const TEMA_GORSEL = ['tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'];
+const CUKUR = { 1: '#5a2a66', 2: '#a8642c' };   // dünyaya göre kalıp çukurunun rengi   // dünya temalarının kendi tepsi ve karo görselleri geldikçe buraya yazılır: 'tepsi-2', 'hucre-2', 'tepsi-3', 'hucre-3'
 const IMG = {};
 for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', 'damgalar', 'yuz-dikey', 'parcacik', 'el', 'hucre', 'girdap', ...TEMA_GORSEL]) { const im = new Image(); im.onload = () => { IMG[ad] = im; if (ad === 'blok') blokHazirla(im); if (ad === 'girdap') { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 128, 128); maske = x.getImageData(0, 0, 128, 128).data; } }; im.src = 'img/' + ad + '.webp'; }
 
@@ -590,11 +591,11 @@ function drawHole(h, now) {
   const c = C[h.color], [hx, hy] = h.cells[0];
   ctx.save();
   if (h.shown) {
-    ctx.fillStyle = +document.body.dataset.dunya === 1 ? '#5a2a66' : C.pit; ctx.fill(h.path);   // gece dünyasında çukur koyu
+    ctx.fillStyle = CUKUR[+document.body.dataset.dunya] || C.pit; ctx.fill(h.path);   // gece dünyasında çukur koyu
     ctx.save(); ctx.clip(h.path); ctx.translate(hx * cell, hy * cell + cell * .03); govde(h, () => koyu(c, .9), .05); ctx.restore();
     ctx.save(); ctx.clip(h.path); ctx.lineWidth = cell * .12; ctx.strokeStyle = 'rgba(50,20,80,.3)'; ctx.translate(0, cell * .05); ctx.stroke(h.path); ctx.restore();
   } else {
-    ctx.fillStyle = +document.body.dataset.dunya === 1 ? '#5a2a66' : C.pit; ctx.fill(h.path);   // gece dünyasında çukur koyu
+    ctx.fillStyle = CUKUR[+document.body.dataset.dunya] || C.pit; ctx.fill(h.path);   // gece dünyasında çukur koyu
     // içte koyu üst gölge (çukur derinliği): kenar çizgisinin gölgesi aşağı düşürülür ve kalıbın içine kırpılır; her şekilde kenarı izler
     ctx.save(); ctx.clip(h.path);
     ctx.lineWidth = cell * .1; ctx.strokeStyle = 'rgba(40,10,70,.45)';

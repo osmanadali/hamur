@@ -957,3 +957,8 @@ body.ana-acik .gok .n-ay{display:none}
 .card.ikonlu .go[data-ik=sure]::before{background-image:url(img/saat.webp)}
 .card.ikonlu .go[data-ik=reklam]::before{background-image:url(img/klaket.webp)}
 .card.ikonlu .go[data-ik=sure]::after,.card.ikonlu .go[data-ik=reklam]::after{font-size:15px;color:#6a3f10}
+
+/* gün batımı dünyası (121-180) */
+body[data-dunya="2"].oyun-acik{background:#f79a6a url(img/gok-3.webp) center/cover no-repeat}
+body[data-dunya="2"].oyun-acik::before{display:none}
+body[data-dunya="2"].oyun-acik .gok{opacity:0}
