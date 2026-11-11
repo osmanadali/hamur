@@ -771,3 +771,14 @@ html{background:#c9a8ee}
 @media (prefers-reduced-motion:reduce){.acilis .adekor .un-a,.acilis .adekor .un-y,.acilis .adekor .mor-iz{animation:none}}
 .adekor .d4{display:none}
 .adekor .d5{right:auto;left:36%;bottom:1%;width:120px}
+/* yükleme: karakterler havada durmasın, her grup bir bulutun üstünde */
+.acilis .cek{z-index:3}
+.acilis p{z-index:4}
+.acilis .adekor .un-a,.acilis .adekor .un-y,.acilis .adekor .mor-iz,.acilis .adekor .uyu{z-index:3}
+.acilis .adekor .zm{z-index:1;background-size:100% 100%;filter:drop-shadow(0 8px 8px rgba(70,30,120,.18))}
+.adekor .z1{background-image:url(img/bulut-5.webp);left:50%;top:calc(50% + 22px);width:min(108vw,500px);height:96px;transform:translateX(-50%)}
+.adekor .z2{background-image:url(img/bulut-3.webp);left:50%;top:calc(50% + 232px);width:min(104vw,470px);height:104px;transform:translateX(-50%)}
+.adekor .z3{background-image:url(img/bulut-1.webp);left:-3%;bottom:calc(9% - 34px);width:170px;height:76px}
+.adekor .z4{background-image:url(img/bulut-6.webp);right:-4%;bottom:calc(7% - 30px);width:210px;height:86px}
+.acilis p{top:calc(50% + 70px)}
+.acilis .adekor .un-a,.acilis .adekor .un-y{top:calc(50% + 104px)}
