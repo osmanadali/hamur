@@ -820,3 +820,19 @@ html{background:#c9a8ee}
 /* ana düğme: "Oyna" yerine doğrudan "Bölüm N" */
 #bOyna>b{display:none}
 #bOyna small{font:400 29px var(--display);letter-spacing:.3px;opacity:1}
+/* yükleme: derinlik. Arkada ışık huzmeleri ve küçük, soluk uzak hamurlar; ortada sahne; önde büyük, hafif bulanık, ekrandan taşan hamurlar */
+.acilis .adekor .isin{left:50%;top:44%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;z-index:0;filter:none;background:repeating-conic-gradient(from 8deg,rgba(255,250,235,.2) 0 7deg,transparent 7deg 20deg);-webkit-mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 22%,transparent 46%);mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 22%,transparent 46%);animation:don 70s linear infinite}
+.acilis .adekor .uz{z-index:1;opacity:.75;filter:blur(.6px)}
+.adekor .u1{background-image:url(img/blok-b.webp);left:14%;top:36%;width:26px;height:26px;rotate:-18deg}
+.adekor .u2{background-image:url(img/blok-y.webp);right:20%;top:40%;width:22px;height:22px;rotate:24deg}
+.adekor .u3{background-image:url(img/blok-p.webp);left:46%;top:30%;width:18px;height:18px;rotate:12deg}
+.acilis .adekor .on{z-index:6;filter:blur(2.2px) drop-shadow(0 10px 12px rgba(60,25,100,.3));animation:salla-on 5s ease-in-out infinite alternate}
+.adekor .o1{background-image:url(img/blok-r.webp);left:-52px;top:-34px;width:150px;height:150px;rotate:-22deg}
+.adekor .o2{background-image:url(img/blok-g.webp);right:-58px;bottom:-40px;width:170px;height:170px;rotate:18deg;animation-delay:-2s}
+.adekor .o3{background-image:url(img/blok-b.webp);left:-60px;bottom:-56px;width:140px;height:140px;rotate:30deg;animation-delay:-3.4s}
+.adekor .o4{background-image:url(img/blok-o.webp);right:-44px;top:26%;width:96px;height:96px;rotate:-14deg;filter:blur(1.4px);animation-delay:-1s}
+@keyframes salla-on{from{translate:0 0}to{translate:0 -10px}}
+.adekor .d1{z-index:1;width:104px;height:64px;opacity:.9}
+.adekor .d2{z-index:1;opacity:.85}
+.acilis .alogo{z-index:5;filter:drop-shadow(0 10px 10px rgba(60,25,100,.4))}
+@media (prefers-reduced-motion:reduce){.acilis .adekor .isin,.acilis .adekor .on{animation:none}}
