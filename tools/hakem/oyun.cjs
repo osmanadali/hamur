@@ -181,4 +181,37 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     check('oyun.sure.bekle', 'Dokunmadan önce süre işlemez', t === 30, t + ' sn');
     await bekle.ctx.close(); await o.ctx.close();
   }
+
+  // ---------- boya damlası, kilitli kalıp, kırılgan zemin (parmakla) ----------
+  {
+    const renk = o => o.page.evaluate(() => window.__hamur.oyun.st.pieces.map(p => p.color).join(''));
+    let o = await ac(); await o.kur({ t: 60, hint: ['', ''], map: ['r....', '.....'], molds: ['..b..', '....B'] });
+    await o.basla(0, 0); await o.gotur(2, 0, 200); await o.gotur(3, 0, 200); await o.birak(); await o.page.waitForTimeout(150);
+    const gecti = await renk(o);                                    // üstünden geçti: boyanmaz
+    await o.basla(3, 0); await o.gotur(2, 0, 200); await o.birak(); await o.page.waitForTimeout(150);
+    const kaldi = await renk(o), damla = await o.page.evaluate(() => window.__hamur.oyun.st.boya[0].open);
+    await o.basla(2, 0); await o.gotur(2, 1, 150); await o.gotur(4, 1, 250); await o.birak(); await o.page.waitForTimeout(700);
+    const s = await o.d();
+    check('boya.oyun', 'Boya damlası: üstünden geçen boyanmaz, üstünde bırakılan boyanır ve kalıbına oturur', gecti === 'r' && kaldi === 'b' && damla === false && s.n === 0 && s.durum === 'won', `${gecti} → ${kaldi}, ${s.n} parça, ${s.durum}`);
+    await o.ctx.close();
+
+    o = await ac(); await o.kur({ t: 60, hint: ['', ''], map: ['r...b', '.....', '.....'], molds: ['.....', '.....', 'R...B'], kilit: [[0, 2]] });
+    await o.basla(0, 0); await o.gotur(0, 2, 300); await o.birak(); await o.page.waitForTimeout(500);
+    const kilitli = await o.d();
+    await o.basla(4, 0); await o.gotur(4, 2, 300); await o.birak(); await o.page.waitForTimeout(900);
+    const acik = await o.d();
+    check('kilit.oyun', 'Kilitli kalıba parça oturmaz; başka kalıp dolunca açılır ve üstünde bekleyen parça oturur', kilitli.n === 2 && kilitli.durum === 'play' && acik.n === 0 && acik.durum === 'won', `${kilitli.n} parça → ${acik.n} parça, ${acik.durum}`);
+    await o.ctx.close();
+
+    o = await ac(); await o.kur({ t: 60, hint: ['', ''], map: ['r...', '....'], molds: ['....', '...R'], kirik: [[1, 0], [2, 0]] });
+    const z = () => o.page.evaluate(() => window.__hamur.oyun.st.kirik.map(z => z.open ? 1 : 0).join(''));
+    await o.basla(0, 0); await o.gotur(1, 0, 200); await o.gotur(2, 0, 200); await o.birak(); await o.page.waitForTimeout(150);
+    const gecince = await z();                                      // 1. karenin üstünden geçti, 2.'de kaldı: ikisi de sağlam
+    await o.basla(2, 0); await o.gotur(2, 1, 200); await o.birak(); await o.page.waitForTimeout(150);
+    const ayrilinca = await z();                                    // kaldığı kareden ayrıldı: o kare çöker
+    await o.basla(2, 1); await o.gotur(2, 0, 250); await o.birak(); await o.page.waitForTimeout(150);
+    const yer = await o.page.evaluate(() => window.__hamur.oyun.st.pieces[0].cells[0].join(','));
+    check('kirik.oyun', 'Kırılgan zemin: geçince sağlam kalır, üstünde kalıp ayrılınca çöker ve geçit kapanır', gecince === '11' && ayrilinca === '10' && yer === '2,1', `${gecince} → ${ayrilinca}, parça ${yer}`);
+    await o.ctx.close();
+  }
 };
