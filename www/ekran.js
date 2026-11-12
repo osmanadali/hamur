@@ -66,7 +66,7 @@ function yol() {
   const karoSay = Math.ceil(N / DURAK.length);
   let hedef = null;
   for (let k = 0; k < karoSay; k++) {
-    const karo = document.createElement('div'); karo.className = 'karo';
+    const karo = document.createElement('div'); karo.className = 'karo'; karo.dataset.ilk = k * DURAK.length + 1;
     { const ilk = k * DURAK.length + 1, son = Math.min(N, ilk + DURAK.length - 1), onceki = Math.max(1, ilk - 3), sonraki = Math.min(N, son + 3);   // alt kenar önceki karoyla, üst kenar sonrakiyle aynı renkte: geçiş yumuşak
       karo.style.setProperty('--zemin', `linear-gradient(to top, ${dunyaRenk(onceki, .82)}, ${dunyaRenk(ilk, .82)} 22%, ${dunyaRenk(son, .82)} 78%, ${dunyaRenk(sonraki, .82)})`); }
     DURAK.forEach(([x, y], i) => {
@@ -88,6 +88,11 @@ function yol() {
     { const d = DURAK[3 + (k % 2) * 4], kr = document.createElement('i'); kr.className = 'sus kar'; kr.style.backgroundImage = `url(img/kar-${k % 6 + 1}.webp)`; const ustunde = k % 6 === 2 || k % 6 === 4, d2 = DURAK[3 + (k % 2) * 4 + 1]; kr.style.top = (ustunde ? (d[1] + d2[1]) * 50 - 1.5 : d[1] * 100 - 1) + '%'; kr.style.left = (ustunde ? (d[0] + d2[0]) * 50 : d[0] < .5 ? d[0] * 100 + 27 : d[0] * 100 - 27) + '%'; if (ustunde) kr.classList.add('ustte'); karo.appendChild(kr); }   // yolun kenarında oturan hamur karakter
     el.appendChild(karo);
   }
+  // üstteki sis, o an ekranın üstünde görünen dünyanın rengini alır
+  { const ust = document.querySelector('#sYol .ust'), karolar = [...el.querySelectorAll('.karo')]; let son = -1;
+    const sis = () => { const y = el.getBoundingClientRect().top + 70; let k = karolar.findIndex(q => { const r = q.getBoundingClientRect(); return r.top <= y && r.bottom > y; }); if (k < 0 || k === son) return; son = k;
+      const r = DUNYA[dunyaNo(+karolar[k].dataset.ilk)][2] || [160, 130, 215]; ust.style.setProperty('--sis', r.join(',')); };
+    el.onscroll = sis; requestAnimationFrame(sis); setTimeout(sis, 400); }
   // sıradaki bölüm ekranın ortasına gelsin
   requestAnimationFrame(() => { if (hedef) { const r = hedef.getBoundingClientRect(), e = el.getBoundingClientRect(); el.scrollTop += r.top - e.top - e.height / 2 + r.height / 2; } else el.scrollTop = el.scrollHeight; });
 }

@@ -996,3 +996,15 @@ body[data-dunya="7"].oyun-acik .gok{opacity:0}
 body[data-dunya="8"].oyun-acik{background:#e0b8f0 url(img/gok-9.webp) center/cover no-repeat}
 body[data-dunya="8"].oyun-acik::before{display:none}
 body[data-dunya="8"].oyun-acik .gok{opacity:0}
+
+/* başlıklar oyun ekranındaki üst çubukla aynı hizada; üstte bulut yok, bölüm yolunda sis dünyanın renginde */
+#sYol .ust,#sTepsi .ust,#sMagaza .ust{position:absolute;left:0;right:0;top:0;z-index:2;min-height:0;align-items:center;padding:max(26px,env(safe-area-inset-top,0px)) 16px 0;background:none}
+#sYol .ust::before,#sTepsi .ust::before,#sMagaza .ust::before{display:none}
+#sYol .ust .top,#sTepsi .ust .top,#sMagaza .ust .top{width:54px;height:54px}
+#sYol .ust .bos,#sTepsi .ust .bos,#sMagaza .ust .bos{width:54px}
+#sYol .ust h2,#sTepsi .ust h2,#sMagaza .ust h2{padding:0;margin:0;line-height:54px}
+#sYol .ust{padding-bottom:34px;background:linear-gradient(rgba(var(--sis,160,130,215),.94),rgba(var(--sis,160,130,215),.7) 55%,rgba(var(--sis,160,130,215),0));transition:--sis .4s}
+#sTepsi .aciklama{top:calc(max(26px,env(safe-area-inset-top,0px)) + 56px)}
+.figurler{padding-top:calc(max(26px,env(safe-area-inset-top,0px)) + 92px)}
+.magaza{padding-top:calc(max(26px,env(safe-area-inset-top,0px)) + 66px)}
+.magaza,.figurler{-webkit-mask:linear-gradient(transparent calc(max(26px,env(safe-area-inset-top,0px)) + 40px),#000 calc(max(26px,env(safe-area-inset-top,0px)) + 84px));mask:linear-gradient(transparent calc(max(26px,env(safe-area-inset-top,0px)) + 40px),#000 calc(max(26px,env(safe-area-inset-top,0px)) + 84px))}

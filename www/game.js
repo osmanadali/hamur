@@ -634,7 +634,7 @@ function blob(x, y, R, now, s) {
 }
 // Boyalı yastık: parca-blok görseli × renk. Çarpma bloğun ortalama grisine göre normallenir (piksel = renk × gri / ortalama gri):
 // bloğun ortalama tonu rengin kendisini verir, renkler kararmaz; doku ve kenar gölgesi kalır. Renk başına bir kez hesaplanır.
-const BLOK = 256, boyali = new Map(); let blokGri = null, blokOrt = 1;
+const BLOK = 384, boyali = new Map(); let blokGri = null, blokOrt = 1;
 function blokHazirla(im) {
   const c = document.createElement('canvas'); c.width = c.height = BLOK;
   const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, BLOK, BLOK);
@@ -810,17 +810,25 @@ function drawPiece(p, now, k, glow) {
   // (tutunca dışta yanıp sönen renk çizgisi kaldırıldı: yaklaşan parçalar eğilerek ve iplikle haber verir)
   if (save.damga && !p.mix) p.cells.forEach((c, i) => { if (i !== p.face || p.cells.length === 1) damga(p.color, (c[0] - x0 + .5) * cell, (c[1] - y0 + (p.cells.length === 1 ? .23 : .5)) * cell, p.cells.length === 1 ? .32 : .5, .75); });   // tek karede yüzün üstüne (alna) küçük damga
   if (k > .25) face(p, now);
-  if (p.donuk) {   // buz: soğuk mavi-beyaz örtü, üstte kar, köşelerde kırağı pırıltısı
-    ctx.save(); ctx.clip(p.path);
-    if (IMG.buz) { const b = IMG.buz, W = b.width, H = b.height, var_ = new Set(p.cells.map(c => c[0] + ',' + c[1]));   // buz görselinin ortası her kareye doku olur; üstü açık karelere karlı üst kenar biner
-      ctx.globalAlpha = .5; for (const c of p.cells) ctx.drawImage(b, W * .2, H * .24, W * .6, H * .56, (c[0] - x0) * cell - 1, (c[1] - y0) * cell - 1, cell + 2, cell + 2);
-      ctx.globalAlpha = 1; for (const c of p.cells) if (!var_.has(c[0] + ',' + (c[1] - 1))) ctx.drawImage(b, W * .14, 0, W * .72, H * .2, (c[0] - x0) * cell - 1, (c[1] - y0) * cell, cell + 2, cell * .26);
-    } else { ctx.fillStyle = 'rgba(205,232,255,.62)'; ctx.fill(p.path); }
+  if (p.donuk) {   // buz: küpün üstüne bere gibi oturur; üst yüzü, yan yüzü ve kenarları sarar, üstte kar, altta saçak
+    const b = IMG.buz, var_ = new Set(p.cells.map(c => c[0] + ',' + c[1])), W = b ? b.width : 0, H = b ? b.height : 0, tas = cell * .05;
+    ctx.save();   // yan yüzdeki buz: üst yüzün dışında kalan, aşağı kaymış gövde
+    { const dis = new Path2D(); dis.rect(-cell * 9, -cell * 9, cell * 30, cell * 30); dis.addPath(p.path); ctx.clip(dis, 'evenodd'); }
+    ctx.translate(0, depth); ctx.lineJoin = 'round'; ctx.lineWidth = tas * 2; ctx.strokeStyle = 'rgba(150,200,238,.78)'; ctx.fillStyle = 'rgba(150,200,238,.78)'; ctx.fill(p.path); ctx.stroke(p.path);
+    if (b) { ctx.clip(p.path); ctx.globalAlpha = .5; for (const c of p.cells) ctx.drawImage(b, W * .2, H * .5, W * .6, H * .3, (c[0] - x0) * cell, (c[1] - y0) * cell, cell, cell); }
     ctx.restore();
-    ctx.lineWidth = cell * .07; ctx.strokeStyle = 'rgba(235,247,255,.95)'; ctx.stroke(p.path);
+    ctx.save(); ctx.lineJoin = 'round'; ctx.lineWidth = tas * 2; ctx.strokeStyle = 'rgba(214,236,255,.9)'; ctx.stroke(p.path);   // kenardan taşan buz kabuğu
+    ctx.clip(p.path);
+    if (b) { ctx.globalAlpha = .5; for (const c of p.cells) ctx.drawImage(b, W * .2, H * .24, W * .6, H * .56, (c[0] - x0) * cell - 1, (c[1] - y0) * cell - 1, cell + 2, cell + 2); ctx.globalAlpha = 1; }
+    else { ctx.fillStyle = 'rgba(205,232,255,.62)'; ctx.fill(p.path); }
+    const g = ctx.createLinearGradient(0, 0, cell * .9, cell * .9); g.addColorStop(0, 'rgba(255,255,255,.6)'); g.addColorStop(.28, 'rgba(255,255,255,0)'); g.addColorStop(.6, 'rgba(255,255,255,.22)'); g.addColorStop(.72, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fill(p.path);
+    ctx.restore();
+    if (b) for (const c of p.cells) { const X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell;
+      if (!var_.has(c[0] + ',' + (c[1] - 1))) ctx.drawImage(b, W * .1, 0, W * .8, H * .2, X - tas, Y - cell * .13, cell + tas * 2, cell * .34);   // kar: üst kenarın üstüne taşar
+      if (!var_.has(c[0] + ',' + (c[1] + 1))) ctx.drawImage(b, W * .1, H * .86, W * .8, H * .14, X, Y + cell + depth - cell * .05, cell, cell * .2); }   // saçak: yan yüzün altından sarkar
     ctx.fillStyle = '#fff';
     for (const c of p.cells) { const X = (c[0] - x0) * cell, Y = (c[1] - y0) * cell, pr = .5 + .5 * Math.sin(now / 420 + c[0] * 2 + c[1]);
-      for (const [fx, fy, r] of [[.2, .2, .05], [.8, .28, .035], [.3, .82, .03]]) { ctx.globalAlpha = .55 + .45 * pr; ctx.beginPath(); ctx.arc(X + fx * cell, Y + fy * cell, cell * r, 0, 6.2832); ctx.fill(); } }
+      for (const [fx, fy, r] of [[.2, .3, .045], [.82, .34, .03], [.3, .84, .028]]) { ctx.globalAlpha = .55 + .45 * pr; ctx.beginPath(); ctx.arc(X + fx * cell, Y + fy * cell, cell * r, 0, 6.2832); ctx.fill(); } }
     ctx.globalAlpha = 1;
   }
   ctx.restore();
