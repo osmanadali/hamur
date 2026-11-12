@@ -516,3 +516,22 @@ Ritme uymayan bölümler: yok.
 | 498 | 5 | 30 | 55 | 28.4 |
 | 499 | 5 | 15 | 71 | 25.3 |
 | 500 | 6 | 53 | 47 | 33.1 |
+
+## 251–500 ölçümü (mekanikler eklendikten sonra)
+
+`node tools/uretici/ritim.cjs --tablo` çözücü puanını ölçer ve 251–500'ü yeniden sıralar: her bant (50 bölüm) kolaydan zora beş 10'luğa ayrılır, her 10'luk ritme dizilir. Sayılar çözücü puanıdır; gerçek oyuncu verisi değildir.
+
+| Bölümler | Mekanik | Ortalama | En az | En çok | 10'luk ortalamaları |
+|---|---|---|---|---|---|
+| 1–50 | öğretim | 20,1 | 8 | 31,4 | |
+| 51–100 | karışık | 25,9 | 19,1 | 31,7 | |
+| 101–150 | makaslı, büyük tahta | 27,5 | 17,7 | 34,3 | |
+| 151–200 | donmuş | 26,2 | 9 | 31,9 | |
+| 201–250 | ileri | 23,6 | 18,6 | 31,9 | |
+| 251–300 | boya damlası | 30,8 | 24,4 | 36,6 | 26,9 → 29,5 → 31,5 → 32,4 → 33,6 |
+| 301–350 | kilitli kalıp | 26,7 | 21,5 | 32,4 | 23,2 → 25,1 → 26,5 → 28,0 → 30,5 |
+| 351–400 | kırılgan zemin | 24,2 | 18,3 | 31,6 | 19,8 → 21,5 → 23,7 → 26,0 → 29,8 |
+| 401–450 | boya damlası | 31,2 | 26,5 | 36,1 | 28,1 → 29,8 → 31,0 → 32,7 → 34,6 |
+| 451–500 | kilit + kırılgan | 26,8 | 22,1 | 31,7 | 23,6 → 25,3 → 26,6 → 28,2 → 30,3 |
+
+Bilinen açıklar: boya bantları oyunun en zor yeri (ortalama 31); 201–250 kendinden önceki banttan kolay; 351–400 yeni mekaniğe rağmen düşük başlıyor. Kapalı test verisi gelince hedef puanlar buna göre ayarlanır.
