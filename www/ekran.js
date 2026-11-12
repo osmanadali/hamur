@@ -60,6 +60,9 @@ function gunlukEkran() {
   $('gunSeri').textContent = seri ? L(`Seri: ${seri} gün`, `Streak: ${seri} days`) : L('Seriye bugün başla', 'Start your streak today');
   const h = $('gunHamur'); h.innerHTML = '';
   ['r', 'o', 'y', 'g', 'b', 'p', 'krem'].forEach((c, i) => { const d = document.createElement('i'); if (i < dolu) { d.className = 'dolu'; d.style.backgroundImage = `url(img/blok-${c}.webp)`; } d.style.setProperty('--i', i); h.appendChild(d); });
+  { const im = $('gunSomun'); im.src = `img/somun-${dolu === 7 ? 8 : Math.max(1, dolu)}.webp`; im.classList.toggle('bos', !dolu); im.alt = L(`Haftalık somun: ${dolu}/7`, `Weekly loaf: ${dolu}/7`);
+    const raf = $('gunRaf'), n = save.somun || 0; raf.innerHTML = ''; for (let i = 0; i < Math.min(n, 4); i++) raf.appendChild(Object.assign(document.createElement('img'), { src: 'img/somun-8.webp', alt: '' }));
+    if (n > 4) raf.appendChild(Object.assign(document.createElement('b'), { textContent: '×' + n })); if (!n) raf.appendChild(Object.assign(document.createElement('small'), { textContent: L('7 günde bir somun rafa konur', 'Every 7 days a loaf goes on the shelf') })); }
   $('gunAciklama').textContent = L('Her gün +1 can. 7. günde birer güçlendirici.', 'Each day +1 life. Day 7: one of each booster.');
   $('gunlukYazi').textContent = bitti2 ? L('Bugün tamam ✓', 'Done today ✓') : L('Bugünün kalıbı', "Today's mold");
 }

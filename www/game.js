@@ -475,6 +475,7 @@ function kazanKaydet() {
   if (gunluk) {   // günlük seri: üst üste günler; her gün +1 can, 7. günde birer güçlendirici
     const g = bugun(), ilkKez = !(save.gunluk && save.gunluk.gun === g && save.gunluk.bitti);
     if (ilkKez) { const e = save.seri || { gun: 0, n: 0 }; save.seri = { gun: g, n: e.gun === g - 1 ? e.n + 1 : 1 }; canVer(1);
+      if (save.seri.n % 7 === 0) save.somun = (save.somun || 0) + 1;   // haftalık somun rafa
       if (save.seri.n % 7 === 0) save.bst = { ...save.bst, geri: stok('geri') + 1, sure: stok('sure') + 1, makas: stok('makas') + 1 }; }
     save.gunluk = { gun: g, bitti: true, sure: Math.ceil(timeLeft), yildiz: sonYildiz }; App.persist();
   }
