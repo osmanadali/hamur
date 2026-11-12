@@ -170,6 +170,7 @@
   // true: kesin çıkmaz (kanıtlı). false: çıkmaz olduğu kanıtlanamadı (çözülebilir ya da bütçe yetmedi).
   // cap: düğüm bütçesi · ms: süre bütçesi (oyunda donma olmasın). Bütçe aşılırsa "kanıtlanamadı" (false) döner; ctx.over ile anlaşılır.
   function cikmaz(st, ctx, cap = 20000, ms = 0) {
+    if (K.boyaAcik(st)) return false;   // açık boya damlası: renkler değişebilir, kanıt yok (B3)
     ctx = ctx || hazirla(st);
     if (ctx.dead.size > 150000) { ctx.dead.clear(); ctx.fuses.clear(); }   // bellek sınırı (kalabalık makaslı tahtalar)
     ctx.son = ms ? now() + ms : 0;
@@ -179,6 +180,21 @@
     return !ok && !ctx.over;
   }
 
+  // Aramada budama: açık boya damlası varken kanıt yoktur (cikmaz false döner); arama yine de yön bulsun diye sezgisel bakılır:
+  // şimdiki renklerle ve "damla şu parçayı boyadı" seçeneklerinin her biriyle gevşetilmiş modelde kazanılamıyorsa dal ölü sayılır.
+  // Kanıt değildir (yapıştıktan sonra boyanmayı ve iki damlanın birlikte kullanımını görmez): yalnız aramada ve raporda kullanılır, oyunda değil.
+  function olu(st, ctx, cap) {
+    if (!K.boyaAcik(st)) return cikmaz(st, ctx, cap);
+    const acik = st.boya.filter(d => d.open), kapali = st.boya.map(d => ({ ...d, open: false }));
+    if (!cikmaz({ ...st, boya: kapali }, ctx, cap)) return false;
+    for (const d of acik) for (let i = 0; i < st.pieces.length; i++) {
+      const p = st.pieces[i]; if (p.color === d.color || p.donuk) continue;
+      const ps = st.pieces.slice(); ps[i] = { ...p, color: d.color };
+      if (!cikmaz({ ...st, boya: kapali, pieces: ps }, ctx, cap)) return false;
+    }
+    return true;
+  }
+
   // ---------- gerçek kurallarla arama ----------
   // i. parçanın şu anki durumda ulaşabildiği yerler: [{ dx, dy, d (kare adımı), tip: 'otur' | 'yapis' | 'yer', park }]
   // Kalıbının üstüne gelen parça oraya oturur ve daha ileri gidemez. park: 'kalip' = parça açık bir kalıbın tamamen içinde.
@@ -186,18 +202,20 @@
     if (st.pieces[i].donuk) return [];   // donmuş parça hamle yapamaz (ona yapışılır)
     const { W, H, wall } = ctx, p = st.pieces[i], occ = new Int8Array(W * H), hole = new Int8Array(W * H).fill(-1), mk = new Uint8Array(W * H), ya = new Uint8Array(W * H), cok = p.cells.length > 1;
     if (st.makas) for (const m of st.makas) { if (m.open) mk[m.y * W + m.x] = 1; if (m.open || m.hold) ya[m.y * W + m.x] = 1; }
+    const by = new Uint8Array(W * H); if (st.boya) for (const d of st.boya) if (d.open) by[d.y * W + d.x] = 1;
     for (const c of p.cells) if (!mk[c[1] * W + c[0]]) ya[c[1] * W + c[0]] = 0;   // parça ayrılınca altındaki "tutan" makas kapanır
     st.pieces.forEach((q, j) => { if (j !== i) for (const c of q.cells) occ[c[1] * W + c[0]] = j + 1; });
+    const cok2 = new Uint8Array(W * H); if (st.kirik) for (const z of st.kirik) if (!z.open || (z.basili && p.cells.some(c => c[0] === z.x && c[1] === z.y))) cok2[z.y * W + z.x] = 1;   // çökmüş ya da bu parça ayrılınca çökecek zemin
     ctx.holes.forEach(h => { if (!st.holes[h.i].filled) for (const c of h.cells) hole[c[1] * W + c[0]] = h.i; });
     const sh = shapeOf(p.cells), sinks = new Set();
-    for (const h of ctx.holes) if (!st.holes[h.i].filled && h.color === p.color && h.shape.key === sh.key) sinks.add((h.shape.y - sh.y) * 64 + (h.shape.x - sh.x));
+    for (const h of ctx.holes) if (!st.holes[h.i].filled && !st.holes[h.i].kilit && h.color === p.color && h.shape.key === sh.key) sinks.add((h.shape.y - sh.y) * 64 + (h.shape.x - sh.x));
     const seen = new Set([0]), q = [[0, 0, 0]], out = [];
     for (let t = 0; t < q.length; t++) {
       const [dx, dy, d] = q[t];
       for (const [ex, ey] of DIRS) {
         const nx = dx + ex, ny = dy + ey, k = ny * 64 + nx; if (seen.has(k)) continue;
         let ok = true, kes = false;
-        for (const c of p.cells) { const x = c[0] + nx, y = c[1] + ny; if (x < 0 || y < 0 || x >= W || y >= H || wall[y * W + x] || occ[y * W + x]) { ok = false; break; } if (cok && mk[y * W + x]) kes = true; }
+        for (const c of p.cells) { const x = c[0] + nx, y = c[1] + ny; if (x < 0 || y < 0 || x >= W || y >= H || wall[y * W + x] || occ[y * W + x] || cok2[y * W + x]) { ok = false; break; } if (cok && mk[y * W + x]) kes = true; }
         if (!ok) continue;
         seen.add(k);
         if (kes) { out.push({ dx: nx, dy: ny, d: d + 1, tip: 'kes' }); continue; }   // çok kareli parça makasa itilir: kesilir, hamle orada biter
@@ -214,6 +232,8 @@
         }
         if (icinde) { const hc = ctx.holes[h0].color; icinde = hc === p.color || !!(PARTS[hc] && PARTS[hc].includes(p.color)); }
         let kalipta = false; for (const c of p.cells) if (hole[(c[1] + ny) * W + c[0] + nx] >= 0) { kalipta = true; break; }
+        let boya = false; for (const c of p.cells) if (by[(c[1] + ny) * W + c[0] + nx]) { boya = true; break; }
+        if (boya) { out.push({ dx: nx, dy: ny, d: d + 1, tip: 'boya', park: '' }); q.push([nx, ny, d + 1]); continue; }   // damlanın üstünde kalmak: boyanır (her kipte hamle)
         out.push({ dx: nx, dy: ny, d: d + 1, tip: yapis ? 'yapis' : 'yer', park: yapis ? '' : icinde ? 'kalip' : (!komsu && !kalipta) ? 'bos' : '' });
         q.push([nx, ny, d + 1]);
       }
@@ -265,7 +285,7 @@
           seen.set(k, c);
           if (!s.pieces.length) { wins.push(c); continue; }
           // kanıt bu tahtada bütçeyi aşıyorsa (kalabalık makaslı tahta) aramada her düğümde yeniden denenmez
-          if (!ctx.pahali) { if (cikmaz(s, ctx, 4000)) continue; if (ctx.over && ++ctx.asim > 20) ctx.pahali = true; }
+          if (!ctx.pahali) { if (olu(s, ctx, 4000)) continue; if (ctx.over && ++ctx.asim > 20) ctx.pahali = true; }
           next.push(c);
         }
         if (kesildi) break;
@@ -330,7 +350,7 @@
         if (h.tip !== 'yapis') continue;
         const c = uygula(s, h.i, h.dx, h.dy), k = K.stateKey(c); if (gor.has(k)) continue; gor.add(k);
         const x = sonuc(s, c); if (!x) continue;
-        const kotu = c.pieces.length ? cikmaz(c, ctx) : false;
+        const kotu = c.pieces.length ? olu(c, ctx) : false;
         if (!kotu && c.pieces.length && !cozulur(ctx, c)) { belirsiz++; continue; }
         const o = sinif.get(x.sinif); if (!o) sinif.set(x.sinif, { kotu, etiket: x.etiket, st: c }); else if (!kotu) o.kotu = false;   // aynı karar bir yerde doğruysa yanlış sayılmaz
       }

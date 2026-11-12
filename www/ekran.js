@@ -73,7 +73,7 @@ const DURAK = [[0.4982,0.955],[0.4179,0.8641],[0.2571,0.7732],[0.3063,0.6823],[0
 // Dünyalar: 60 bölümde bir. Bölüm yolunda her dünyanın kendi gökyüzü rengi vardır; sınırın düştüğü karoda renkler yumuşakça birbirine geçer.
 const DUNYA = [['Hamur Diyarı', 'Dough Land', null], ['Gece Fırını', 'Night Bakery', [58, 42, 128]], ['Gün Batımı', 'Sunset', [247, 150, 100]], ['Nane Bahçesi', 'Mint Garden', [120, 215, 170]],
   ['Kurabiye Ormanı', 'Cookie Forest', [110, 185, 235]], ['Çikolata Vadisi', 'Chocolate Valley', [140, 92, 62]], ['Kış Masalı', 'Winter Tale', [175, 215, 240]], ['Limon Bahçesi', 'Lemon Grove', [245, 225, 105]], ['Gökkuşağı', 'Rainbow', [215, 180, 240]]];
-const dunyaNo = n => Math.min(DUNYA.length - 1, Math.floor((n - 1) / 60));
+const dunyaNo = n => Math.floor((n - 1) / 60) % DUNYA.length;   // dokuz dünya döner
 const dunyaRenk = (n, a) => { const r = DUNYA[dunyaNo(Math.max(1, n))][2]; return r ? `rgba(${r.join(',')},${a})` : 'rgba(201,168,238,0)'; };
 const SUS_DUNYA = new Set([2, 3, 4, 5, 6, 7, 8, 9]);   // kendi süs seti olan dünyalar (sus-dN-1…6)
 function yol() {

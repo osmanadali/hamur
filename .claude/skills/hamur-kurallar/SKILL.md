@@ -106,3 +106,13 @@ node tools/hakem.cjs --strict
 ```
 
 Robot tam geçmeden iş bitmiş sayılmaz. Yeni kural için `tools/hakem/kurallar.cjs`, parmak davranışı için `tools/hakem/oyun.cjs` içine test eklenir. Çekirdeğe ya da çözücüye dokunan her değişiklikte `tools/hakem/rastgele.cjs` çıkmaz kanıtını ve çözümleri bağımsız bir modelle karşılaştırır.
+
+## Sonradan eklenen mekanikler (251. bölümden itibaren)
+
+Kesin metin `www/rules/cekirdek.js` başındadır; özet:
+
+- **Boya damlası** (`molds` içinde küçük harf `r y b g o p`): tek kullanımlık zemin karesi. Üstünden geçen parça boyanmaz; üstünde **kalan** parça (bırakılınca ya da orada yapışacakken) bütünüyle damlanın rengine döner. Sıra: boyan → kalıba otur → yapış. Açık damla varken `doomed` ve `cikmaz` bir şey söylemez; çözücü aramada sezgisel `olu` kullanır (kanıt değildir, oyunda kullanılmaz).
+- **Kilitli kalıp** (bölümde `kilit: [[x, y]…]`): kilitli kalıba parça oturmaz. Başka bir kalıp dolunca bütün kilitler açılır; tam üstünde bekleyen uygun parça hemen oturur (`sink` olayında `acilan`, `zincir`).
+- **Kırılgan zemin** (bölümde `kirik: [[x, y]…]`): geçmek serbest. Üstünde kalıp sonra ayrılınca çöker ve duvar gibi kapanır (`bas`, `ayril`, `cokuk`). Başta üstünde duran parça kalmış sayılır.
+
+Oyun tarafı: `birak()` her bırakmada `K.boyan` ve `K.bas` çağırır; çizimler `drawBoya`, `drawKirik`, `drawKilit`.

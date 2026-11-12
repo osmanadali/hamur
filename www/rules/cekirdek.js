@@ -19,12 +19,26 @@
 //      Renk geri ayrışmaz (yeşil kesilince iki yeşil olur): makas şekil hatasını telafi eder, renk hatasını değil.
 //  M4. Kesim sürüklemeyi bitirir: bütün parçalar oldukları yerde kalmış sayılır (önce kalıbına oturur, sonra yapışabildiğine yapışır).
 //
+// Boya damlası (501. bölümden itibaren):
+//  B1. Damla tahtada bir zemin karesidir (molds'ta küçük harf: r y b g o p) ve tek kullanımlıktır.
+//  B2. Üstünden geçen parça boyanmaz. Parça damlanın üstünde KALINCA (bırakılınca ya da orada yapışacakken) bütünüyle damlanın rengine döner,
+//      damla biter. Sıra: önce boyanır, sonra kalıbına oturur ya da komşusuyla yapışır (settle).
+//  B3. Açık damla varken renkler değişebilir: hızlı çıkmaz denetimi ve çıkmaz kanıtı bir şey söylemez.
+//
+// Kilitli kalıp (601. bölümden itibaren; bölümde kilit: [[x, y]…], her biri kilitli kalıbın bir karesi):
+//  K1. Kilitli kalıba parça oturmaz (üstünde durabilir). Başka bir kalıp dolunca bütün kilitler açılır.
+//  K2. Kilit açıldığında tam üstünde duran, rengi ve şekli uyan parça hemen oturur (olayda zincir).
+//
+// Kırılgan zemin (701. bölümden itibaren; bölümde kirik: [[x, y]…]):
+//  Z1. Üstünden geçmek serbesttir. Bir parça üstünde KALIP sonra ayrılınca zemin çöker: o kare duvar gibi kapanır.
+//  Z2. Bölüm başında üstünde duran parça "kalmış" sayılır.
+//
 // "Orada kalmak" kararını çekirdek vermez: move() yalnız taşır, yapıştırmaz. Oyun parmağı okuyup (niyet okuma) fuse() ya da settle() çağırır;
 // çözücü "yanından geçmek serbest, yanında durmak yapışma" kuralıyla hedef karede settle() çağırır.
 //
 // Bölüm biçimi: { t: saniye, hint: 'metin', map: [satır…], molds: [satır…] }
 //   map:   '.' boş · '#' duvar · r y b g o p parça karesi (bitişik aynı harfler tek parça)
-//   molds: '.' boş · R Y B G O P kalıp karesi (bitişik aynı harfler tek kalıp) · 'x' makas karesi
+//   molds: '.' boş · R Y B G O P kalıp karesi (bitişik aynı harfler tek kalıp) · 'x' makas karesi · r y b g o p boya damlası
 (function (root, factory) {
   const K = factory();
   if (typeof module === 'object' && module.exports) module.exports = K; else root.HamurKural = K;
@@ -53,16 +67,24 @@
     }
     return out;
   }
-  function load(L) {
+  function load0(L) {
     const H = L.map.length, W = L.map[0].length, walls = new Set(), wallCells = [];
     L.map.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') { walls.add(key(x, y)); wallCells.push([x, y]); } }));
     const makas = [];
     L.molds.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'x') makas.push({ x, y, open: true }); }));
-    return { W, H, walls, wallCells, makas,
+    const boya = [];
+    L.molds.forEach((row, y) => [...row].forEach((ch, x) => { if ('rybgop'.includes(ch)) boya.push({ x, y, color: ch, open: true }); }));
+    const kirik = (L.kirik || []).map(([x, y]) => ({ x, y, open: true, basili: false }));
+    return { W, H, walls, wallCells, makas, boya, kirik,
       // Donmuş parça (D1): map'te büyük harf (R Y B …). Oyuncu onu sürükleyemez; başka bir parça ona yapışınca çözülür (birleşen parça serbesttir).
       pieces: groups(L.map.map(r => r.replace(/[RYBGOP]/g, c => c.toLowerCase())), 'rybgop').map(g => { const p = { color: g.ch, cells: g.cells }; if (g.cells.some(c => /[RYBGOP]/.test(L.map[c[1]][c[0]]))) p.donuk = true; return p; }),
-      holes: groups(L.molds, 'RYBGOP').map(g => ({ color: g.ch.toLowerCase(), cells: g.cells, filled: false })) };
+      holes: groups(L.molds, 'RYBGOP').map(g => { const h = { color: g.ch.toLowerCase(), cells: g.cells, filled: false }; if ((L.kilit || []).some(k => g.cells.some(c => c[0] === k[0] && c[1] === k[1]))) h.kilit = true; return h; }) };
   }
+  function load(L) { const st = load0(L); for (const z of st.kirik) if (st.pieces.some(p => p.cells.some(c => c[0] === z.x && c[1] === z.y))) z.basili = true; return st; }
+  // (x,y) çökmüş kırılgan zemin mi (duvar gibi)
+  const cokuk = (st, x, y) => { if (st.kirik) for (const z of st.kirik) if (!z.open && z.x === x && z.y === y) return true; return false; };
+  // p olduğu yerde kaldı: altındaki kırılgan zeminler basılı sayılır (ayrılınca çöker)
+  const bas = (st, p) => { if (st.kirik) for (const z of st.kirik) if (z.open && p.cells.some(c => c[0] === z.x && c[1] === z.y)) z.basili = true; };
   const fuseColor = (a, b) => a === b ? a : MIX[a + b];
   // Makas durumu: open = henüz kesmedi · hold = kesti, kestiği kare hâlâ üstünde (ayrılınca kapanır).
   // (x,y) açık bir makas karesi mi (çok kareli parçayı durdurur ve keser)
@@ -70,7 +92,8 @@
   // (x,y)'nin kenarından dikiş geçmez mi (M2)
   const yalitik = (st, x, y) => { if (st.makas) for (const m of st.makas) if ((m.open || m.hold) && m.x === x && m.y === y) return true; return false; };
   // p yerinden ayrılıyor: altındaki "kesti, tutuyor" makaslar kapanır
-  const ayril = (st, p) => { if (st.makas) for (const m of st.makas) if (m.hold && p.cells.some(c => c[0] === m.x && c[1] === m.y)) m.hold = false; };
+  const ayril = (st, p) => { if (st.makas) for (const m of st.makas) if (m.hold && p.cells.some(c => c[0] === m.x && c[1] === m.y)) m.hold = false;
+    if (st.kirik) for (const z of st.kirik) if (z.open && z.basili && p.cells.some(c => c[0] === z.x && c[1] === z.y)) z.open = false; };   // Z1: kalınan kırılgan zemin ayrılınca çöker
   // Parçanın (dx,dy) kadar kayması: 'yol' = serbest · 'makas' = yalnız açık makas engelliyor (çok kareli parça; kesilerek girilir) · '' = engel
   function gecis(st, p, dx, dy) {
     if (p.donuk) return '';   // donmuş parça kıpırdamaz
@@ -78,7 +101,7 @@
     for (const q of st.pieces) if (q !== p) for (const c of q.cells) occ.add(key(c[0], c[1]));
     for (const [x, y] of p.cells) {
       const nx = x + dx, ny = y + dy, k = key(nx, ny);
-      if (nx < 0 || ny < 0 || nx >= st.W || ny >= st.H || st.walls.has(k) || occ.has(k)) return '';
+      if (nx < 0 || ny < 0 || nx >= st.W || ny >= st.H || st.walls.has(k) || occ.has(k) || cokuk(st, nx, ny)) return '';
       if (p.cells.length > 1 && makasta(st, nx, ny)) m = true;
     }
     return m ? 'makas' : 'yol';
@@ -98,11 +121,17 @@
     return a.every(c => B.has(key(c[0], c[1])));
   }
   // p şu an tam üstünde durduğu, rengi ve şekli aynı boş kalıp (yoksa undefined)
-  const moldUnder = (st, p) => st.holes.find(h => !h.filled && h.color === p.color && same(h.cells, p.cells));
+  const moldUnder = (st, p) => st.holes.find(h => !h.filled && !h.kilit && h.color === p.color && same(h.cells, p.cells));
   function sink(st, p) {
     const h = moldUnder(st, p); if (!h) return null;
     h.filled = true; st.pieces.splice(st.pieces.indexOf(p), 1);
-    return { type: 'sink', hole: h };
+    const ev = { type: 'sink', hole: h };
+    const kilitli = st.holes.filter(x => x.kilit && !x.filled);
+    if (kilitli.length) {   // K1, K2: kilitler açılır; tam üstünde bekleyen parçalar oturur
+      for (const x of kilitli) delete x.kilit; ev.acilan = kilitli; ev.zincir = [];
+      for (const q of st.pieces.slice()) { const h2 = st.pieces.includes(q) && moldUnder(st, q); if (h2) { h2.filled = true; st.pieces.splice(st.pieces.indexOf(q), 1); ev.zincir.push({ type: 'sink', hole: h2, p: q }); } }
+    }
+    return ev;
   }
   // Bir kare taşı. Engel varsa null; yoksa olanların listesi (yalnız kalıba oturma olabilir). Yapıştırmaz.
   function move(st, p, dx, dy) {
@@ -138,8 +167,15 @@
   //   2) aynı anda iki farklı ana renge değiyorsa (gerçek belirsizlik): tercih(t) varsa onun seçtiği (oyun: ipliği en dolu olan),
   //      yoksa renk sırası (kırmızı, sarı, mavi). Üretici, çözümünde böyle bir temas olan bölümü eler (cozucu rapor › belirsizTemas).
   const SIRA = 'rybgop';
-  function settle(st, p, tercih) {
+  // p olduğu yerde kaldı ve altında açık damla var: boyanır (B2). Dönen: olay listesi (boşsa damla yok).
+  function boyan(st, p) {
     const ev = [];
+    if (st.boya) for (const d of st.boya) if (d.open && p.cells.some(c => c[0] === d.x && c[1] === d.y)) { d.open = false; ev.push({ type: 'boya', color: d.color, once: p.color, at: [d.x, d.y] }); p.color = d.color; }
+    return ev;
+  }
+  const boyaAcik = st => !!(st.boya && st.boya.some(d => d.open));
+  function settle(st, p, tercih) {
+    const ev = boyan(st, p); bas(st, p);
     for (;;) {
       const s = sink(st, p); if (s) { ev.push(s); break; }
       const t = touching(st, p); if (!t.length) break;
@@ -189,6 +225,7 @@
   // Açık makas varken şekil kesilerek düzeltilebilir; o durumda hiçbir şey söylemez (null).
   function doomed(st) {
     if (st.makas && st.makas.some(m => m.open)) return null;
+    if (boyaAcik(st)) return null;
     const open = st.holes.filter(h => !h.filled), count = c => st.pieces.filter(q => q.color === c).length;
     for (const p of st.pieces) {
       let ok = false;
@@ -209,14 +246,15 @@
   }
   // Durumun kopyası (geri alma, arama). Yalnız kural alanları kopyalanır; walls ve wallCells paylaşılır (değişmezler).
   function clone(st) {
-    return { W: st.W, H: st.H, walls: st.walls, wallCells: st.wallCells, makas: (st.makas || []).map(m => ({ x: m.x, y: m.y, open: m.open, hold: !!m.hold })),
+    return { W: st.W, H: st.H, walls: st.walls, wallCells: st.wallCells, makas: (st.makas || []).map(m => ({ x: m.x, y: m.y, open: m.open, hold: !!m.hold })), boya: (st.boya || []).map(d => ({ x: d.x, y: d.y, color: d.color, open: d.open })),
       pieces: st.pieces.map(p => { const q = { color: p.color, cells: p.cells.map(c => [c[0], c[1]]) }; if (p.donuk) q.donuk = true; return q; }),
-      holes: st.holes.map(h => ({ color: h.color, cells: h.cells, filled: h.filled })) };
+      kirik: (st.kirik || []).map(z => ({ x: z.x, y: z.y, open: z.open, basili: z.basili })),
+      holes: st.holes.map(h => { const x = { color: h.color, cells: h.cells, filled: h.filled }; if (h.kilit) x.kilit = true; return x; }) };
   }
   // Durumun kimliği: parça sırasından bağımsız. Aynı kimlik = aynı oyun durumu.
   function stateKey(st) {
     const ps = st.pieces.map(p => (p.donuk ? '*' : '') + p.color + p.cells.map(c => c[1] * st.W + c[0]).sort((a, b) => a - b).join('.')).sort();
-    return ps.join('|') + '#' + st.holes.map(h => h.filled ? 1 : 0).join('') + (st.makas && st.makas.length ? '#' + st.makas.map(m => m.open ? 1 : m.hold ? 2 : 0).join('') : '');
+    return ps.join('|') + '#' + st.holes.map(h => h.filled ? 1 : h.kilit ? 2 : 0).join('') + (st.kirik && st.kirik.length ? '^' + st.kirik.map(z => z.open ? (z.basili ? 2 : 1) : 0).join('') : '') + (st.makas && st.makas.length ? '#' + st.makas.map(m => m.open ? 1 : m.hold ? 2 : 0).join('') : '') + (st.boya && st.boya.length ? '~' + st.boya.map(d => d.open ? 1 : 0).join('') : '');
   }
   // Bölüm dosyası doğrulaması: hata metinlerinin listesi (boşsa geçerli). Çözülebilirliğe bakmaz (o çözücünün işi).
   function validate(L) {
@@ -225,7 +263,7 @@
     const W = L.map[0].length, H = L.map.length;
     if (W > 10 || H > 10) E.push('tahta en çok 10×10 olabilir');
     if (L.molds.length !== H) E.push('map ve molds aynı sayıda satır içermeli');
-    for (const [ad, rows, ok] of [['map', L.map, '.#rybgopRYBGOP'], ['molds', L.molds, '.RYBGOPx']]) rows.forEach((r, y) => {
+    for (const [ad, rows, ok] of [['map', L.map, '.#rybgopRYBGOP'], ['molds', L.molds, '.RYBGOPxrybgop']]) rows.forEach((r, y) => {
       if (typeof r !== 'string' || r.length !== W) E.push(`${ad} ${y + 1}. satır ${W} kare olmalı`);
       else for (const ch of r) if (!ok.includes(ch)) E.push(`${ad} ${y + 1}. satırda geçersiz harf: ${ch}`);
     });
@@ -236,6 +274,9 @@
     if (!st.holes.length) E.push('en az bir kalıp olmalı');
     for (const h of st.holes) if (h.cells.some(c => st.walls.has(key(c[0], c[1])))) E.push('kalıp duvarın üstünde olamaz');
     if (st.makas.some(m => st.walls.has(key(m.x, m.y)))) E.push('makas duvarın üstünde olamaz');
+    if (st.boya.some(d => st.walls.has(key(d.x, d.y)) || st.pieces.some(p => p.cells.some(c => c[0] === d.x && c[1] === d.y)) || st.makas.some(m => m.x === d.x && m.y === d.y))) E.push('boya damlası duvarın, parçanın ya da makasın üstünde olamaz');
+    if (st.kirik.some(z => z.x < 0 || z.y < 0 || z.x >= W || z.y >= H || st.walls.has(key(z.x, z.y)))) E.push('kırılgan zemin tahtanın içinde ve duvarsız karede olmalı');
+    if ((L.kilit || []).length && st.holes.every(h => h.kilit)) E.push('bütün kalıplar kilitli olamaz');
     if (st.holes.length > 30 || st.makas.length > 30) E.push('en çok 30 kalıp ve 30 makas olabilir');
     // kalıbın şekli bölüm başında görünmeli: hiçbir parça bir kalıp karesinin üstünde başlamaz
     const kalipKare = new Set(st.holes.flatMap(h => h.cells.map(c => key(c[0], c[1]))));
@@ -250,5 +291,5 @@
     }
     return E;
   }
-  return { DIRS, MIX, PARTS, key, groups, load, fuseColor, makasta, yalitik, ayril, gecis, canMove, canCut, cut, bilesenler, seam, same, moldUnder, sink, move, touching, fuse, settle, belirsiz, step, fitsIn, doomed, clone, stateKey, validate };
+  return { DIRS, MIX, PARTS, key, groups, load, fuseColor, makasta, yalitik, ayril, gecis, canMove, canCut, cut, bilesenler, seam, same, moldUnder, sink, move, touching, fuse, settle, boyan, boyaAcik, cokuk, bas, belirsiz, step, fitsIn, doomed, clone, stateKey, validate };
 });

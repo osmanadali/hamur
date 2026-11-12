@@ -85,3 +85,19 @@ Yol haritasının başlangıç formülü: 15 sn okuma payı + en kısa çözüm�
 2. Çözücüden geçir, puanına ve etiketlerine bak.
 3. Takvime uyduğunu denetle: bandından önce gelen mekanik yok.
 4. Robotu çalıştır: `node tools/hakem.cjs --strict`. `bolum.*` kontrolleri 60 bölümün hepsini çözer, takvimi, ritmi ve kopyaları denetler.
+
+## 251–500: mekanik takvimi ve `mekanik.cjs`
+
+`node tools/uretici.cjs --yaz` 500 bölümü yazar; ardından `node tools/uretici/mekanik.cjs` 251–500'e yeni mekanikleri ekler (sıfırdan üretmez: var olan, çözülebilir bölüme mekaniği koyar ve çözücüyle doğrular; tutmayan bölüm olduğu gibi kalır, süre yeni çözüme göre uzar).
+
+| Bölümler | Mekanik |
+|---|---|
+| 151–200 | donmuş hamur |
+| 201–250 | ileri (makaslı karışık) |
+| 251–300 | boya damlası |
+| 301–350 | kilitli kalıp |
+| 351–400 | kırılgan zemin |
+| 401–450 | boya damlası |
+| 451–500 | kilit + kırılgan |
+
+Her bandın ilk bölümü mekaniği ipucuyla tanıtır. Dünyalar 60 bölümde bir değişir ve dokuz dünya döner (`% 9`).
