@@ -70,7 +70,7 @@ module.exports = async ({ browser, URL, open, shot, getSave, inViewport, check }
     check('acilis.gec', 'Açılış dokununca geçilmez; dokunuş alttaki düğmeye de gitmez', gec.join() === 'false,ana', gec.join(' · ')); await page.waitForTimeout(2400);
     await page.click('#bYol'); await page.waitForTimeout(30); const g1 = await page.evaluate(() => document.querySelector('#gecis i').getAnimations().map(a => a.effect.getTiming().duration).join()); await page.waitForTimeout(400);
     const g2 = await page.evaluate(() => [document.querySelector('#gecis i').getAnimations().length, document.querySelector('#gecis i').getBoundingClientRect().right < 0, window.__hamur.ekran.acik]);
-    check('gecis', 'Ekran geçişi: 360 ms un bulutu, bitince ekranda kalmaz', g1 === '360' && g2.join() === '0,true,yol', `${g1} · ${g2.join(' · ')}`);
+    check('gecis', 'Ekran geçişinde bulut yok: ekran doğrudan değişir', g1 === '' && g2[0] === 0 && g2[2] === 'yol', `"${g1}" · ${g2.join(' · ')}`);
     await ctx.close();
   }
   {

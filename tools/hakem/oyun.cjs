@@ -143,16 +143,18 @@ module.exports = async ({ browser, URL, open, shot, getSave, check }) => {
     await o.basla(0, 0); await o.gotur(1, 0, 150); await o.birak(); await o.page.waitForTimeout(300);
     const hemen = await o.d(); await o.page.waitForTimeout(1500); const sonra = await o.d();
     await shot(o.page, 'cikmaz');
-    check('oyun.cikmaz', 'Dar aralığın önünde yan yana yapışan kırmızılar anında çıkmaz sayılır ve neden gösterilir', hemen.durum === 'lost' && hemen.boy === '1112' && !!sonra.ov, `${hemen.durum} · "${sonra.ov}"`);
-    const iki = await o.page.evaluate(() => !document.getElementById('ovB2').hidden);
-    await o.page.click('#ovB'); await o.page.waitForTimeout(200);
+    const uyari = await o.page.evaluate(() => document.getElementById('tost').textContent);
+    check('oyun.cikmaz', 'Çıkmazda bölüm bitmez: haber verilir, oyun süre bitene kadar sürer', hemen.durum === 'play' && hemen.boy === '1112' && sonra.durum === 'play' && !sonra.ov && /Çıkmaz/.test(uyari), `${hemen.durum} · "${uyari}"`);
+    const iki = true;
+    await o.page.click('#undo'); await o.page.waitForTimeout(200);
     const s = await o.d();
     check('oyun.geri', 'Geri al: yapışmanın olduğu sürüklemenin başına döner, bölüm sürer; hak bir kez', iki && s.durum === 'play' && s.boy === '11111' && s.geri === 0 && !s.btn && !s.ov, `${s.durum} · parçalar ${s.boy} · kalan hak ${s.geri}`);
     // ikinci yanlışta geri alma yok (stok boşken; stok varsa oradan harcanır: bkz. güçlendirici testleri)
     await o.page.evaluate(() => { window.__hamur.save.bst = { geri: 0, sure: 0, makas: 0 }; });
     await o.basla(0, 0); await o.gotur(1, 0, 150); await o.birak(); await o.page.waitForTimeout(1800);
     const iki2 = await o.page.evaluate(() => [window.__hamur.oyun.durum, document.getElementById('ovB2').hidden]);
-    check('oyun.geri.tek', 'İkinci yanlış yapışmada geri alma önerilmez', iki2[0] === 'lost' && iki2[1] === true, iki2.join(' · '));
+    const kapali = await o.page.evaluate(() => document.getElementById('undo').disabled);
+    check('oyun.geri.tek', 'Hak bitince ikinci yanlışta geri al kapalıdır; oyun yine sürer', iki2[0] === 'play' && kapali === true, iki2[0] + ' · geri al kapalı: ' + kapali);
     await o.ctx.close();
   }
   {

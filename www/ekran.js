@@ -14,8 +14,7 @@ const acikMi = n => save.hepsiAcik || n <= siradaki();
 // Ekran geçişi: un bulutu silmesi, 250 ms, bütün ekranlarda aynı (hareket azaltmada düz solma). Ekran hemen değişir; bulut üstünden geçer.
 function gecis(ad) {
   const g = $('gecis'), e = $(EKRAN[ad]);
-  for (const el of [g, e]) { el.classList.remove('oyna', 'giris'); void el.offsetWidth; }
-  g.classList.add('oyna'); e.classList.add('giris');
+  e.classList.remove('giris'); void e.offsetWidth; e.classList.add('giris');   // un bulutu kaldırıldı: yeni ekran yalnız yumuşakça belirir
 }
 // Bekleme: 'serit' 500 ms'yi geçen beklemede (oklavayla açılan hamur), 'top' reklam ve satın alma beklerken (yoğrulan hamur topu).
 const bekle = (() => {

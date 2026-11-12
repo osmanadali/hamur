@@ -39,7 +39,7 @@ for (const ad of ['tepsi', 'duvar', 'blok', 'yuzler', 'makas', 'makas-kapali', '
 
 const ASIL = LEVELS.length;   // sonrasına eklenenler deneme bölümüdür (editör, test): ilerlemeye yazılmaz
 let st, cz, Lv, li = clamp((save.level || 1) - 1, 0, LEVELS.length - 1), done = new Set(save.done || []);
-let dalgalar = [];
+let dalgalar = [], cikmazUyari = false;
 let cell = 60, dpr = 1, state = 'play', timeLeft = 0, running = false, drag = null, sinks = [], parts = [], rings = [], after = null, wonAt = 0, shownS = -1, wallPath = null, last = performance.now();
 let sonGirdi = performance.now();   // son dokunuş: uzun süre dokunulmazsa parçalar esner
 let egil = new Map();   // yapışabilecek kadar yaklaşan parçalar birbirine doğru eğilir: p → karşısındaki parça
@@ -111,7 +111,7 @@ function giydir(p) {
   return Object.assign(p, { ox: 0, oy: 0, pulse: 0, pv: 0, lift: 0, face: f, seed: Math.random() * 9, mix: null, flash: null, shakeT: 0 });
 }
 // Günlük kalıp: herkes aynı gün aynı bölümü oynar (11-50 arası havuzdan, güne göre). İlerlemeye yazılmaz; sonuç paylaşılabilir.
-const bugun = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5), gunlukNo = () => 10 + (bugun() * 7919) % 40;
+const bugun = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5), gunlukNo = () => 50 + (bugun() * 7919) % 200;   // günlük kalıp 51–250 arasından (ilk 50 öğretim bölümü fazla kolaydı)
 function setup(i, g) {
   gunluk = g === undefined ? gunluk && i === li : !!g; ekGuc = 0;
   li = i; Lv = LEVELS[i]; document.body.dataset.dunya = gunluk || i >= ASIL ? 0 : Math.floor(i / 60) % 9; st = K.load(Lv); cz = Coz.hazirla(st);
@@ -211,7 +211,9 @@ function olaylar(p, ev) {
 function denetle(p) {
   if (state !== 'play') return;
   if (st.pieces.length === 0) { state = 'won'; running = false; wonAt = 0; kazanKaydet(); paintUndo(); }
-  else if (Coz.cikmaz(st, cz, 20000, 80)) lose('doom', K.doomed(st) || (st.pieces.includes(p) ? p : st.pieces[0]));
+  else if (Coz.cikmaz(st, cz, 20000, 80)) {   // çıkmaz: bölüm bitmez (süre bitene kadar oynanır; geri al ya da makasla kurtarılabilir), yalnız haber verilir
+    if (!cikmazUyari) { cikmazUyari = true; const q = K.doomed(st) || (st.pieces.includes(p) ? p : st.pieces[0]); if (q) { q.shakeT = performance.now(); q.pv += 1; } buzz([20, 60, 20]); bilgi(L('Çıkmaz! Geri al ya da makas kullan', 'Stuck! Undo or use scissors')); }
+  } else cikmazUyari = false;
 }
 // Makas: çok kareli parça açık makasa doğru itilince dolan ölçü. Dolunca parça o kareye girer, makasın üstündeki kare kopar,
 // sürükleme biter ve bütün parçalar oldukları yerde kalır (cekirdek M3-M4). Kararsız parmak kesmez: karar görünür (makas kapanır).
@@ -497,7 +499,7 @@ function win() {
   Ses.cal('kazan', .8, () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', 0, .07, i * .09)));
   Ads.warm();
   const kalan = L('Kalan süre ', 'Time left: ') + Math.ceil(timeLeft) + L(' sn.', ' s.');
-  if (gunluk) return showOv(L('Günlük kalıp tamam', 'Daily mold done'), yildizYazi(sonYildiz) + ' · ' + kalan + L(` Seri: ${save.seri?.n || 1} gün.`, ` Streak: ${save.seri?.n || 1} days.`) + ((save.seri?.n || 1) % 7 === 0 ? L(' 7. gün ödülü: birer güçlendirici!', ' Day 7 reward: one of each booster!') : L(' Yarın yeni kalıp var.', ' A new mold comes tomorrow.')), L('Paylaş', 'Share'), paylas, L('Ana ekran', 'Home'), () => App.ekran.goster('ana'));
+  if (gunluk) return showOv(L('Günlük kalıp tamam', 'Daily mold done'), yildizYazi(sonYildiz) + ' ·' + L(` Seri: ${save.seri?.n || 1} gün.`, ` Streak: ${save.seri?.n || 1} days.`) + ((save.seri?.n || 1) % 7 === 0 ? L(' 7. gün ödülü: birer güçlendirici!', ' Day 7 reward: one of each booster!') : L(' Yarın yeni kalıp var.', ' A new mold comes tomorrow.')), L('Paylaş', 'Share'), paylas, L('Ana ekran', 'Home'), () => App.ekran.goster('ana'));
   if (li >= ASIL) return showOv(L('Deneme tamam', 'Test complete'), kalan, L('Yeniden oyna', 'Play again'), () => setup(li));   // editörden gelen deneme bölümü
   const lastOne = li === ASIL - 1;
   if (!lastOne) {   // bölüm bitince menü açılmaz: kısa bir kutlama, sonra tahta kayar ve sıradaki bölüm gelir
@@ -505,12 +507,12 @@ function win() {
     if (fig) App.ekran.kutla(fig);   // figür tamamlandı: tam ekran kutlama
     t.append(seritYazi(fig ? fig.ad + L(' tamamlandı!', ' completed!') : L('Bölüm tamam!', 'Level complete!')));
     const y = document.createElement('span'); y.className = 'yildiz'; for (let k = 0; k < 3; k++) { const yi = document.createElement('i'); if (k >= sonYildiz) yi.className = 'bos'; y.appendChild(yi); } t.append(y);
-    const k = document.createElement('small'); k.textContent = kalan; t.append(k); t.hidden = false;
+    t.hidden = false;
     const hedef = li + 1; clearTimeout(gecisT); gecisT = setTimeout(() => { if (state === 'won' && li === hedef - 1) sonraki(hedef); }, fig ? 3400 : RM ? 1100 : 950);
     return;
   }
   showOv(lastOne ? L('Hepsi tamam', 'All done') : L('Bölüm tamam', 'Level complete'),
-    lastOne ? L('Bütün bölümler bitti. ', 'Every level is finished. ') + kalan : kalan,
+    lastOne ? L('Bütün bölümler bitti.', 'Every level is finished.') : '',
     lastOne ? L('Baştan oyna', 'Play again') : L('Sıradaki bölüm', 'Next level'), () => sonraki(lastOne ? 0 : li + 1));
 }
 
