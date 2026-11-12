@@ -3,7 +3,7 @@
 (() => {
 'use strict';
 const App = window.__hamur, O = App.oyun, save = App.save, $ = id => document.getElementById(id);
-const N = O.ASIL, EKRAN = { ana: 'sAna', yol: 'sYol', tepsi: 'sTepsi', magaza: 'sMagaza', oyun: 'sOyun' };
+const N = O.ASIL, EKRAN = { ana: 'sAna', yol: 'sYol', tepsi: 'sTepsi', magaza: 'sMagaza', gunluk: 'sGunluk', oyun: 'sOyun' };
 let acik = '';
 
 // Sıradaki bölüm: bitirilmemiş ilk bölüm. Açık bölümler: sıradakine kadar (ayarlardan "bütün bölümler açık" test seçeneği).
@@ -31,10 +31,12 @@ function goster(ad) {
   acik = ad; document.body.classList.toggle('ana-acik', ad === 'ana'); document.body.classList.toggle('oyun-acik', ad === 'oyun'); document.body.classList.remove('gunluk-acik');
   if (ad !== 'oyun') O.dur();   // oyundan çıkınca süre, bekleyen bölüm geçişi ve reklam durur
   for (const [k, id] of Object.entries(EKRAN)) $(id).hidden = k !== ad;
+  $('sekme').hidden = ad === 'oyun'; for (const b of $('sekme').children) b.setAttribute('aria-current', String(b.dataset.ek === ad));
   if (ad === 'ana') ana();
   if (ad === 'yol') yol();
   if (ad === 'tepsi') tepsi();
   if (ad === 'magaza') magaza();
+  if (ad === 'gunluk') gunlukEkran();
   window.Olcum?.event('screen_view', { screen_name: ad });
 }
 function oyna(n) { goster('oyun'); O.setup(Math.max(1, Math.min(N, n)) - 1, false); if (!window.__hamurRobot) setTimeout(() => { if (acik === 'oyun') O.giris(); }, 400); }
@@ -48,8 +50,18 @@ function ana() {
   if ((save.done || []).length >= 3 && !save.bildirimSoruldu) { save.bildirimSoruldu = true; App.persist(); hatirlat(true); } else hatirlat(false);
   canCiz();
   const seri = save.seri && save.seri.gun >= O.bugun() - 1 ? save.seri.n : 0;
-  $('gunlukYazi').textContent = L('Günlük kalıp', 'Daily mold') + (save.gunluk?.gun === O.bugun() && save.gunluk.bitti ? ' ✓' : '') + '';
   $('oynaNo').textContent = hepsi ? L('Hepsi tamam', 'All done') : L('Bölüm ', 'Level ') + n;
+}
+
+/* ---------- günlük kalıp ---------- */
+// Seri hamuru: haftanın her günü bir renk; üst üste oynanan her gün bir parça daha yapışır, 7. günde somun tamamlanır ve ödül gelir.
+function gunlukEkran() {
+  const bitti2 = save.gunluk?.gun === O.bugun() && save.gunluk.bitti, seri = save.seri && save.seri.gun >= O.bugun() - 1 ? save.seri.n : 0, dolu = seri ? (seri - 1) % 7 + 1 : 0;
+  $('gunSeri').textContent = seri ? L(`Seri: ${seri} gün`, `Streak: ${seri} days`) : L('Seriye bugün başla', 'Start your streak today');
+  const h = $('gunHamur'); h.innerHTML = '';
+  ['r', 'o', 'y', 'g', 'b', 'p', 'krem'].forEach((c, i) => { const d = document.createElement('i'); if (i < dolu) { d.className = 'dolu'; d.style.backgroundImage = `url(img/blok-${c}.webp)`; } d.style.setProperty('--i', i); h.appendChild(d); });
+  $('gunAciklama').textContent = L('Her gün +1 can. 7. günde birer güçlendirici.', 'Each day +1 life. Day 7: one of each booster.');
+  $('gunlukYazi').textContent = bitti2 ? L('Bugün tamam ✓', 'Done today ✓') : L('Bugünün kalıbı', "Today's mold");
 }
 
 /* ---------- bölüm yolu ---------- */
@@ -195,8 +207,14 @@ function ayarKapat() {
 
 /* ---------- bağlantılar ---------- */
 $('bOyna').onclick = () => oyna(siradaki()); $('bGunluk').onclick = gunlukAc;
-$('bYol').onclick = () => goster('yol'); $('bTepsi').onclick = () => goster('tepsi');
-$('yolGeri').onclick = $('tepsiGeri').onclick = $('magazaGeri').onclick = () => goster('ana'); $('bMagaza').onclick = () => goster('magaza');
+for (const b of $('sekme').children) b.onclick = () => { if (acik !== b.dataset.ek) goster(b.dataset.ek); };
+$('yolGeri').onclick = $('tepsiGeri').onclick = $('magazaGeri').onclick = () => goster('ana');
+// Yana kaydırma: sekmeler arasında geçiş (dikey kaydırmayı bozmaz; pencere açıkken ve oyunda kapalı)
+{ const SIRA = ['magaza', 'tepsi', 'ana', 'yol', 'gunluk']; let x0 = 0, y0 = 0, t0 = 0;
+  addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = e.touches.length === 1 && !e.target.closest('.sekme') ? performance.now() : 0; }, { passive: true });
+  addEventListener('touchend', e => { const i = SIRA.indexOf(acik); if (i < 0 || !t0 || !$('ayar').hidden || performance.now() - t0 > 600) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    const j = i + (dx < 0 ? 1 : -1); if (j >= 0 && j < SIRA.length) goster(SIRA[j]); }, { passive: true }); }
 $('bCik').onclick = () => O.cikisSor();   // oyundan çıkınca ana ekran
 $('bAyar').onclick = ayar; $('ayarKapat').onclick = ayarKapat;
 $('ayar').addEventListener('click', e => { if (e.target === $('ayar')) ayarKapat(); });

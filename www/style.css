@@ -1008,3 +1008,68 @@ body[data-dunya="8"].oyun-acik .gok{opacity:0}
 .figurler{padding-top:calc(max(26px,env(safe-area-inset-top,0px)) + 92px)}
 .magaza{padding-top:calc(max(26px,env(safe-area-inset-top,0px)) + 66px)}
 .magaza,.figurler{-webkit-mask:linear-gradient(transparent calc(max(26px,env(safe-area-inset-top,0px)) + 40px),#000 calc(max(26px,env(safe-area-inset-top,0px)) + 84px));mask:linear-gradient(transparent calc(max(26px,env(safe-area-inset-top,0px)) + 40px),#000 calc(max(26px,env(safe-area-inset-top,0px)) + 84px))}
+
+/* alt sekme çubuğu */
+.sekme{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:space-around;align-items:flex-end;gap:2px;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(255,248,238,.96);border-radius:26px 26px 0 0;box-shadow:0 -4px 0 rgba(120,80,170,.18),0 -10px 24px rgba(60,25,100,.18)}
+.sekme[hidden]{display:none}
+.sekme button{flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center;gap:0;border:0;background:none;padding:2px 0 0;font:700 12px var(--display);color:#8a74a8;border-radius:18px;-webkit-tap-highlight-color:transparent;transition:transform .16s cubic-bezier(.3,1.5,.5,1)}
+.sekme button i{display:block;width:46px;height:46px;background:center/contain no-repeat;transition:transform .2s cubic-bezier(.3,1.6,.5,1);filter:saturate(.75) opacity(.8)}
+.sekme button[aria-current="true"]{color:#5a2a96;background:rgba(170,130,225,.22)}
+.sekme button[aria-current="true"] i{transform:translateY(-9px) scale(1.24);filter:drop-shadow(0 4px 3px rgba(60,25,100,.3))}
+.sekme button:active{transform:scale(.92)}
+#yolGeri,#tepsiGeri,#magazaGeri{visibility:hidden}
+.yol{padding-bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+.figurler,.magaza{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+#sAna .ada{bottom:calc(46px + env(safe-area-inset-bottom,0px))}
+@media (prefers-reduced-motion:reduce){.sekme button,.sekme button i{transition:none}}
+/* köşe karakterleri dünyaya göre değişir */
+@keyframes kose-nefes{50%{transform:scale(1.035,.965) translateY(1.5%)}}
+body[data-dunya="1"] #sOyun .foot::before{background:url(img/kose-2-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="1"] #sOyun .foot::after{background:url(img/kose-2-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+body[data-dunya="2"] #sOyun .foot::before{background:url(img/kose-3-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="2"] #sOyun .foot::after{background:url(img/kose-3-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+body[data-dunya="3"] #sOyun .foot::before{background:url(img/kose-4-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="3"] #sOyun .foot::after{background:url(img/kose-4-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+body[data-dunya="4"] #sOyun .foot::before{background:url(img/kose-5-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="4"] #sOyun .foot::after{background:url(img/kose-5-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+body[data-dunya="5"] #sOyun .foot::before{background:url(img/kose-6-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="5"] #sOyun .foot::after{background:url(img/kose-6-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+body[data-dunya="6"] #sOyun .foot::before{background:url(img/kose-7-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="6"] #sOyun .foot::after{background:url(img/kose-7-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+body[data-dunya="7"] #sOyun .foot::before{background:url(img/kose-8-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="7"] #sOyun .foot::after{background:url(img/kose-8-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+body[data-dunya="8"] #sOyun .foot::before{background:url(img/kose-9-uyu.webp) left bottom/contain no-repeat;width:118px;height:118px;animation:kose-nefes 2.6s ease-in-out infinite;transform-origin:50% 100%}
+body[data-dunya="8"] #sOyun .foot::after{background:url(img/kose-9-bak.webp) right bottom/contain no-repeat;width:112px;height:130px;right:-10px;animation:kose-nefes 3.1s ease-in-out infinite;transform-origin:100% 100%}
+@media (prefers-reduced-motion:reduce){#sOyun .foot::before,#sOyun .foot::after{animation:none!important}}
+.sekme #bMagaza{background-image:none}
+.sekme #bMagaza i{display:block;width:46px;height:46px}
+.sekme button span{font:700 12px/1.2 var(--display);color:inherit;text-shadow:none;-webkit-text-stroke:0;letter-spacing:0;padding-bottom:2px}
+.sekme button,.sekme #bYol,.sekme #bTepsi{color:#8a74a8;-webkit-text-fill-color:currentColor;font-size:12px;min-height:0;width:auto;border-image:none;border-width:0}
+.sekme button[aria-current="true"]{color:#5a2a96}
+
+/* beş sekme: yazısız, ortada ana ekran; seçili simgenin altında hamur yastığı */
+.sekme{align-items:center;padding-top:8px}
+.sekme button{position:relative;height:56px;justify-content:center;background:none!important}
+.sekme button::before{content:'';position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-27px 0 0 -29px;background:url(img/blok-krem.webp) center/contain no-repeat;opacity:0;transform:scale(.5);transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .15s}
+.sekme button[aria-current="true"]::before{opacity:1;transform:scale(1)}
+.sekme button i{position:relative;width:44px;height:44px}
+.sekme button[aria-current="true"] i{transform:translateY(-12px) scale(1.2)}
+.sekme #bAna i{width:52px;height:52px}
+.sekme #bMagaza i{width:44px;height:44px}
+/* günlük ekranı */
+#sGunluk{position:relative}
+#sGunluk .ust{position:absolute;left:0;right:0;top:0;z-index:2;min-height:0;align-items:center;padding:max(26px,env(safe-area-inset-top,0px)) 16px 0;background:none}
+#sGunluk .ust .bos{width:54px}
+#sGunluk .ust h2{padding:0;margin:0;line-height:54px}
+.gun-ic{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:90px 20px calc(96px + env(safe-area-inset-bottom,0px))}
+.gun-resim{width:132px;height:132px;object-fit:contain;filter:drop-shadow(0 8px 6px rgba(60,25,100,.25))}
+.gun-seri{margin:0;font:400 28px var(--baslik);color:#fff6d8;text-shadow:0 2px 0 #6a3aa6,0 4px 8px rgba(60,25,100,.3)}
+.gun-hamur{display:flex;padding:10px 12px;border-radius:22px;background:rgba(255,250,244,.86);box-shadow:0 4px 0 rgba(120,80,170,.2)}
+.gun-hamur i{width:42px;height:42px;margin:0 -2px;border-radius:10px;background:rgba(150,120,200,.2) center/cover no-repeat;box-shadow:inset 0 2px 4px rgba(60,25,100,.18)}
+.gun-hamur i.dolu{background-color:transparent;box-shadow:none;animation:gun-gel .4s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:calc(var(--i)*60ms)}
+@keyframes gun-gel{from{transform:scale(0)}}
+#sGunluk .aciklama{margin:0}
+#bGunluk{margin-top:8px}
+@media (prefers-reduced-motion:reduce){.gun-hamur i.dolu,.sekme button::before{animation:none;transition:none}}
+.sekme #bGun i{background-size:150%}
+#bGunluk{white-space:nowrap;font-size:22px;min-height:64px}

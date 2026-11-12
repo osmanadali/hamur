@@ -29,7 +29,7 @@ module.exports = async ({ browser, URL, open, shot, getSave, inViewport, check }
     const t = await page.evaluate(() => [...document.querySelectorAll('.figur')].map(f => (f.classList.contains('tamam') ? 'T' : '') + f.querySelector('small').textContent).join(' | '));
     await shot(page, 'ekran-tepsi');
     check('ekran.tepsi', 'Tepsi: her 10 bölümde bir figür tamamlanır, yarım figür kaç bölüm kaldığını gösterir', /^T/.test(t) && t.includes('4 / 10') && t.split('|').length >= 15, t);
-    await page.click('#tepsiGeri'); await page.click('#bAyar'); await page.waitForTimeout(200);
+    await page.click('#bAna'); await page.click('#bAyar'); await page.waitForTimeout(200);
     await page.click('#sec-damga'); await page.click('#sec-hepsiAcik');
     const k = await getSave(page); await shot(page, 'ekran-ayar');
     check('ekran.ayar', 'Ayarlar: renk damgaları ve test seçeneği açılıp kapanır, kalıcıdır', k.damga === true && k.hepsiAcik === true, JSON.stringify({ damga: k.damga, hepsiAcik: k.hepsiAcik }));
