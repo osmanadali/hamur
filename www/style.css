@@ -1073,3 +1073,16 @@ body[data-dunya="8"] #sOyun .foot::after{background:url(img/kose-9-bak.webp) rig
 @media (prefers-reduced-motion:reduce){.gun-hamur i.dolu,.sekme button::before{animation:none;transition:none}}
 .sekme #bGun i{background-size:150%}
 #bGunluk{white-space:nowrap;font-size:22px;min-height:64px}
+
+/* alt panel: hamur şeridi; günlük ekranının kendi gökyüzü; ana ekranın orta görseli */
+.sekme{left:6px;right:6px;bottom:calc(4px + env(safe-area-inset-bottom,0px));padding:10px 10px 12px;background:url(img/sekme-panel.webp) center/100% 100% no-repeat;border-radius:0;box-shadow:none;filter:drop-shadow(0 5px 6px rgba(60,25,100,.3))}
+.sekme #bGun i{background-size:contain}
+.sekme button::before{background-image:url(img/blok-p.webp)}
+body.gun-acik{background:#f3b0c8 url(img/gok-gunluk.webp) center/cover no-repeat!important}
+body.gun-acik .gok{opacity:0}
+.ana-orta{width:min(58vw,30vh,300px);height:auto;margin-top:1vh;filter:drop-shadow(0 10px 8px rgba(60,25,100,.28));animation:orta-salin 4s ease-in-out infinite}
+@keyframes orta-salin{50%{transform:translateY(-6px) rotate(-1.2deg)}}
+#sAna .ana-dugmeler{margin-top:1.5vh}
+#sAna .ada{max-height:27vh;bottom:calc(52px + env(safe-area-inset-bottom,0px))}
+@media (prefers-reduced-motion:reduce){.ana-orta{animation:none}}
+@media (max-height:560px){.ana-orta{display:none}}

@@ -28,7 +28,7 @@ const bekle = (() => {
 App.bekle = bekle;
 function goster(ad) {
   if (acik && acik !== ad) gecis(ad);
-  acik = ad; document.body.classList.toggle('ana-acik', ad === 'ana'); document.body.classList.toggle('oyun-acik', ad === 'oyun'); document.body.classList.remove('gunluk-acik');
+  acik = ad; document.body.classList.toggle('ana-acik', ad === 'ana'); document.body.classList.toggle('oyun-acik', ad === 'oyun'); document.body.classList.toggle('gun-acik', ad === 'gunluk'); document.body.classList.remove('gunluk-acik');
   if (ad !== 'oyun') O.dur();   // oyundan çıkınca süre, bekleyen bölüm geçişi ve reklam durur
   for (const [k, id] of Object.entries(EKRAN)) $(id).hidden = k !== ad;
   $('sekme').hidden = ad === 'oyun'; for (const b of $('sekme').children) b.setAttribute('aria-current', String(b.dataset.ek === ad));
